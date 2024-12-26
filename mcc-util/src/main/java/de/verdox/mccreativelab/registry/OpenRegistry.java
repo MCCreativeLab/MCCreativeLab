@@ -1,6 +1,6 @@
 package de.verdox.mccreativelab.registry;
 
-import org.bukkit.NamespacedKey;
+import net.kyori.adventure.key.Key;
 
 public class OpenRegistry<T> extends CustomRegistry<T> {
     private final String namespace;
@@ -10,10 +10,10 @@ public class OpenRegistry<T> extends CustomRegistry<T> {
     }
 
     public <S extends T> Reference<S> register(String key, S data) {
-        return this.register(new NamespacedKey(namespace, key), data);
+        return this.register(Key.key(namespace, key), data);
     }
 
-    public <S extends T> Reference<S> register(NamespacedKey namespacedKey, S data) {
+    public <S extends T> Reference<S> register(Key namespacedKey, S data) {
         return super.register(namespacedKey, data);
     }
 

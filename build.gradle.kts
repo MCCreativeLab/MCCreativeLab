@@ -1,5 +1,3 @@
-import io.papermc.paperweight.util.convertToPath
-
 plugins {
     java
     `maven-publish`
@@ -43,7 +41,10 @@ allprojects {
 }
 
 
+
+
 subprojects {
+
     tasks.withType<JavaCompile> {
         options.encoding = Charsets.UTF_8.name()
         options.release.set(21)
@@ -111,31 +112,19 @@ publishing {
         }
     }
 }
-/*
 allprojects {
     // Publishing API:
     // ./gradlew :ForkTest-API:publish[ToMavenLocal]
     publishing {
         repositories {
             maven {
-                name = "myRepoSnapshots"
-                url = uri("https://my.repo/")
-                // See Gradle docs for how to provide credentials to PasswordCredentials
-                // https://docs.gradle.org/current/samples/sample_publishing_credentials.html
-                credentials(PasswordCredentials::class)
+                name = "verdox"
+                url = uri("https://repo.verdox.de/snapshots")
+                credentials {
+                    username = (findProperty("reposilite.verdox.user") ?: System.getenv("REPO_USER")).toString()
+                    password = (findProperty("reposilite.verdox.key") ?: System.getenv("REPO_PASSWORD")).toString()
+                }
             }
         }
     }
 }
-
-publishing {
-    // Publishing dev bundle:
-    // ./gradlew publishDevBundlePublicationTo(MavenLocal|MyRepoSnapshotsRepository) -PpublishDevBundle
-    if (project.hasProperty("publishDevBundle")) {
-        publications.create<MavenPublication>("devBundle") {
-            artifact(tasks.generateDevelopmentBundle) {
-                artifactId = "dev-bundle"
-            }
-        }
-    }
-}*/

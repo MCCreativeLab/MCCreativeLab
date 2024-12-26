@@ -1,10 +1,12 @@
 package de.verdox.mccreativelab.registry;
 
+import net.kyori.adventure.key.Key;
 import org.bukkit.NamespacedKey;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public record ReferenceImpl<T>(CustomRegistry<T> registry, NamespacedKey namespacedKey) implements Reference<T>{
+public record ReferenceImpl<T>(CustomRegistry<T> registry, Key namespacedKey) implements Reference<T>{
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -19,7 +21,7 @@ public record ReferenceImpl<T>(CustomRegistry<T> registry, NamespacedKey namespa
     }
 
     @Override
-    public NamespacedKey getKey() {
+    public Key getKey() {
         return namespacedKey;
     }
 
@@ -31,5 +33,10 @@ public record ReferenceImpl<T>(CustomRegistry<T> registry, NamespacedKey namespa
     @Override
     public T unwrapValue() {
         return registry.get(namespacedKey);
+    }
+
+    @Override
+    public @NotNull Key key() {
+        return getKey();
     }
 }

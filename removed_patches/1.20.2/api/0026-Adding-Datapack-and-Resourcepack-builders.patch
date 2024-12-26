@@ -1297,7 +1297,7 @@ index 0000000000000000000000000000000000000000..64fef4f9b8f27fbcfd49a56df9764746
 +import de.verdox.mccreativelab.resource.resourcepack.renderer.ScreenPosition;
 +import de.verdox.mccreativelab.resource.resourcepack.renderer.element.single.SingleHudText;
 +import de.verdox.mccreativelab.resource.resourcepack.types.CustomHud;
-+import de.verdox.mccreativelab.util.StringAlign;
++import de.verdox.mccreativelab.util.io.StringAlign;
 +import net.kyori.adventure.text.Component;
 +
 +import java.util.List;
@@ -1400,7 +1400,7 @@ index 0000000000000000000000000000000000000000..1ddcdde38bca26cbe2f67c41633f4181
 +import de.verdox.mccreativelab.resource.resourcepack.renderer.element.SingleHudElement;
 +import de.verdox.mccreativelab.resource.resourcepack.types.font.Font;
 +import de.verdox.mccreativelab.resource.resourcepack.types.CustomHud;
-+import de.verdox.mccreativelab.util.StringAlign;
++import de.verdox.mccreativelab.util.io.StringAlign;
 +import net.kyori.adventure.key.Key;
 +import net.kyori.adventure.text.Component;
 +import net.kyori.adventure.text.TextComponent;
@@ -1567,10 +1567,10 @@ index 0000000000000000000000000000000000000000..9dd298d16e48dc1ef8e41120256113e6
 +import de.verdox.mccreativelab.resource.resourcepack.types.font.Font;
 +import de.verdox.mccreativelab.resource.resourcepack.types.font.Space;
 +import de.verdox.mccreativelab.resource.resourcepack.types.font.StandardFontAssets;
-+import de.verdox.mccreativelab.util.AssetUtil;
-+import de.verdox.mccreativelab.util.BitMapReader;
-+import de.verdox.mccreativelab.util.ImageUtil;
-+import de.verdox.mccreativelab.util.StringAlign;
++import de.verdox.mccreativelab.util.io.AssetUtil;
++import de.verdox.mccreativelab.util.io.BitMapReader;
++import de.verdox.mccreativelab.util.io.ImageUtil;
++import de.verdox.mccreativelab.util.io.StringAlign;
 +import org.bukkit.NamespacedKey;
 +import org.jetbrains.annotations.Nullable;
 +
@@ -1745,7 +1745,7 @@ index 0000000000000000000000000000000000000000..ef4524192853f1f5a1cee47d00fb965b
 +import de.verdox.mccreativelab.resource.resourcepack.CustomResourcePack;
 +import de.verdox.mccreativelab.resource.resourcepack.ResourcePackResource;
 +import de.verdox.mccreativelab.resource.resourcepack.ResourcePackAssetTypes;
-+import de.verdox.mccreativelab.util.AssetUtil;
++import de.verdox.mccreativelab.util.io.AssetUtil;
 +import org.bukkit.Material;
 +import org.bukkit.NamespacedKey;
 +import org.jetbrains.annotations.NotNull;
@@ -1984,7 +1984,7 @@ index 0000000000000000000000000000000000000000..f0de37e9d00b00204e65d80b292a617d
 +import de.verdox.mccreativelab.gson.JsonObjectBuilder;
 +import de.verdox.mccreativelab.resource.Asset;
 +import de.verdox.mccreativelab.resource.resourcepack.CustomResourcePack;
-+import de.verdox.mccreativelab.util.BitMapReader;
++import de.verdox.mccreativelab.util.io.BitMapReader;
 +import org.bukkit.NamespacedKey;
 +
 +import javax.imageio.ImageIO;
@@ -2232,7 +2232,7 @@ index 0000000000000000000000000000000000000000..7bcdf2e1d750dff6d1440604c695d7ba
 +import de.verdox.mccreativelab.resource.resourcepack.CustomResourcePack;
 +import de.verdox.mccreativelab.resource.resourcepack.ResourcePackAssetTypes;
 +import de.verdox.mccreativelab.resource.resourcepack.ResourcePackResource;
-+import de.verdox.mccreativelab.util.AssetUtil;
++import de.verdox.mccreativelab.util.io.AssetUtil;
 +import net.kyori.adventure.text.Component;
 +import org.bukkit.NamespacedKey;
 +

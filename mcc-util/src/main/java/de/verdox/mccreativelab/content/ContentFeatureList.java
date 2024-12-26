@@ -41,8 +41,9 @@ public class ContentFeatureList implements Listener {
         Logger.getLogger(bootstrapContext.getPluginMeta().getName()).info("Running " + projectName + " Content Bootstrapper");
         contentFeatureConfig = new ContentFeatureConfig(this, bootstrapContext);
         for (ContentFeature contentFeature : getFeatures()) {
-            if (contentFeatureConfig.isDisabled(contentFeature))
+            if (contentFeatureConfig.isDisabled(contentFeature)) {
                 continue;
+            }
             bootstrapContext.getLogger().info("Bootstrap - " + contentFeature.getClass().getSimpleName());
             contentFeature.bootstrap(pluginBootstrap, bootstrapContext);
         }
@@ -55,8 +56,9 @@ public class ContentFeatureList implements Listener {
         this.javaPlugin = javaPlugin;
         javaPlugin.getLogger().info("Running " + projectName + " plugin loader");
         for (ContentFeature contentFeature : features) {
-            if (contentFeatureConfig.isDisabled(contentFeature))
+            if (contentFeatureConfig.isDisabled(contentFeature)) {
                 continue;
+            }
             javaPlugin.getLogger().info("DataSetup - " + contentFeature.getClass().getSimpleName());
             contentFeature.dataSetup(javaPlugin);
         }
@@ -69,8 +71,9 @@ public class ContentFeatureList implements Listener {
         this.javaPlugin = javaPlugin;
         javaPlugin.getLogger().info("Running " + projectName + " plugin enable logic");
         for (ContentFeature contentFeature : features) {
-            if (contentFeatureConfig.isDisabled(contentFeature))
+            if (contentFeatureConfig.isDisabled(contentFeature)) {
                 continue;
+            }
             javaPlugin.getLogger().info("Enabling - " + contentFeature.getClass().getSimpleName());
             Bukkit.getPluginManager().registerEvents(contentFeature, javaPlugin);
             contentFeature.onEnable(javaPlugin);
@@ -82,8 +85,9 @@ public class ContentFeatureList implements Listener {
         status = Status.DISABLE_PLUGIN;
         javaPlugin.getLogger().info("Running " + projectName + " plugin disable logic");
         for (ContentFeature contentFeature : features) {
-            if (contentFeatureConfig.isDisabled(contentFeature))
+            if (contentFeatureConfig.isDisabled(contentFeature)) {
                 continue;
+            }
             javaPlugin.getLogger().info("Disabling - " + contentFeature.getClass().getSimpleName());
             contentFeature.onDisable(javaPlugin);
             HandlerList.unregisterAll(contentFeature);
@@ -100,6 +104,7 @@ public class ContentFeatureList implements Listener {
             for (ContentFeature contentFeature : features) {
                 if (contentFeatureConfig.isDisabled(contentFeature))
                     continue;
+                javaPlugin.getLogger().info("CompleteStartup - " + contentFeature.getClass().getSimpleName());
                 contentFeature.onStartupComplete(this.javaPlugin);
             }
         } catch (Exception exception) {

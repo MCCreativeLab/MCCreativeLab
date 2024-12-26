@@ -1,6 +1,6 @@
 package de.verdox.mccreativelab.registry;
 
-import org.bukkit.NamespacedKey;
+import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -11,15 +11,15 @@ import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-public abstract class CustomRegistry<T> implements Iterable<Map.Entry<NamespacedKey, T>> {
+public abstract class CustomRegistry<T> implements Iterable<Map.Entry<Key, T>> {
     private final AtomicInteger idCounter = new AtomicInteger();
-    private final Map<NamespacedKey, T> registry = new HashMap<>();
-    private final Map<T, NamespacedKey> dataToKeyMapping = new HashMap<>();
-    private final Map<NamespacedKey, Integer> keyToId = new HashMap<>();
-    private final Map<Integer, NamespacedKey> idToKey = new HashMap<>();
+    private final Map<Key, T> registry = new HashMap<>();
+    private final Map<T, Key> dataToKeyMapping = new HashMap<>();
+    private final Map<Key, Integer> keyToId = new HashMap<>();
+    private final Map<Integer, Key> idToKey = new HashMap<>();
     private boolean freeze;
 
-    protected <S extends T> Reference<S> register(NamespacedKey namespacedKey, S data) {
+    protected <S extends T> Reference<S> register(Key namespacedKey, S data) {
         if (freeze)
             throw new IllegalStateException("Registry already frozen");
         int id = idCounter.getAndIncrement();
@@ -79,20 +79,20 @@ public abstract class CustomRegistry<T> implements Iterable<Map.Entry<Namespaced
 
     @NotNull
     @Override
-    public Iterator<Map.Entry<NamespacedKey, T>> iterator() {
+    public Iterator<Map.Entry<Key, T>> iterator() {
         return registry.entrySet().iterator();
     }
 
     @Override
-    public Spliterator<Map.Entry<NamespacedKey, T>> spliterator() {
+    public Spliterator<Map.Entry<Key, T>> spliterator() {
         return registry.entrySet().spliterator();
     }
 
-    public Iterator<NamespacedKey> keys() {
+    public Iterator<Key> keys() {
         return registry.keySet().iterator();
     }
 
-    public Stream<NamespacedKey> streamKeys() {
+    public Stream<Key> streamKeys() {
         return registry.keySet().stream();
     }
 
@@ -101,29 +101,29 @@ public abstract class CustomRegistry<T> implements Iterable<Map.Entry<Namespaced
     }
 
     @Nullable
-    public NamespacedKey getKey(T data) {
+    public Key getKey(T data) {
         return dataToKeyMapping.get(data);
     }
 
-    public boolean contains(NamespacedKey namespacedKey) {
+    public boolean contains(Key namespacedKey) {
         return registry.containsKey(namespacedKey);
     }
 
     @Nullable
-    public NamespacedKey getKey(int id) {
+    public Key getKey(int id) {
         return idToKey.getOrDefault(id, null);
     }
 
-    public int getId(NamespacedKey namespacedKey) {
+    public int getId(Key namespacedKey) {
         return keyToId.getOrDefault(namespacedKey, -1);
     }
 
     @Nullable
-    public T get(NamespacedKey namespacedKey) {
+    public T get(Key namespacedKey) {
         return registry.get(namespacedKey);
     }
 
-    public Reference<T> getAsReference(NamespacedKey namespacedKey) {
+    public Reference<T> getAsReference(Key namespacedKey) {
         return Reference.create(this, namespacedKey);
     }
 
@@ -132,13 +132,13 @@ public abstract class CustomRegistry<T> implements Iterable<Map.Entry<Namespaced
     }
 
     public @Nullable T get(int id) {
-        NamespacedKey key = getKey(id);
+        Key key = getKey(id);
         if (key == null)
             return null;
         return registry.get(key);
     }
 
-    protected void checkForDuplicates(NamespacedKey namespacedKey, T data) {
+    protected void checkForDuplicates(Key namespacedKey, T data) {
         if (registry.containsKey(namespacedKey))
             throw new IllegalStateException(data.getClass()
                 .getSimpleName() + " with key " + namespacedKey.toString() + " already registered");
