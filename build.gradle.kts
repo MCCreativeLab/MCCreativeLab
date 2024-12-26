@@ -1,5 +1,3 @@
-import io.papermc.paperweight.util.convertToPath
-
 plugins {
     java
     `maven-publish`

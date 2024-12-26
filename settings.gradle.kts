@@ -12,5 +12,4 @@ plugins {
 rootProject.name = "MCCreativeLab"
 
 include("mccreativelab-api", "mccreativelab-server")
-include("plugin-extension")
 include("mcc-util")
