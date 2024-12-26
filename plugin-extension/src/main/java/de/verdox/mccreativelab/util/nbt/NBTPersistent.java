@@ -2,6 +2,7 @@ package de.verdox.mccreativelab.util.nbt;
 
 import de.verdox.vcore.paper.serializer.PDCSerializationContext;
 import de.verdox.vserializer.generic.SerializationContainer;
+import de.verdox.vserializer.generic.SerializationElement;
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataAdapterContext;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -22,7 +23,9 @@ public interface NBTPersistent extends PersistentDataObject, Serializable {
 
     @Override
     default void deSerialize(PersistentDataContainer persistentDataContainer) {
-        SerializationContainer container = PDCSerializationContext.INSTANCE.deserializeFromPDC(persistentDataContainer).getAsContainer();
-        load(container, PDCSerializationContext.INSTANCE);
+        SerializationElement element = PDCSerializationContext.INSTANCE.deserializeFromPDC(persistentDataContainer);
+        if(element.isContainer()){
+            load(element.getAsContainer(), PDCSerializationContext.INSTANCE);
+        }
     }
 }

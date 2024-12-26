@@ -25,10 +25,10 @@ public class FakeItemRegistry extends CustomRegistry<FakeItem> {
 
     private final Map<Entry, Reference<? extends FakeItem>> fakeItemMapping = new HashMap<>();
 
-    public <T extends FakeItem> Reference<T> register(FakeItem.Builder<T> fakeItemBuilder){
+    public <T extends FakeItem> Reference<T> register(FakeItem.Builder<T> fakeItemBuilder) {
         T fakeItem = fakeItemBuilder.buildItem();
         Reference<T> result = register(fakeItem.key(), fakeItem);
-        fakeItemMapping.put(Entry.of(fakeItem.createItemStack()), result);
+        fakeItemMapping.put(new Entry(fakeItem.asItemType(), fakeItem.getCustomModelData()), result);
 
         MCCTypedKey<MCCRegistry<MCCItemType>> registryKey = VANILLA_REGISTRY.unwrapKey().get();
         MCCTypedKey<MCCItemType> typedKey = MCCPlatform.getInstance().getTypedKeyFactory().getKey(result.getKey(), registryKey.key(), new TypeToken<MCCItemType>() {});
@@ -37,29 +37,32 @@ public class FakeItemRegistry extends CustomRegistry<FakeItem> {
     }
 
     @Nullable
-    public Reference<? extends FakeItem> getFakeItem(Entry entry){
-        if(!fakeItemMapping.containsKey(entry))
+    public Reference<? extends FakeItem> getFakeItem(Entry entry) {
+        if (!fakeItemMapping.containsKey(entry))
             return null;
         return fakeItemMapping.get(entry);
     }
 
-    public Reference<? extends FakeItem> getFakeItem(@Nullable MCCItemStack stack){
-        return stack == null ? null : getFakeItem(Entry.of(stack));
-    }
-
     @Deprecated
-    public Reference<? extends FakeItem> getFakeItem(@Nullable ItemStack stack){
-        return getFakeItem(BukkitAdapter.wrap(stack, MCCItemStack.class));
+    public Reference<? extends FakeItem> getFakeItem(@Nullable ItemStack stack) {
+        if(stack == null){
+            return null;
+        }
+        return getFakeItem(Entry.of(stack));
     }
 
-    public record Entry(@MCCRequireVanillaElement MCCItemType vanillaMaterial, int customModelData){
-        public static Entry of(MCCItemStack stack){
-            return new Entry(stack.getType(), stack.components().get(MCCDataComponentTypes.CUSTOM_MODEL_DATA.get()).getValue());
+    public record Entry(@MCCRequireVanillaElement MCCItemType vanillaMaterial, int customModelData) {
+        public static Entry of(ItemStack stack) {
+            //TODO Das geht nicht
+            return new Entry(BukkitAdapter.wrap(stack.getType()), stack.hasItemMeta() ? stack.getItemMeta().hasCustomModelData() ? stack.getItemMeta().getCustomModelData() : 0 : 0);
         }
     }
 
-    public static void registerToMinecraftRegistry(){
+    public static void registerToMinecraftRegistry() {
         VANILLA_REGISTRY = MCCPlatform.getInstance().getRegistryStorage().createMinecraftRegistry(Key.key("mcc", "item"));
     }
 
+    public static MCCReference<MCCRegistry<MCCItemType>> getVanillaRegistry() {
+        return VANILLA_REGISTRY;
+    }
 }

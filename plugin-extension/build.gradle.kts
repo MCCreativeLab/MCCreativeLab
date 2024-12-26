@@ -45,12 +45,16 @@ allprojects {
         implementation(project(":mcc-util"))
         implementation(project(":mcc-pack-generator"))
 
-        compileOnly("de.verdox:vserializer:1.0.5-SNAPSHOT")
 
-        compileOnly("de.verdox.mccreativelab.mcc-wrapper:api:" + providers.gradleProperty("version").get())
+
+        implementation("de.verdox.mccreativelab.mcc-wrapper:api:" + providers.gradleProperty("version").get())
         implementation("de.verdox.mccreativelab.mcc-wrapper:vanilla:" + providers.gradleProperty("version").get())
         implementation("de.verdox.mccreativelab.mcc-wrapper:paper:" + providers.gradleProperty("version").get())
-        implementation("de.verdox.vcore:paper:1.0.0-SNAPSHOT")
+
+        implementation("de.verdox.vcore:core:+")
+        implementation("de.verdox.vcore:paper:+")
+        implementation("de.verdox:vserializer:+")
+        implementation("de.verdox:vpipeline:+")
 
         compileOnly("com.hierynomus:sshj:0.38.0")
         compileOnly("io.vertx:vertx-core:4.5.3")

@@ -1,6 +1,6 @@
 package de.verdox.mccreativelab.generator;
 
-import de.verdox.mccreativelab.conversion.ConversionService;
+import de.verdox.mccreativelab.event.GUICloseEvent;
 import de.verdox.mccreativelab.generator.resourcepack.types.gui.ActiveGUI;
 import de.verdox.mccreativelab.generator.resourcepack.types.gui.GUIClickAction;
 import de.verdox.mccreativelab.generator.resourcepack.types.gui.GUIFrontEndBehavior;
@@ -25,8 +25,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class PaperGUIFrontEndBehavior extends GUIFrontEndBehavior implements Listener {
-
-    private final ConversionService conversionService = MCCPlatform.getInstance().getConversionService();
     private final JavaPlugin javaPlugin;
 
     public PaperGUIFrontEndBehavior(JavaPlugin javaPlugin, ActiveGUI activeGUI) {
@@ -47,7 +45,7 @@ public class PaperGUIFrontEndBehavior extends GUIFrontEndBehavior implements Lis
         if (!isRightContainer(e.getInventory())) {
             return;
         }
-        onDrag(conversionService.wrap((Player) e.getWhoClicked()), e.getInventorySlots().stream().toList(), new MCCCancellable() {
+        onDrag(BukkitAdapter.wrap((Player) e.getWhoClicked()), e.getInventorySlots().stream().toList(), new MCCCancellable() {
             @Override
             public boolean isCancelled() {
                 return e.isCancelled();
@@ -65,12 +63,13 @@ public class PaperGUIFrontEndBehavior extends GUIFrontEndBehavior implements Lis
         if (!isRightContainer(e.getInventory())) {
             return;
         }
-        onClose(conversionService.wrap((Player) e.getPlayer()), to(e.getReason()));
+        onClose(BukkitAdapter.wrap(e.getPlayer()), to(e.getReason()));
+        Bukkit.getPluginManager().callEvent(new GUICloseEvent((Player) e.getPlayer(), getActiveGUI(), e.getReason()));
     }
 
     @Override
     public void onFrontendClose() {
-        HandlerList.unregisterAll();
+        HandlerList.unregisterAll(this);
     }
 
     @Override
@@ -80,11 +79,12 @@ public class PaperGUIFrontEndBehavior extends GUIFrontEndBehavior implements Lis
 
     private boolean isRightContainer(Inventory inventory) {
         Container container = ((CraftInventory) inventory).getInventory();
-        Container fromGUI = conversionService.unwrap(getActiveGUI().getVanillaInventory());
+        Container fromGUI = MCCPlatform.getInstance().getConversionService().unwrap(getActiveGUI().getVanillaInventory());
+
         return container.equals(fromGUI);
     }
 
-    private MCCContainerCloseReason to(InventoryCloseEvent.Reason reason) {
+    public static MCCContainerCloseReason to(InventoryCloseEvent.Reason reason) {
         return switch (reason) {
             case UNKNOWN -> MCCContainerCloseReason.UNKNOWN;
             case TELEPORT -> MCCContainerCloseReason.TELEPORT;
@@ -98,8 +98,8 @@ public class PaperGUIFrontEndBehavior extends GUIFrontEndBehavior implements Lis
         };
     }
 
-    private GUIClickAction to(InventoryClickEvent e) {
-        MCCPlayer player = conversionService.wrap((Player) e.getWhoClicked());
+    public static GUIClickAction to(InventoryClickEvent e) {
+        MCCPlayer player = BukkitAdapter.wrap((Player) e.getWhoClicked());
         boolean isUpperInventoryClicked = e.getView().getTopInventory().equals(e.getClickedInventory());
 
         return new GUIClickAction(BukkitAdapter.wrap(e.getClickedInventory()), player, isUpperInventoryClicked, e.getSlot(), e.getRawSlot(), BukkitAdapter.wrap(e.getCurrentItem()), BukkitAdapter.wrap(e.getCursor()), to(e.getSlotType()), to(e.getClick()), to(e.getAction())) {
@@ -115,15 +115,15 @@ public class PaperGUIFrontEndBehavior extends GUIFrontEndBehavior implements Lis
         };
     }
 
-    private MCCInventorySlotType to(InventoryType.SlotType slotType) {
+    public static MCCInventorySlotType to(InventoryType.SlotType slotType) {
         return MCCInventorySlotType.valueOf(slotType.name());
     }
 
-    private MCCInventoryClickType to(ClickType clickType) {
+    public static MCCInventoryClickType to(ClickType clickType) {
         return MCCInventoryClickType.valueOf(clickType.name());
     }
 
-    private MCCInventoryAction to(InventoryAction inventoryAction) {
+    public static MCCInventoryAction to(InventoryAction inventoryAction) {
         return MCCInventoryAction.valueOf(inventoryAction.name());
     }
 }

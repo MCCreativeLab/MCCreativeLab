@@ -81,7 +81,7 @@ public class FakeItem implements Keyed, ItemBehaviour {
 
         mccItemStack.components().edit(MCCDataComponentTypes.MAX_STACK_SIZE.get(), component -> component.set(getMaxStackSize()));
         mccItemStack.components().edit(MCCDataComponentTypes.MAX_DAMAGE.get(), component -> component.set(getMaxDamage()));
-        mccItemStack.components().edit(MCCDataComponentTypes.CUSTOM_MODEL_DATA.get(), component -> component.create().withValue(customModelData));
+        mccItemStack.components().edit(MCCDataComponentTypes.CUSTOM_MODEL_DATA.get(), component -> component.with(mccCustomModelData -> mccCustomModelData.withValue(customModelData)));
         mccItemStack.components().edit(MCCDataComponentTypes.ITEM_NAME.get(), component -> component.set(nameFormat != null ? nameFormat.apply(this.nameTranslation) : nameTranslation.asTranslatableComponent()));
 
         if (this.fakeItemProperties.foodProperties != null) {

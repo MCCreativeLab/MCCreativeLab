@@ -5,6 +5,7 @@ import de.verdox.mccreativelab.conversion.converter.MCCConverter;
 import de.verdox.mccreativelab.impl.vanilla.item.NMSItemStack;
 import de.verdox.mccreativelab.registry.Reference;
 import de.verdox.mccreativelab.world.item.FakeItem;
+import de.verdox.mccreativelab.wrapper.item.MCCItemStack;
 import de.verdox.mccreativelab.wrapper.item.MCCItemType;
 import de.verdox.mccreativelab.wrapper.platform.MCCHandle;
 import net.minecraft.world.item.ItemStack;

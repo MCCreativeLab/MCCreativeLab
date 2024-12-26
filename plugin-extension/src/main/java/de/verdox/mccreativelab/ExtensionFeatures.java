@@ -2,6 +2,7 @@ package de.verdox.mccreativelab;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import de.verdox.mccreativelab.event.MCCreativeLabReloadEvent;
+import de.verdox.mccreativelab.generator.PlayerGuiStackListener;
 import de.verdox.mccreativelab.generator.resourcepack.ResourcePackMapper;
 import de.verdox.mccreativelab.generator.resourcepack.types.gui.GUIUtil;
 import de.verdox.mccreativelab.generator.resourcepack.types.hud.renderer.HudRenderer;
@@ -11,6 +12,8 @@ import de.verdox.mccreativelab.util.ComponentUtil;
 import de.verdox.mccreativelab.util.player.inventory.PlayerInventoryCacheStrategy;
 import de.verdox.mccreativelab.util.player.inventory.PlayerInventoryCachedData;
 import de.verdox.mccreativelab.wrapper.platform.MCCPlatform;
+import de.verdox.mccreativelab.wrapper.typed.MCCRegistries;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -28,9 +31,13 @@ public class ExtensionFeatures implements Listener {
         MCCreativeLabExtension.registerRegistryLookupCommand("hud", resourcePackMapper.getHudsRegistry(), hudRenderer::getOrStartActiveHud);
         MCCreativeLabExtension.registerRegistryLookupCommand("gui", resourcePackMapper.getGuiRegistry(), (player, customGUIBuilder) -> customGUIBuilder.createMenuForPlayer(BukkitAdapter.wrap(player)));
         MCCreativeLabExtension.registerRegistryLookupCommand("menu", resourcePackMapper.getMenuRegistry(), (player, customMenu) -> customMenu.createMenuForPlayer(BukkitAdapter.wrap(player)));
+        MCCreativeLabExtension.registerRegistryLookupCommand("containerMenu", MCCRegistries.MENU_REGISTRY.get(), (player, menuType) -> {
+
+            MCCPlatform.getInstance().getContainerFactory().create(menuType).createMenuForPlayer(BukkitAdapter.wrap(player), Component.text("debug_title"));
+        });
         ComponentUtil.install();
         GUIUtil.install(MCCreativeLabExtension.getCustomResourcePack());
-
+        Bukkit.getPluginManager().registerEvents(new PlayerGuiStackListener(), MCCreativeLabExtension.getInstance());
         Bukkit.getPluginManager().registerEvents(new PlayerInventoryCachedData.Listener(), MCCreativeLabExtension.getInstance());
         PlayerInventoryCachedData.register(PlayerInventoryCacheStrategy.CachedAmounts.class, PlayerInventoryCacheStrategy.CachedAmounts::new);
         PlayerInventoryCachedData.register(PlayerInventoryCacheStrategy.CachedSlots.class, PlayerInventoryCacheStrategy.CachedSlots::new);

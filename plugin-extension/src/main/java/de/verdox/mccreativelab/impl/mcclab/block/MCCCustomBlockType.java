@@ -1,7 +1,9 @@
 package de.verdox.mccreativelab.impl.mcclab.block;
 
+import de.verdox.mccreativelab.MCCreativeLabExtension;
 import de.verdox.mccreativelab.conversion.converter.MCCConverter;
 import de.verdox.mccreativelab.world.block.FakeBlock;
+import de.verdox.mccreativelab.world.block.FakeBlockRegistry;
 import de.verdox.mccreativelab.wrapper.block.MCCBlockSoundGroup;
 import de.verdox.mccreativelab.wrapper.block.MCCBlockState;
 import de.verdox.mccreativelab.wrapper.block.MCCBlockType;
@@ -72,5 +74,10 @@ public class MCCCustomBlockType extends MCCHandle<FakeBlock> implements MCCBlock
     @Override
     public boolean isVanilla() {
         return false;
+    }
+
+    @Override
+    public Key getRegistryKey() {
+        return FakeBlockRegistry.getVanillaRegistry().unwrapKey().get().key();
     }
 }

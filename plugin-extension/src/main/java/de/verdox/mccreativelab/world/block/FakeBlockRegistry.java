@@ -69,4 +69,8 @@ public class FakeBlockRegistry extends CustomRegistry<FakeBlock> {
     public static void registerToMinecraftRegistry(){
         VANILLA_REGISTRY = MCCPlatform.getInstance().getRegistryStorage().createMinecraftRegistry(Key.key("mcc", "block"));
     }
+
+    public static MCCReference<MCCRegistry<MCCBlockType>> getVanillaRegistry() {
+        return VANILLA_REGISTRY;
+    }
 }

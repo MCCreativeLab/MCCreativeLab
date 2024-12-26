@@ -7,6 +7,7 @@ import de.verdox.mccreativelab.wrapper.block.MCCBlockState;
 import de.verdox.mccreativelab.wrapper.block.MCCBlockType;
 import de.verdox.mccreativelab.wrapper.platform.MCCHandle;
 import net.minecraft.world.level.chunk.LevelChunk;
+import org.bukkit.craftbukkit.CraftChunk;
 import org.jetbrains.annotations.NotNull;
 
 public class MCCCustomChunk extends NMSChunk {

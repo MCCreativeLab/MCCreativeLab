@@ -2,6 +2,7 @@ package de.verdox.mccreativelab;
 
 import de.verdox.mccreativelab.debug.*;
 import de.verdox.mccreativelab.event.MCCreativeLabReloadEvent;
+import de.verdox.mccreativelab.event.ResourcePackInstallEvent;
 import de.verdox.mccreativelab.features.Feature;
 import de.verdox.mccreativelab.features.Features;
 import de.verdox.mccreativelab.features.legacy.LegacyFeatures;
@@ -16,6 +17,7 @@ import de.verdox.mccreativelab.impl.paper.plugin.MCCPaperPlatformPlugin;
 import de.verdox.mccreativelab.impl.paper.plugin.MCCPaperPluginLoader;
 import de.verdox.mccreativelab.platform.GeneratorPlatformHelper;
 import de.verdox.mccreativelab.registry.CustomRegistry;
+import de.verdox.mccreativelab.registry.MinecraftRegistryLookupCommand;
 import de.verdox.mccreativelab.registry.RegistryLookUpCommand;
 import de.verdox.mccreativelab.util.PlayerAsyncRayTracer;
 import de.verdox.mccreativelab.util.nbt.PersistentDataSaver;
@@ -26,6 +28,7 @@ import de.verdox.mccreativelab.world.block.replaced.ReplacedBlocks;
 import de.verdox.mccreativelab.world.item.FakeItemListener;
 import de.verdox.mccreativelab.world.item.FakeItemRegistry;
 import de.verdox.mccreativelab.wrapper.platform.MCCPlatform;
+import de.verdox.mccreativelab.wrapper.registry.MCCRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -101,6 +104,7 @@ public class MCCreativeLabExtension extends MCCPaperPlatformPlugin {
     @Override
     public void onEnable() {
         super.onEnable();
+        Debug.init();
         extensionFeatures.onEnable();
         Bukkit.getPluginManager().registerEvents(extensionFeatures, this);
         Bukkit.getPluginManager().registerEvents(new CustomEventsCaller(), this);
@@ -128,6 +132,10 @@ public class MCCreativeLabExtension extends MCCPaperPlatformPlugin {
 
     public static <T> void registerRegistryLookupCommand(String name, CustomRegistry<T> customRegistry, BiConsumer<Player, T> consumer) {
         Bukkit.getCommandMap().register(name, new RegistryLookUpCommand<>(name, customRegistry, consumer));
+    }
+
+    public static <T> void registerRegistryLookupCommand(String name, MCCRegistry<T> mccRegistry, BiConsumer<Player, T> consumer) {
+        Bukkit.getCommandMap().register(name, new MinecraftRegistryLookupCommand<>(name, mccRegistry, consumer));
     }
 
     public void onServerLoad(ServerLoadEvent.LoadType loadType) {
@@ -173,6 +181,7 @@ public class MCCreativeLabExtension extends MCCPaperPlatformPlugin {
                 }
             }
             getCustomResourcePack().installPack(doReload);
+            new ResourcePackInstallEvent().callEvent();
             getResourcePackFileHoster().createResourcePackZipFiles();
         } catch (IOException ex) {
             ex.printStackTrace();
