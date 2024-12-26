@@ -43,10 +43,8 @@ allprojects {
         paperweight.devBundle("de.verdox.mccreativelab", providers.gradleProperty("version").get())
         //compileOnly(project(":mccreativelab-api"))
         implementation(project(":mcc-util"))
-        implementation(project(":mcc-pack-generator"))
 
-
-
+        implementation("de.verdox.mccreativelab:mcc-pack-generator:" + providers.gradleProperty("version").get())
         implementation("de.verdox.mccreativelab.mcc-wrapper:api:" + providers.gradleProperty("version").get())
         implementation("de.verdox.mccreativelab.mcc-wrapper:vanilla:" + providers.gradleProperty("version").get())
         implementation("de.verdox.mccreativelab.mcc-wrapper:paper:" + providers.gradleProperty("version").get())

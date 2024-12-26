@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.21.1-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle(providers.gradleProperty("version").get())
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
