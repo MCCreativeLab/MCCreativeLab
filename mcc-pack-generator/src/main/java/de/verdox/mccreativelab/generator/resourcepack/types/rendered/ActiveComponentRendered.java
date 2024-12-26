@@ -107,8 +107,9 @@ public abstract class ActiveComponentRendered<T extends ActiveComponentRendered<
     }
 
     public final void forceUpdate() {
-        if (viewers.isEmpty())
+        if (viewers.isEmpty()) {
             return;
+        }
         doUpdate();
         this.needsUpdate = true;
     }
@@ -172,7 +173,7 @@ public abstract class ActiveComponentRendered<T extends ActiveComponentRendered<
         this.hudElementToRenderedElementMapping.put(hudElement, renderedElement);
     }
 
-    public Set<Audience> getViewers() {
+    public synchronized Set<Audience> getViewers() {
         return Set.copyOf(viewers);
     }
 }

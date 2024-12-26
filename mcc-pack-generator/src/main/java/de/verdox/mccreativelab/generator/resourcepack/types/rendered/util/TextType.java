@@ -2,6 +2,7 @@ package de.verdox.mccreativelab.generator.resourcepack.types.rendered.util;
 
 import de.verdox.mccreativelab.wrapper.inventory.MCCMenuType;
 import de.verdox.mccreativelab.wrapper.inventory.MCCMenuTypes;
+import de.verdox.mccreativelab.wrapper.inventory.types.menu.MCCChestContainerMenu;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +29,6 @@ public record TextType(int xOffset, int yOffset) {
     public static TextType CHEST_9x_4 = createChestTextType(4);
     public static TextType CHEST_9x_5 = createChestTextType(5);
     public static TextType CHEST_9x_6 = createChestTextType(6);
-    public static TextType CHEST_9x_7 = createChestTextType(7);
     // Dispenser - Mid
     public static TextType DISPENSER = new TextType(0, 70);
     // Dropper - Mid
@@ -115,6 +115,12 @@ public record TextType(int xOffset, int yOffset) {
         invTypes.put(MCCMenuTypes.SMOKER, SMOKER);
         invTypes.put(MCCMenuTypes.STONECUTTER, STONE_CUTTER);
         invTypes.put(MCCMenuTypes.CRAFTING, WORKBENCH);
+
+        invTypes.put(MCCMenuTypes.GENERIC_9x1, CHEST_9x_1);
+        invTypes.put(MCCMenuTypes.GENERIC_9x2, CHEST_9x_2);
+        invTypes.put(MCCMenuTypes.GENERIC_9x4, CHEST_9x_4);
+        invTypes.put(MCCMenuTypes.GENERIC_9x5, CHEST_9x_5);
+        invTypes.put(MCCMenuTypes.GENERIC_9x6, CHEST_9x_6);
 
         topLeftCorner.put(CHEST_9x_6, new ScreenPosition(50, 50, -(CHEST_9x_6.xOffset + 8), CHEST_9x_6.yOffset() + 13, 1));
         topLeftCorner.put(CHEST_9x_5, new ScreenPosition(50, 50, -(CHEST_9x_5.xOffset + 8), CHEST_9x_5.yOffset() + 13, 1));

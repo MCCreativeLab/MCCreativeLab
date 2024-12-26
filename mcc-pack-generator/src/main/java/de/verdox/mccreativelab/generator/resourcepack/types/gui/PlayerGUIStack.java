@@ -7,27 +7,31 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Stack;
+import java.util.logging.Logger;
 
 /**
  * Tracks the GUIs opened by a player
  */
 public class PlayerGUIStack {
+    private static final Logger LOGGER = Logger.getLogger(PlayerGUIStack.class.getSimpleName());
 
     private final Stack<StackElement> stack = new Stack<>();
     private final MCCPlayer player;
 
     public static PlayerGUIStack load(MCCPlayer player) {
-        if (!player.getTempData().containsData("playerGUIStack"))
+        if (!player.getTempData().containsData("playerGUIStack")) {
             player.getTempData().storeData("playerGUIStack", new PlayerGUIStack(player));
+        }
 
         return player.getTempData().getData(PlayerGUIStack.class, "playerGUIStack");
     }
 
     public PlayerGUIStack(MCCPlayer player) {
         this.player = player;
+        //LOGGER.info("Creating player gui stack for player " + player.getUUID());
     }
 
-    public void onActiveGuiClose(@NotNull ActiveGUI closedActiveGui, MCCContainerCloseReason closeReason){
+    public void onActiveGuiClose(@NotNull ActiveGUI closedActiveGui, MCCContainerCloseReason closeReason) {
         Objects.requireNonNull(closedActiveGui);
         Objects.requireNonNull(closeReason);
         if (stack.isEmpty() || closeReason.equals(MCCContainerCloseReason.OPEN_NEW))
@@ -40,16 +44,17 @@ public class PlayerGUIStack {
 
     public void popAndOpenLast(MCCPlayer player, ActiveGUI activeGUI) {
         StackElement stackElement = stack.pop();
-
+        //LOGGER.info("Pop: " + stackElement.activeGUI.getComponentRendered().key());
         if (stackElement.activeGUI.getComponentRendered().equals(activeGUI.getComponentRendered()))
             return;
-
-        stackElement.activeGUI.openToPlayer(player);
+        //LOGGER.info("Open: " + stackElement.activeGUI.getComponentRendered().key());
+        stackElement.activeGUI.getComponentRendered().createMenuForPlayer(player);
     }
 
     public void trackGUI(ActiveGUI activeGUI) {
         StackElement stackElement = new StackElement(activeGUI, activeGUI.tempData);
         stack.push(stackElement);
+        //LOGGER.info("Tracking: " + activeGUI.getComponentRendered().key());
     }
 
     public void clear() {

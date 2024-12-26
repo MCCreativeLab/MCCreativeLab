@@ -6,40 +6,28 @@ import de.verdox.mccreativelab.generator.resourcepack.types.rendered.ActiveCompo
 import de.verdox.mccreativelab.platform.GeneratorPlatformHelper;
 import de.verdox.mccreativelab.wrapper.entity.types.MCCPlayer;
 import de.verdox.mccreativelab.wrapper.inventory.MCCContainer;
-import de.verdox.mccreativelab.wrapper.inventory.MCCContainerMenu;
 import de.verdox.mccreativelab.wrapper.inventory.types.menu.creator.SharedMenuCreatorInstance;
-import de.verdox.mccreativelab.wrapper.item.MCCItemStack;
 import de.verdox.mccreativelab.wrapper.platform.MCCPlatform;
 import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 public class ActiveGUI extends ActiveComponentRendered<ActiveGUI, CustomGUIBuilder> {
+    public static final Logger LOGGER = Logger.getLogger(ActiveGUI.class.getSimpleName());
+
     private final Map<String, ActiveGUIElement<?>> activeGUIElements = new HashMap<>();
     private final Map<Integer, ActiveGUIElement<?>> guiElementsBySlot = new HashMap<>();
-    private final SharedMenuCreatorInstance<?,?> menuCreatorInstance;
+    private final SharedMenuCreatorInstance<?, ?> menuCreatorInstance;
     private final MCCContainer container;
-
-    private FrontEndRenderer frontEndRenderer;
     private GUIFrontEndBehavior GUIFrontEndBehavior;
-
-    private final AtomicBoolean isUpdating = new AtomicBoolean();
-
     private final Map<Integer, ClickableItem> indexToClickableItemMapping = new HashMap<>();
-
-    private final Set<UUID> inventoryUpdateWhitelist = new HashSet<>();
-    private boolean setup;
 
     public ActiveGUI(CustomGUIBuilder customGUIBuilder, @Nullable Consumer<ActiveGUI> initialSetup) {
         super(customGUIBuilder);
-        frontEndRenderer = new FrontEndRenderer(this);
         customGUIBuilder.checkInstalled();
 
         customGUIBuilder.guiElements.forEach((s, guiElement) -> {
@@ -51,6 +39,7 @@ public class ActiveGUI extends ActiveComponentRendered<ActiveGUI, CustomGUIBuild
         this.menuCreatorInstance = (SharedMenuCreatorInstance<?, ?>) MCCPlatform.getInstance().getContainerFactory().create(customGUIBuilder.getType());
         this.container = menuCreatorInstance.getSharedContainer();
 
+
         if (initialSetup != null) {
             initialSetup.accept(this);
             forEachElementBehavior((activeGUIRenderedRenderedElementBehavior, rendered, a) -> activeGUIRenderedRenderedElementBehavior.onOpen(this, rendered, a), true);
@@ -59,7 +48,7 @@ public class ActiveGUI extends ActiveComponentRendered<ActiveGUI, CustomGUIBuild
     }
 
     @Deprecated
-    public MCCPlayer getPlayer(){
+    public MCCPlayer getPlayer() {
         return (MCCPlayer) viewers.stream().findAny().orElse(null);
     }
 
@@ -97,10 +86,6 @@ public class ActiveGUI extends ActiveComponentRendered<ActiveGUI, CustomGUIBuild
 
     public Map<Integer, ClickableItem> getIndexToClickableItemMapping() {
         return Map.copyOf(indexToClickableItemMapping);
-    }
-
-    public Set<UUID> getInventoryUpdateWhitelist() {
-        return inventoryUpdateWhitelist;
     }
 
     public final void addClickableItem(int index, ClickableItem clickableItem) {
@@ -159,97 +144,15 @@ public class ActiveGUI extends ActiveComponentRendered<ActiveGUI, CustomGUIBuild
 
     @Override
     protected void doUpdate() {
-        frontEndRenderer.offer(() -> {
-            if (getComponentRendered().whileOpen != null) getComponentRendered().whileOpen.accept(this);
-            forEachElementBehavior((activeGUIRenderedRenderedElementBehavior, rendered, audience) -> activeGUIRenderedRenderedElementBehavior.whileOpen(this, rendered, audience), false);
-            forEachGUIElementBehavior((guiElementBehavior, activeGUIElement) -> guiElementBehavior.whileOpen(this, activeGUIElement));
-
-            isUpdating.set(true);
-            try {
-                int viewerCount;
-                synchronized (viewers) {
-                    viewerCount = ActiveGUI.this.viewers.size();
-                }
-                if (viewerCount == 0)
-                    return;
-
-                Component lastRendering = getLastRendered();
-                Component newRendering = render();
-                if (newRendering.equals(lastRendering) && setup)
-                    return;
-
-                CompletableFuture<Void> waitForSync = new CompletableFuture<>();
-
-                MCCPlatform.getInstance().getTaskManager().runOnTickThread(mccTask -> {
-                    synchronized (viewers) {
-                        Iterator<Audience> iterator = viewers.iterator();
-
-                        while (iterator.hasNext()) {
-                            UUID uuid = GeneratorPlatformHelper.INSTANCE.get().getUUIDOfAudience(iterator.next());
-                            if (uuid == null)
-                                continue;
-                            MCCPlayer player = MCCPlatform.getInstance().getOnlinePlayer(uuid);
-                            if (player == null)
-                                continue;
-                            if (!ActiveGUI.this.equals(PlayerGUIData.getCurrentActiveGUI(player))) {
-                                iterator.remove();
-                                continue;
-                            }
-
-                            var itemAtCursor = player.getCursorProperty().get().copy();
-                            openUpdatedInventory(player, itemAtCursor, newRendering);
-                        }
-                    }
-                    waitForSync.complete(null);
-                });
-                waitForSync.join();
-            } finally {
-                setup = true;
-                isUpdating.set(false);
-            }
-        });
-    }
-
-    void addToViewers(Audience audience) {
-        viewers.add(audience);
-    }
-
-    private @NotNull MCCContainerMenu<?, ?> createInventory(Component rendering, MCCPlayer viewer) {
-        return menuCreatorInstance.createMenuForPlayer(viewer, rendering);
-    }
-
-    private void openUpdatedInventory(MCCPlayer player, MCCItemStack itemAtCursor, Component rendering) {
-        synchronized (viewers) {
-            if (!viewers.contains(player) && getComponentRendered().isUsePlayerSlots()) {
-                //FakeInventory.setFakeInventoryOfPlayer(player);
-            }
-
-        }
-
-        synchronized (inventoryUpdateWhitelist) {
-            inventoryUpdateWhitelist.add(player.getUUID());
-            try {
-                var menu = menuCreatorInstance.createMenuForPlayer(player, rendering);
-                if (itemAtCursor != null) {
-                    if (menu != null && !itemAtCursor.getType().isEmpty() && !getComponentRendered().isUsePlayerSlots()) {
-                        player.getInventory().removeItem(itemAtCursor);
-                        player.getCursorProperty().set(itemAtCursor);
-                    }
-                }
-                viewers.add(player);
-            } finally {
-                inventoryUpdateWhitelist.remove(player.getUUID());
-            }
-        }
+        getFrontEndBehavior().updateFrontEnd();
     }
 
     public GUIFrontEndBehavior getFrontEndBehavior() {
         return GUIFrontEndBehavior;
     }
 
-    @Override
-    public synchronized Set<Audience> getViewers() {
-        return super.getViewers();
+    public SharedMenuCreatorInstance<?, ?> getMenuCreatorInstance() {
+        return menuCreatorInstance;
     }
 
     public static class PlayerGUIData {
@@ -267,5 +170,9 @@ public class ActiveGUI extends ActiveComponentRendered<ActiveGUI, CustomGUIBuild
                 return null;
             return player.getTempData().getData(ActiveGUI.class, "active_gui");
         }
+    }
+
+    synchronized Set<Audience> getViewersNoCopy() {
+        return viewers;
     }
 }

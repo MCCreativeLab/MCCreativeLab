@@ -16,6 +16,7 @@ public class FrontEndRenderer extends Thread {
 
     public void stopRenderer() {
         this.running = false;
+        this.updateQueue.clear();
     }
 
     public void offer(Runnable runnable) {

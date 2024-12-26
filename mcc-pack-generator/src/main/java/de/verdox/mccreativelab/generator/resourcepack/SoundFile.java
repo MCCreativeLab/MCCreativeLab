@@ -31,7 +31,7 @@ public class SoundFile extends ResourcePackResource {
             var soundVariants = JsonArrayBuilder.create();
             soundData.getSoundVariants().forEach((namespacedKey, soundVariant) -> {
                 var variant = JsonObjectBuilder.create();
-                variant.add("name", namespacedKey.asString());
+                variant.add("name", namespacedKey.value());
                 variant.add("pitch", soundVariant.pitch());
                 variant.add("volume", soundVariant.volume());
                 soundVariants.add(variant);
@@ -41,7 +41,7 @@ public class SoundFile extends ResourcePackResource {
             soundObject.add("replace", soundData.isReplace());
             soundObject.add("subtitle", soundData.getSubtitle());
 
-            soundsFileJson.add(soundData.key().asString(), soundObject);
+            soundsFileJson.add(soundData.key().value(), soundObject);
         }
 
         AssetUtil.createJsonAssetAndInstall(soundsFileJson.build(), customPack, key(), ResourcePackAssetTypes.SOUND_FILE);

@@ -133,7 +133,9 @@ public class CustomMenu extends ResourcePackResource {
 
     @Override
     public void beforeResourceInstallation(CustomResourcePack customPack) throws IOException {
-        customPack.register(this.menuHud);
+        if(this.menuHud != null){
+            customPack.register(this.menuHud);
+        }
         backgroundPictures.forEach((s, itemTextureData) -> customPack.register(itemTextureData));
     }
 

@@ -97,7 +97,7 @@ public class CustomGUIBuilder extends ComponentRendered<CustomGUIBuilder, Active
             // 13 hoch / 8 nach links
             screenPosition, new RenderedElementBehavior<>() {
                 @Override
-                public void onOpen(ActiveGUI parentElement, SingleHudTexture.RenderedSingleHudTexture element, Audience audience) {
+                public void whileOpen(ActiveGUI parentElement, SingleHudTexture.RenderedSingleHudTexture element, Audience audience) {
                     element.setVisible(true);
                 }
             });

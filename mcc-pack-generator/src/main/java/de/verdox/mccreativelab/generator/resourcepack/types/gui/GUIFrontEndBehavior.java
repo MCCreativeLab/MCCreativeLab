@@ -1,6 +1,7 @@
 package de.verdox.mccreativelab.generator.resourcepack.types.gui;
 
 import de.verdox.mccreativelab.generator.resourcepack.types.gui.element.active.ActiveGUIElement;
+import de.verdox.mccreativelab.platform.GeneratorPlatformHelper;
 import de.verdox.mccreativelab.wrapper.entity.types.MCCPlayer;
 import de.verdox.mccreativelab.wrapper.event.MCCCancellable;
 import de.verdox.mccreativelab.wrapper.inventory.MCCContainer;
@@ -11,52 +12,91 @@ import de.verdox.mccreativelab.wrapper.platform.MCCPlatform;
 import de.verdox.mccreativelab.wrapper.platform.MCCTask;
 import de.verdox.mccreativelab.wrapper.typed.MCCDataComponentTypes;
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.text.Component;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public abstract class GUIFrontEndBehavior {
     private static final long SHIFT_COOLDOWN_MILLIS = 20;
     private final ActiveGUI activeGUI;
+    private final Set<Audience> viewers;
     private long lastShift = System.currentTimeMillis();
     private FrontEndRenderer frontEndRenderer;
     private MCCTask updateTask;
+    private boolean setup;
+    private final Set<UUID> inventoryUpdateWhitelist = new HashSet<>();
 
     public GUIFrontEndBehavior(ActiveGUI activeGUI) {
         this.activeGUI = activeGUI;
+        viewers = this.activeGUI.getViewersNoCopy();
     }
 
     public ActiveGUI getActiveGUI() {
         return activeGUI;
     }
 
+    public void updateFrontEnd() {
+        getFrontEndRenderer().offer(() -> {
+            try {
+                if (viewers.isEmpty()) {
+                    return;
+                }
+                if (activeGUI.getComponentRendered().whileOpen != null) {
+                    activeGUI.getComponentRendered().whileOpen.accept(activeGUI);
+                }
+                activeGUI.forEachElementBehavior((activeGUIRenderedRenderedElementBehavior, rendered, audience) -> activeGUIRenderedRenderedElementBehavior.whileOpen(activeGUI, rendered, audience), false);
+                activeGUI.forEachGUIElementBehavior((guiElementBehavior, activeGUIElement) -> guiElementBehavior.whileOpen(activeGUI, activeGUIElement));
+
+                Component lastRendering = activeGUI.getLastRendered();
+                Component newRendering = activeGUI.render();
+                if (newRendering.equals(lastRendering) && setup) {
+                    return;
+                }
+
+                Set<Audience> newViewers = MCCPlatform.getInstance().getTaskManager().syncAndWait(mccTask -> {
+                    Iterator<Audience> iterator = viewers.iterator();
+                    Set<Audience> viewersToAdd = new HashSet<>();
+
+                    while (iterator.hasNext()) {
+                        UUID uuid = GeneratorPlatformHelper.INSTANCE.get().getUUIDOfAudience(iterator.next());
+                        if (uuid == null) {
+                            continue;
+                        }
+                        MCCPlayer player = MCCPlatform.getInstance().getOnlinePlayer(uuid);
+                        if (player == null) {
+                            continue;
+                        }
+                        if (!activeGUI.equals(ActiveGUI.PlayerGUIData.getCurrentActiveGUI(player))) {
+                            iterator.remove();
+                            continue;
+                        }
+
+                        var itemAtCursor = player.getCursorProperty().get().copy();
+                        openUpdatedInventory(player, itemAtCursor, newRendering);
+                        viewersToAdd.add(player);
+                    }
+                    return viewersToAdd;
+                });
+
+                viewers.addAll(newViewers);
+            } finally {
+                setup = true;
+            }
+        });
+    }
+
     public void clickBehavior(GUIClickAction clickAction) {
         try {
             MCCPlayer player = clickAction.getEntityClicking();
-            synchronized (activeGUI.getViewers()) {
-                if (!activeGUI.getViewers().contains(player))
-                    return;
+            if (!activeGUI.getViewers().contains(player)) {
+                clickAction.setCancelled(true);
+                return;
             }
 
-            int rawSlot = clickAction.getClickedRawSlot();
+            int rawSlot = clickAction.getClickedSlot();
             if (activeGUI.getIndexToClickableItemMapping().containsKey(rawSlot)) {
-                clickAction.setCancelled(true);
-
-                ClickableItem clickableItem = activeGUI.getIndexToClickableItemMapping().get(rawSlot);
-                clickableItem.getOnClick().accept(clickAction, activeGUI);
-
-                if (clickableItem.getBuilder().clearGUIStackAndClose) {
-                    PlayerGUIStack.load(player).clear();
-
-                    player.closeCurrentInventory(new MCCContainerCloseReason("close_active_gui"));
-                } else if (clickableItem.getBuilder().popGUIStack) {
-                    PlayerGUIStack.load(player).popAndOpenLast(player, activeGUI);
-                }
-
-                if (activeGUI.getComponentRendered().getClickConsumer() != null)
-                    activeGUI.getComponentRendered().getClickConsumer().accept(clickAction, activeGUI);
-
+                runClickableItemLogic(clickAction, rawSlot, player);
                 return;
             }
 
@@ -66,40 +106,69 @@ public abstract class GUIFrontEndBehavior {
 
             if (activeGUI.getComponentRendered().isSlotBlocked(rawSlot) && clickAction.isUpperInventoryClicked()) {
                 clickAction.setCancelled(true);
-                if (activeGUIElement != null)
+                if (activeGUIElement != null) {
                     activeGUIElement.onClick(clickAction, rawSlot % 9, rawSlot / 9);
+                }
             }
             // Prevent inventory clicks if is using player slots
-            if (activeGUI.getComponentRendered().isUsePlayerSlots() && !clickAction.isUpperInventoryClicked())
-                clickAction.setCancelled(true);
-
-            if (clickAction.getClickType().isShiftClick() && !clickAction.isUpperInventoryClicked()) {
-                if (activeGUI.getComponentRendered().isUsePlayerSlots() || System.currentTimeMillis() - lastShift < SHIFT_COOLDOWN_MILLIS) {
-                    clickAction.setCancelled(true);
-                    return;
-                }
-                lastShift = System.currentTimeMillis();
-
-
-                shiftItemToInventory(player.getInventory(), activeGUI.getVanillaInventory(), clickAction.getClickedSlot(), activeGUI.getComponentRendered().getBlockedSlots());
+            if (activeGUI.getComponentRendered().isUsePlayerSlots() && !clickAction.isUpperInventoryClicked()) {
                 clickAction.setCancelled(true);
             }
 
-            if (activeGUI.getComponentRendered().getClickConsumer() != null)
+            if (clickAction.getClickType().isShiftClick() && !clickAction.isUpperInventoryClicked()) {
+                if (performShiftClickLogic(clickAction, player)) {
+                    return;
+                }
+            }
+
+            if (activeGUI.getComponentRendered().getClickConsumer() != null) {
                 activeGUI.getComponentRendered().getClickConsumer().accept(clickAction, activeGUI);
+            }
         } finally {
             activeGUI.forceUpdate();
         }
     }
 
+    private boolean performShiftClickLogic(GUIClickAction clickAction, MCCPlayer player) {
+        if (activeGUI.getComponentRendered().isUsePlayerSlots() || System.currentTimeMillis() - lastShift < SHIFT_COOLDOWN_MILLIS) {
+            clickAction.setCancelled(true);
+            return true;
+        }
+        lastShift = System.currentTimeMillis();
+
+
+        shiftItemToInventory(player.getInventory(), activeGUI.getVanillaInventory(), clickAction.getClickedSlot(), activeGUI.getComponentRendered().getBlockedSlots());
+        clickAction.setCancelled(true);
+        return false;
+    }
+
+    private void runClickableItemLogic(GUIClickAction clickAction, int rawSlot, MCCPlayer player) {
+        clickAction.setCancelled(true);
+
+        ClickableItem clickableItem = activeGUI.getIndexToClickableItemMapping().get(rawSlot);
+        clickableItem.getOnClick().accept(clickAction, activeGUI);
+
+        if (clickableItem.getBuilder().clearGUIStackAndClose) {
+            PlayerGUIStack.load(player).clear();
+
+            player.closeCurrentInventory(new MCCContainerCloseReason("close_active_gui"));
+        } else if (clickableItem.getBuilder().popGUIStack) {
+            PlayerGUIStack.load(player).popAndOpenLast(player, activeGUI);
+        }
+
+        if (activeGUI.getComponentRendered().getClickConsumer() != null) {
+            activeGUI.getComponentRendered().getClickConsumer().accept(clickAction, activeGUI);
+        }
+    }
+
     public void onDrag(MCCPlayer clicker, List<Integer> involvedSlots, MCCCancellable dragAction) {
-        synchronized (activeGUI.getViewers()) {
-            if (!activeGUI.getViewers().contains(clicker))
-                return;
+        if (!activeGUI.getViewers().contains(clicker)) {
+            return;
         }
         var rawSlotUsed = involvedSlots.stream().anyMatch(activeGUI.getComponentRendered()::isSlotBlocked);
-        if (rawSlotUsed)
+        if (rawSlotUsed) {
             dragAction.setCancelled(true);
+        }
     }
 
     /**
@@ -109,55 +178,48 @@ public abstract class GUIFrontEndBehavior {
      * @return true if it was closed successfully
      */
     public boolean onClose(MCCPlayer closingPlayer, MCCContainerCloseReason closeReason) {
-        synchronized (activeGUI.getViewers()) {
-            if (!activeGUI.getViewers().contains(closingPlayer))
-                return true;
+        if (!activeGUI.getViewers().contains(closingPlayer)) {
+            return true;
         }
 
         // A player is in this update whitelist if we reopen the updated inventory to the player
         // Since this forced InventoryCloseEvent should not be
-        synchronized (activeGUI.getInventoryUpdateWhitelist()) {
-            if (activeGUI.getInventoryUpdateWhitelist().contains(closingPlayer.getUUID()))
+        synchronized (inventoryUpdateWhitelist) {
+            if (inventoryUpdateWhitelist.contains(closingPlayer.getUUID())) {
                 return false;
+            }
         }
         removePlayerFromGUI(closingPlayer, closeReason);
         return true;
     }
 
     public void removePlayerFromGUI(MCCPlayer player, MCCContainerCloseReason reason) {
-        synchronized (activeGUI.getViewers()) {
-            //Bukkit.getLogger().info("Removing player " + player.getName() + " from gui " + getComponentRendered().getKey().asString());
-            activeGUI.getViewers().remove(player);
-
-
-            if (activeGUI.equals(ActiveGUI.PlayerGUIData.getCurrentActiveGUI(player))) {
-                ActiveGUI.PlayerGUIData.trackCurrentActiveGUI(player, null);
-            }
-            player.syncInventory();
+        viewers.remove(player);
+        if (activeGUI.equals(ActiveGUI.PlayerGUIData.getCurrentActiveGUI(player))) {
+            ActiveGUI.PlayerGUIData.trackCurrentActiveGUI(player, null);
         }
+        player.syncInventory();
     }
 
     public void openToPlayer(MCCPlayer player) {
         ActiveGUI currentActiveGUI = ActiveGUI.PlayerGUIData.getCurrentActiveGUI(player);
         if (currentActiveGUI != null) {
-            if (currentActiveGUI.equals(this))
+            if (getActiveGUI().equals(currentActiveGUI)) {
+                //ActiveGUI.LOGGER.info(activeGUI.getComponentRendered().key() + ": Could not open to player");
                 return;
+            }
 
-            //Bukkit.getLogger().info("Before opening " + getComponentRendered().getKey().asString() + " we must remove the player from " + currentActiveGUI.getComponentRendered().getKey().asString());
+            //ActiveGUI.LOGGER.info(currentActiveGUI.getComponentRendered().key() + ": Remove player from gui");
             removePlayerFromGUI(player, MCCContainerCloseReason.OPEN_NEW);
         }
-
+        //ActiveGUI.LOGGER.info(activeGUI.getComponentRendered().key() + ": Add player to gui");
         addPlayerToGUI(player);
     }
 
     private void addPlayerToGUI(MCCPlayer player) {
-        Set<Audience> viewers = activeGUI.getViewers();
-        synchronized (viewers) {
-            if (viewers.contains(player))
-                return;
-            //Bukkit.getLogger().info("Adding player " + player.getName() + " to gui " + getComponentRendered().getKey().asString());
+        if (!viewers.contains(player)) {
             ActiveGUI.PlayerGUIData.trackCurrentActiveGUI(player, activeGUI);
-            activeGUI.addToViewers(player);
+            viewers.add(player);
         }
         startFrontEnd();
         if (activeGUI.getComponentRendered().onOpen != null) {
@@ -168,24 +230,22 @@ public abstract class GUIFrontEndBehavior {
     private void startFrontEnd() {
         if (updateTask != null && updateTask.isRunning())
             return;
-
         onFrontendRenderStart();
 
         frontEndRenderer = new FrontEndRenderer(activeGUI);
         frontEndRenderer.start();
 
         updateTask = MCCPlatform.getInstance().getTaskManager().runTimerAsync(mccTask -> {
-            Set<Audience> viewers = activeGUI.getViewers();
-            synchronized (viewers) {
-                if (viewers.isEmpty()) {
-                    updateTask.cancel();
-                    onFrontendClose();
-                    frontEndRenderer.stopRenderer();
-                    return;
-                }
+            if (viewers.isEmpty()) {
+                updateTask.cancel();
+                onFrontendClose();
+                frontEndRenderer.stopRenderer();
+                return;
             }
-            if (activeGUI.getComponentRendered().updateInterval > 0)
+            if (activeGUI.getComponentRendered().updateInterval > 0) {
                 activeGUI.forceUpdate();
+            }
+
         }, 0, activeGUI.getComponentRendered().updateInterval > 0 ? activeGUI.getComponentRendered().updateInterval * 50L : 1, TimeUnit.MILLISECONDS);
 
         if (activeGUI.getComponentRendered().updateInterval < 0) {
@@ -196,6 +256,10 @@ public abstract class GUIFrontEndBehavior {
     public abstract void onFrontendClose();
 
     public abstract void onFrontendRenderStart();
+
+    public FrontEndRenderer getFrontEndRenderer() {
+        return frontEndRenderer;
+    }
 
     private void shiftItemToInventory(MCCPlayerInventory sourceInventory, MCCContainer targetInventory, int sourceSlot, Set<Integer> blockedSlots) {
         int targetSlot = 0;
@@ -253,5 +317,22 @@ public abstract class GUIFrontEndBehavior {
 
         // Falls alle Slots blockiert waren oder kein passender Slot gefunden wurde,
         // wird das Item nicht verschoben
+    }
+
+    private void openUpdatedInventory(MCCPlayer player, MCCItemStack itemAtCursor, Component rendering) {
+        synchronized (inventoryUpdateWhitelist) {
+            inventoryUpdateWhitelist.add(player.getUUID());
+            try {
+                var menu = activeGUI.getMenuCreatorInstance().createMenuForPlayer(player, rendering);
+                if (itemAtCursor != null) {
+                    if (menu != null && !itemAtCursor.getType().isEmpty() && !activeGUI.getComponentRendered().isUsePlayerSlots()) {
+                        player.getInventory().removeItem(itemAtCursor);
+                        player.getCursorProperty().set(itemAtCursor);
+                    }
+                }
+            } finally {
+                inventoryUpdateWhitelist.remove(player.getUUID());
+            }
+        }
     }
 }
