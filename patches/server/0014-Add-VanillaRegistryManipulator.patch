@@ -21,7 +21,7 @@ index 8df7ffae059ce27855a6733e2a052a22a0df3eb7..f1628cb9f2dcee6a360e0acff18358f0
  }
 diff --git a/src/main/java/de/verdox/mccreativelab/data/CraftVanillaRegistryManipulator.java b/src/main/java/de/verdox/mccreativelab/data/CraftVanillaRegistryManipulator.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..70b04d5ec9e5052b02df4e508886aed0ddcfc488
+index 0000000000000000000000000000000000000000..bcf9a9c2a596830f8f71532808227285b509dcd1
 --- /dev/null
 +++ b/src/main/java/de/verdox/mccreativelab/data/CraftVanillaRegistryManipulator.java
 @@ -0,0 +1,96 @@
@@ -122,10 +122,10 @@ index 0000000000000000000000000000000000000000..70b04d5ec9e5052b02df4e508886aed0
 +    }
 +}
 diff --git a/src/main/java/net/minecraft/core/registries/BuiltInRegistries.java b/src/main/java/net/minecraft/core/registries/BuiltInRegistries.java
-index 0497318e8f647453f38f3a16a8be6bd9aa19253f..a3961739fccc01c31c319559c182860bfa794edf 100644
+index bc448f8511c629d1f13d4baf717a11e6a6ad24f9..d597195e7cdc98449c2205841463f2d912ca7456 100644
 --- a/src/main/java/net/minecraft/core/registries/BuiltInRegistries.java
 +++ b/src/main/java/net/minecraft/core/registries/BuiltInRegistries.java
-@@ -342,6 +342,7 @@ public class BuiltInRegistries {
+@@ -350,6 +350,7 @@ public class BuiltInRegistries {
          REGISTRY.freeze(); // Paper - freeze main registry early
          createContents();
          runnable.run(); // Paper
@@ -134,7 +134,7 @@ index 0497318e8f647453f38f3a16a8be6bd9aa19253f..a3961739fccc01c31c319559c182860b
          validate(REGISTRY);
      }
 diff --git a/src/main/java/net/minecraft/world/entity/ai/village/poi/PoiTypes.java b/src/main/java/net/minecraft/world/entity/ai/village/poi/PoiTypes.java
-index faf3e38d00695e2b9189753e36608410a8825b35..7c011ef95cdd5d2e2df0a926e261d7e05913a439 100644
+index 60bd29460b0e29bcf6178a0df32db200d31a143a..3e6bb403da0d746c6da9df268730e22997805e6f 100644
 --- a/src/main/java/net/minecraft/world/entity/ai/village/poi/PoiTypes.java
 +++ b/src/main/java/net/minecraft/world/entity/ai/village/poi/PoiTypes.java
 @@ -76,7 +76,7 @@ public class PoiTypes {
@@ -145,7 +145,7 @@ index faf3e38d00695e2b9189753e36608410a8825b35..7c011ef95cdd5d2e2df0a926e261d7e0
 +    public static PoiType register(Registry<PoiType> registry, ResourceKey<PoiType> key, Set<BlockState> states, int ticketCount, int searchDistance) {
          PoiType poiType = new PoiType(states, ticketCount, searchDistance);
          Registry.register(registry, key, poiType);
-         registerBlockStates(registry.getHolderOrThrow(key), states);
+         registerBlockStates(registry.getOrThrow(key), states);
 diff --git a/src/main/java/net/minecraft/world/entity/npc/VillagerProfession.java b/src/main/java/net/minecraft/world/entity/npc/VillagerProfession.java
 index 8734ab1bd8299bbf43906d81a349c2a13e0981a7..affe9daac616894b45338a3d40f058d66812553e 100644
 --- a/src/main/java/net/minecraft/world/entity/npc/VillagerProfession.java

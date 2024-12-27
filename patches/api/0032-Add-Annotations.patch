@@ -460,52 +460,6 @@ index 725480cb19dd2b2ca2b8b0569705bcc96024248c..a14361700f301cfbbef18925e42bfa39
 -    default int getExhaustionOverTimeAmount(Player player){return 0;}
 +    default int getExhaustionOverTimeAmount(@NotNull Player player){return 0;}
  }
-diff --git a/src/main/java/de/verdox/mccreativelab/behaviour/InventoryHopperBehaviour.java b/src/main/java/de/verdox/mccreativelab/behaviour/InventoryHopperBehaviour.java
-index 0fcfc817c2619232c4e70c7a0fb4a52f479f8a53..af3977ad9ed47287a58634c68937109a5b2655ae 100644
---- a/src/main/java/de/verdox/mccreativelab/behaviour/InventoryHopperBehaviour.java
-+++ b/src/main/java/de/verdox/mccreativelab/behaviour/InventoryHopperBehaviour.java
-@@ -17,6 +17,7 @@ public interface InventoryHopperBehaviour extends Behaviour {
-      * @param stack     The item being placed
-      * @return True if the hopper can place it
-      */
-+    @NotNull
-     default BehaviourResult.Bool canPlaceItem(@NotNull Inventory inventory, int slot, @NotNull ItemStack stack) {
-         return BehaviourResult.Bool.DEFAULT_INSTANCE;
-     }
-@@ -30,6 +31,7 @@ public interface InventoryHopperBehaviour extends Behaviour {
-      * @param stack     The item being placed
-      * @return True if the hopper can place it
-      */
-+    @NotNull
-     default BehaviourResult.Bool canTakeItem(@NotNull Inventory inventory, @NotNull Hopper hopper, int slot, @NotNull ItemStack stack) {
-         return BehaviourResult.Bool.DEFAULT_INSTANCE;
-     }
-@@ -41,6 +43,7 @@ public interface InventoryHopperBehaviour extends Behaviour {
-      * @param direction The direction
-      * @return The respective slots
-      */
-+    @NotNull
-     default BehaviourResult.Object<int[]> getSlotsForFace(@NotNull Inventory inventory, @NotNull BlockFace direction) {
-         return BehaviourResult.Object.DEFAULT_INSTANCE;
-     }
-@@ -54,6 +57,7 @@ public interface InventoryHopperBehaviour extends Behaviour {
-      * @param blockFace The blockFace
-      * @return True if the hopper can place it
-      */
-+    @NotNull
-     default BehaviourResult.Bool canPlaceItemThroughFace(@NotNull Inventory inventory, int slot, @NotNull ItemStack stack, @Nullable BlockFace blockFace) {
-         return BehaviourResult.Bool.DEFAULT_INSTANCE;
-     }
-@@ -68,7 +72,8 @@ public interface InventoryHopperBehaviour extends Behaviour {
-      * @param blockFace The blockFace
-      * @return True if the hopper can place it
-      */
--    default BehaviourResult.Bool canTakeItemThroughFace(@NotNull Inventory inventory, @NotNull Hopper hopper, int slot, @NotNull ItemStack stack, BlockFace blockFace) {
-+    @NotNull
-+    default BehaviourResult.Bool canTakeItemThroughFace(@NotNull Inventory inventory, @NotNull Hopper hopper, int slot, @NotNull ItemStack stack, @NotNull BlockFace blockFace) {
-         return BehaviourResult.Bool.DEFAULT_INSTANCE;
-     }
- 
 diff --git a/src/main/java/de/verdox/mccreativelab/behaviour/ItemBehaviour.java b/src/main/java/de/verdox/mccreativelab/behaviour/ItemBehaviour.java
 index 54a7ec44b1adb1a4d1bdd55a44bb773518e9ea27..88e7ec5cefaeb8c47c77d74d6a14947af7c77762 100644
 --- a/src/main/java/de/verdox/mccreativelab/behaviour/ItemBehaviour.java
@@ -1398,30 +1352,8 @@ index 9adfd51f6659e920786658c34709ee5d1b0f790a..1766c736726df8e2a72beaa445c53ed3
      public Location getSoundLocation() {
          return soundLocation;
      }
-diff --git a/src/main/java/org/bukkit/attribute/Attribute.java b/src/main/java/org/bukkit/attribute/Attribute.java
-index 1c9503bbfeff3deeb839e06053c60ba33a1cc49d..3bbba1a98c8e821bac770eee7b4f65385b361cd4 100644
---- a/src/main/java/org/bukkit/attribute/Attribute.java
-+++ b/src/main/java/org/bukkit/attribute/Attribute.java
-@@ -136,13 +136,16 @@ public abstract class Attribute implements Keyed, net.kyori.adventure.translatio
-      */
-     public static final Attribute ZOMBIE_SPAWN_REINFORCEMENTS = getAttribute("zombie.spawn_reinforcements");
- 
-+    @NotNull
-     public String name(){
-         return de.verdox.mccreativelab.data.FakeEnum.restoreEnumNameSchemeFromKey(getKey());
-     }
- 
--    public static Attribute valueOf(String name){
-+    @NotNull
-+    public static Attribute valueOf(@NotNull String name){
-         return de.verdox.mccreativelab.data.FakeEnum.valueOf(name, org.bukkit.Registry.ATTRIBUTE);
-     }
-+    @NotNull
-     public static Attribute[] values(){
-         return de.verdox.mccreativelab.data.FakeEnum.values(org.bukkit.Registry.ATTRIBUTE).toArray(Attribute[]::new);
-     }
 diff --git a/src/main/java/org/bukkit/entity/Entity.java b/src/main/java/org/bukkit/entity/Entity.java
-index 09dc6e36d4142743bbcce5b911a0318ad03bab81..53dd4014ea695990344d07c170cfdd1d08612c79 100644
+index 7b8f9f69de214895b09b0bd58881e0269acc9583..b72f8a28c2fea48e71c9d89efa56f3e62b7221e3 100644
 --- a/src/main/java/org/bukkit/entity/Entity.java
 +++ b/src/main/java/org/bukkit/entity/Entity.java
 @@ -776,7 +776,7 @@ public interface Entity extends Metadatable, CommandSender, Nameable, Persistent
@@ -1452,7 +1384,7 @@ index 09dc6e36d4142743bbcce5b911a0318ad03bab81..53dd4014ea695990344d07c170cfdd1d
      boolean hasCustomEntityBehaviour();
      // MCCreativeLab end - Add EntityBehaviour
 diff --git a/src/main/java/org/bukkit/entity/LivingEntity.java b/src/main/java/org/bukkit/entity/LivingEntity.java
-index 9b28420ef045f857c332b1fd45285345869f6d3f..57b659075b35b62081fdfdf32905ca614594b235 100644
+index 1caa066f30ebe6d9b73cf25b33c9fab1a83a7995..7188eb2a491ec712edc6aface0cce86f5c5db15f 100644
 --- a/src/main/java/org/bukkit/entity/LivingEntity.java
 +++ b/src/main/java/org/bukkit/entity/LivingEntity.java
 @@ -977,7 +977,8 @@ public interface LivingEntity extends Attributable, Damageable, ProjectileSource
@@ -1523,7 +1455,7 @@ index 927917f9a875595e2ff0626cbda03a08b7e6e166..8f403964e335f3c1c73401b75597607c
          return List.copyOf(choices);
      }
 diff --git a/src/main/java/org/bukkit/inventory/RecipeChoice.java b/src/main/java/org/bukkit/inventory/RecipeChoice.java
-index e5c6f595d6e05a03b8ade9ac4433de97bb14a59a..06defaef44a9d869454d00a204fb6355748cfd0e 100644
+index 4b0c711850dc5d3a855192ae84c2fe7ccc034567..b2e56015b870e16989286b201ad6d25e2e0d3a27 100644
 --- a/src/main/java/org/bukkit/inventory/RecipeChoice.java
 +++ b/src/main/java/org/bukkit/inventory/RecipeChoice.java
 @@ -296,7 +296,8 @@ public interface RecipeChoice extends Predicate<ItemStack>, Cloneable {

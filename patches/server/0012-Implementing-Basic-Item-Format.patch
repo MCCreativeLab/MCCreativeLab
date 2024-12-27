@@ -5,10 +5,10 @@ Subject: [PATCH] Implementing Basic Item Format
 
 
 diff --git a/src/main/java/net/minecraft/world/item/ItemStack.java b/src/main/java/net/minecraft/world/item/ItemStack.java
-index 4123f18aacae3c95841064404c1ddc75fbb8d1b7..9191b54aede3ce62da4c02e5d3d7c18c0609cd34 100644
+index 54c8f5bf99e11ab325c27ab74e2c4cfffd4ae86c..82277dab9b9112ec27e27c8a729bf8821d604491 100644
 --- a/src/main/java/net/minecraft/world/item/ItemStack.java
 +++ b/src/main/java/net/minecraft/world/item/ItemStack.java
-@@ -304,11 +304,13 @@ public final class ItemStack implements DataComponentHolder {
+@@ -307,11 +307,13 @@ public final class ItemStack implements DataComponentHolder {
          this.count = count;
          this.components = components;
          this.getItem().verifyComponentsAfterLoad(this);
@@ -23,10 +23,10 @@ index 4123f18aacae3c95841064404c1ddc75fbb8d1b7..9191b54aede3ce62da4c02e5d3d7c18c
  
      public static DataResult<Unit> validateComponents(DataComponentMap components) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
-index 80e953be36bdc0c4a2988b797432010d486d08f2..13a03a5e07e0e0b9ca27ba59fe560db1e4a1eb08 100644
+index cee6520b775fb5dcd56f00ec3194a884ee16429b..51a4374712ab590e1c4f00ab0f6aafb336f47c53 100644
 --- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
 +++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
-@@ -169,6 +169,7 @@ public final class CraftItemStack extends ItemStack {
+@@ -179,6 +179,7 @@ public final class CraftItemStack extends ItemStack {
          this.setAmount(amount);
          this.setDurability(durability);
          this.setItemMeta(itemMeta);

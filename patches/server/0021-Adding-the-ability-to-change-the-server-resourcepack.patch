@@ -5,10 +5,10 @@ Subject: [PATCH] Adding the ability to change the server resourcepack
 
 
 diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-index 5245efc25c62be360398c58630ba803122384073..6bb055b6024c1d1c4d05561a7d35df30d0ce2523 100644
+index de731d6f85ac1bedc4263cb267941a5ef757bdb4..1ffb81fc20b6938dda6355ebb8468a6b59a8e863 100644
 --- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
 +++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-@@ -881,6 +881,12 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+@@ -827,6 +827,12 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
          return this.settings.getProperties().forceGameMode ? this.worldData.getGameType() : null;
      }
  
@@ -22,23 +22,23 @@ index 5245efc25c62be360398c58630ba803122384073..6bb055b6024c1d1c4d05561a7d35df30
      public Optional<MinecraftServer.ServerResourcePackInfo> getServerResourcePack() {
          return this.settings.getProperties().serverResourcePackInfo;
 diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServerProperties.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServerProperties.java
-index d6431376184e5650b370cbab204e28bc31f4dac6..6e451c06711127c62b1f671e2ec368f1739116eb 100644
+index c3ec370b83b895be0f03662e3884fa4a2442a2a6..6b28fc31157bae875a8687dd6eea34c9742d7560 100644
 --- a/src/main/java/net/minecraft/server/dedicated/DedicatedServerProperties.java
 +++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServerProperties.java
-@@ -100,7 +100,7 @@ public class DedicatedServerProperties extends Settings<DedicatedServerPropertie
-     public final boolean hideOnlinePlayers;
+@@ -99,7 +99,7 @@ public class DedicatedServerProperties extends Settings<DedicatedServerPropertie
      public final int entityBroadcastRangePercentage;
      public final String textFilteringConfig;
+     public final int textFilteringVersion;
 -    public final Optional<MinecraftServer.ServerResourcePackInfo> serverResourcePackInfo;
-+    public Optional<MinecraftServer.ServerResourcePackInfo> serverResourcePackInfo; // Paper - Make server resourcepack changeable -> remove final
++    public Optional<MinecraftServer.ServerResourcePackInfo> serverResourcePackInfo;
      public final DataPackConfig initialDataPackConfiguration;
      public final Settings<DedicatedServerProperties>.MutableValue<Integer> playerIdleTimeout;
      public final Settings<DedicatedServerProperties>.MutableValue<Boolean> whiteList;
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 08671e6bc21260b01c3be4e21c7efcedbb7ec356..daf49f8d5f114bed81f1d879c1a5bc0d079aae2b 100644
+index 309c55ad355da1d987e25d8d3177b90890f5420c..6fc8288fd4820f90f2713d860edb58f025caff24 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -859,6 +859,13 @@ public final class CraftServer implements Server {
+@@ -873,6 +873,13 @@ public final class CraftServer implements Server {
          return this.getServer().getServerResourcePack().map(CraftResourcePack::new).orElse(null);
      }
  

@@ -5,7 +5,7 @@ Subject: [PATCH] Adding GeneratedStructure to AsyncStructureGenerateEvent
 
 
 diff --git a/src/main/java/net/minecraft/world/level/levelgen/structure/StructureStart.java b/src/main/java/net/minecraft/world/level/levelgen/structure/StructureStart.java
-index c92a2c5bba1525eff39d9a3cad70fdacd426e8cb..71c68762e88a1ffbea90b68a32e732303d0b51fe 100644
+index d871d760581df082c47365ef246681faafb1f6a0..85b5f55f0d12d9db0099fc950307b5b6a54d1ea0 100644
 --- a/src/main/java/net/minecraft/world/level/levelgen/structure/StructureStart.java
 +++ b/src/main/java/net/minecraft/world/level/levelgen/structure/StructureStart.java
 @@ -113,7 +113,7 @@ public final class StructureStart {

@@ -5,10 +5,10 @@ Subject: [PATCH] Ignoring errors when creating javadocs
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index ab84a1405acc1f0d5f267892243b82b8dab03e21..124fe3a861fd77b5d4d3f92eff489f1229b818a2 100644
+index e29e5024fa693baae469d47fe77b57118f14627c..7c8dc021156007448284eefc25e2ae81b21a2a26 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
-@@ -147,6 +147,7 @@ tasks.withType<Javadoc> {
+@@ -164,6 +164,7 @@ tasks.withType<Javadoc> {
      options.overview = "src/main/javadoc/overview.html"
      options.use()
      options.isDocFilesSubDirs = true

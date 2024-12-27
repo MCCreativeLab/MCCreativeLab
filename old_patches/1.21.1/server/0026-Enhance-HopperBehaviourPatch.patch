@@ -1,0 +1,84 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Sat, 8 Jun 2024 17:47:24 +0000
+Subject: [PATCH] Enhance HopperBehaviourPatch
+
+
+diff --git a/src/main/java/net/minecraft/world/level/block/entity/HopperBlockEntity.java b/src/main/java/net/minecraft/world/level/block/entity/HopperBlockEntity.java
+index 5ebbdb94d9b91c442ff60eb6872f740ebd790fa0..11fe501a76dec881daa01b9b07c3f2e69a52df1f 100644
+--- a/src/main/java/net/minecraft/world/level/block/entity/HopperBlockEntity.java
++++ b/src/main/java/net/minecraft/world/level/block/entity/HopperBlockEntity.java
+@@ -939,4 +939,73 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+     protected AbstractContainerMenu createMenu(int syncId, net.minecraft.world.entity.player.Inventory playerInventory) {
+         return new HopperMenu(syncId, playerInventory, this);
+     }
++    // MCCreativeLab start - Add InventoryHopperBehaviour
++
++    private static final java.util.Map<Integer, int[]> cachedSlotsForIteration = new org.codehaus.plexus.util.FastMap<>(40);
++
++    private static int[] getSlotsForFace(WorldlyContainer worldlyContainer, Direction direction) {
++        if(!worldlyContainer.hasInventoryHopperBehaviour())
++            return worldlyContainer.getSlotsForFace(direction);
++        return de.verdox.mccreativelab.behaviour.InventoryHopperBehaviourUtil.getSlotsForFace(worldlyContainer, direction, () -> worldlyContainer.getSlotsForFace(direction));
++    }
++
++    private static int[] getSlotsForFace(Container inventory, Direction direction){
++        if(inventory instanceof WorldlyContainer worldlyContainer)
++            return getSlotsForFace(worldlyContainer, direction);
++        else {
++            return de.verdox.mccreativelab.behaviour.InventoryHopperBehaviourUtil.getSlotsForFace(inventory, direction, () -> cachedSlotsForIteration.computeIfAbsent(inventory.getContainerSize(), integer -> {
++                int[] cachedSlots = new int[inventory.getContainerSize()];
++                for (int i = 0; i < cachedSlots.length; i++)
++                    cachedSlots[i] = i;
++                return cachedSlots;
++            }));
++        }
++    }
++
++    private static boolean canPlaceItemInContainerCustom(Container inventory, ItemStack stack, int slot, @Nullable Direction side) {
++        //TODO: [MCCLab] - Hopper attempt place Item in Inventory Event
++        if (!de.verdox.mccreativelab.behaviour.InventoryHopperBehaviourUtil.canPlaceItem(inventory, slot, stack, () -> inventory.canPlaceItem(slot, stack))) {
++            return false;
++        } else {
++            return de.verdox.mccreativelab.behaviour.InventoryHopperBehaviourUtil.canPlaceItemThroughFace(inventory, slot, stack, side , () -> {
++                boolean flag;
++                if (inventory instanceof WorldlyContainer) {
++                    WorldlyContainer iworldinventory = (WorldlyContainer) inventory;
++
++                    if (!iworldinventory.canPlaceItemThroughFace(slot, stack, side)) {
++                        flag = false;
++                        return flag;
++                    }
++                }
++
++                flag = true;
++                return flag;
++            });
++        }
++    }
++
++    private static boolean canTakeItemFromContainerCustom(Container hopperInventory, Container fromInventory, ItemStack stack, int slot, Direction facing) {
++        //TODO: [MCCLab] - Hopper attempt take Item from Inventory Event
++        if (!de.verdox.mccreativelab.behaviour.InventoryHopperBehaviourUtil.canTakeItem(fromInventory, (HopperBlockEntity) hopperInventory, slot, stack, () -> fromInventory.canTakeItem(hopperInventory, slot, stack))) {
++            return false;
++        } else {
++            return de.verdox.mccreativelab.behaviour.InventoryHopperBehaviourUtil.canTakeItemThroughFace(fromInventory, (HopperBlockEntity) hopperInventory, slot, stack, facing, () -> {
++                boolean flag;
++
++                if (fromInventory instanceof WorldlyContainer) {
++                    WorldlyContainer iworldinventory = (WorldlyContainer) fromInventory;
++
++                    if (!iworldinventory.canTakeItemThroughFace(slot, stack, facing)) {
++                        flag = false;
++                        return flag;
++                    }
++                }
++
++                flag = true;
++                return flag;
++            });
++
++        }
++    }
++    // MCCreativeLab end - Add InventoryHopperBehaviour
+ }

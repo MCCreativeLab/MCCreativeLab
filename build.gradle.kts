@@ -111,6 +111,16 @@ publishing {
             }
         }
     }
+    repositories {
+        maven {
+            name = "verdox"
+            url = uri("https://repo.verdox.de/snapshots")
+            credentials {
+                username = (findProperty("reposilite.verdox.user") ?: System.getenv("REPO_USER")).toString()
+                password = (findProperty("reposilite.verdox.key") ?: System.getenv("REPO_PASSWORD")).toString()
+            }
+        }
+    }
 }
 allprojects {
     // Publishing API:

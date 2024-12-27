@@ -5,7 +5,7 @@ Subject: [PATCH] Adding UUID to GeneratedStructure
 
 
 diff --git a/src/main/java/net/minecraft/world/level/levelgen/structure/StructureStart.java b/src/main/java/net/minecraft/world/level/levelgen/structure/StructureStart.java
-index 71c68762e88a1ffbea90b68a32e732303d0b51fe..7c79adb99ad49a610e2a19120772d1e053b73ed4 100644
+index 85b5f55f0d12d9db0099fc950307b5b6a54d1ea0..dc604227cbf800d69984bab54b9e6bea1f7ebd00 100644
 --- a/src/main/java/net/minecraft/world/level/levelgen/structure/StructureStart.java
 +++ b/src/main/java/net/minecraft/world/level/levelgen/structure/StructureStart.java
 @@ -37,12 +37,19 @@ public final class StructureStart {

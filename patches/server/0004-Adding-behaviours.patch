@@ -922,10 +922,10 @@ index 0000000000000000000000000000000000000000..626fda6f220286c1d06b87a5a10d589c
 +    }
 +}
 diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-index dd56c8e041116ef3602a9f89c998c8208ab89b51..5245efc25c62be360398c58630ba803122384073 100644
+index 17a158ff6ce6520b69a5a0032ba4c05449dd0cf8..de731d6f85ac1bedc4263cb267941a5ef757bdb4 100644
 --- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
 +++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-@@ -292,6 +292,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+@@ -289,6 +289,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
          this.server.loadPlugins();
          this.server.enablePlugins(org.bukkit.plugin.PluginLoadOrder.STARTUP);
          // CraftBukkit end
@@ -934,22 +934,22 @@ index dd56c8e041116ef3602a9f89c998c8208ab89b51..5245efc25c62be360398c58630ba8031
          // Paper start - Add Velocity IP Forwarding Support
          boolean usingProxy = org.spigotmc.SpigotConfig.bungee || io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled;
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index f9abf63e12ea930275121b470e4e4906cff0fc12..5b09c288c81f2eafc042d2fb50a69f55dadc925c 100644
+index 585e2b43a0326f0b81597fa1234d3c67c76af550..10da770c9f968aac11e1678996a17d8b99bd170b 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
-@@ -812,6 +812,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
+@@ -885,6 +885,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          for (int sectionIndex = 0, sectionsLen = sections.length; sectionIndex < sectionsLen; sectionIndex++) {
              final int offsetY = (sectionIndex + minSection) << 4;
              final LevelChunkSection section = sections[sectionIndex];
 +            section.init(this, chunk.getPos(), getSectionYFromSectionIndex(sectionIndex)); // MCCreativeLab - Add BlockBehaviour (FAWE support)
              final net.minecraft.world.level.chunk.PalettedContainer<net.minecraft.world.level.block.state.BlockState> states = section.states;
-             if (section == null || !section.isRandomlyTickingBlocks()) {
+             if (!section.isRandomlyTickingBlocks()) {
                  continue;
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index c396580a9cfd86ff261bed439bb4662ae88010b5..ec2c9c7b559cf14b45393800480ad548a387e58b 100644
+index 5a8f396d47577f087abb415c972fd4f51e50faba..386a096dea1bb43fb138f3e1d4a0d21d6d6ab960 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-@@ -1017,7 +1017,7 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+@@ -1277,7 +1277,7 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
  
          if (!keepInventory) {
              for (ItemStack item : this.getInventory().getContents()) {
@@ -959,10 +959,10 @@ index c396580a9cfd86ff261bed439bb4662ae88010b5..ec2c9c7b559cf14b45393800480ad548
                  }
              }
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayerGameMode.java b/src/main/java/net/minecraft/server/level/ServerPlayerGameMode.java
-index ee9e4521079137d7b72194e8789810e7a89b8e75..aa94815188e1bd0f16abe56f3c74cd8fbecc705d 100644
+index a96f859a5d0c6ec692d4627a69f3c9ee49199dbc..2fd7795f24157e39eeb3fc915a4cd59af645c628 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayerGameMode.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayerGameMode.java
-@@ -471,6 +471,7 @@ public class ServerPlayerGameMode {
+@@ -469,6 +469,7 @@ public class ServerPlayerGameMode {
                  }
                  // Paper end - Trigger bee_nest_destroyed trigger in the correct place
  
@@ -971,18 +971,18 @@ index ee9e4521079137d7b72194e8789810e7a89b8e75..aa94815188e1bd0f16abe56f3c74cd8f
                  // CraftBukkit end
              }
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 4b54d0ea31062972e68ee8fafe3cfaf68f65a5cd..4360a2aefc3eeff06244eb630245ecb8814adceb 100644
+index a15546e433ebba6c0de01bdaaef201a3d99a87b5..2d96490e7cae46db028487c81cc15caf4873b906 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -169,6 +169,7 @@ import org.bukkit.plugin.PluginManager;
+@@ -178,6 +178,7 @@ import org.bukkit.plugin.PluginManager;
  
- public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess, CommandSource, ScoreHolder, ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity, ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerEntity { // Paper - rewrite chunk system // Paper - optimise entity tracker
+ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess, ScoreHolder, ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity, ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerEntity {  // Paper - rewrite chunk system // Paper - optimise entity tracker
  
 +    public @org.jetbrains.annotations.Nullable de.verdox.mccreativelab.behaviour.entity.EntityBehaviour<? extends org.bukkit.entity.Entity> behaviour; // MCCreativeLab - Add EntityBehaviour
      // CraftBukkit start
      private static final int CURRENT_LEVEL = 2;
      public boolean preserveMotion = true; // Paper - Fix Entity Teleportation and cancel velocity if teleported; keep initial motion on first setPositionRotation
-@@ -850,6 +851,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -881,6 +882,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
  
      // CraftBukkit start
      public void postTick() {
@@ -990,15 +990,7 @@ index 4b54d0ea31062972e68ee8fafe3cfaf68f65a5cd..4360a2aefc3eeff06244eb630245ecb8
          // No clean way to break out of ticking once the entity has been copied to a new world, so instead we move the portalling later in the tick cycle
          if (!(this instanceof ServerPlayer) && this.isAlive()) { // Paper - don't attempt to teleport dead entities
              this.handlePortal();
-@@ -1225,6 +1227,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
-                 // CraftBukkit end
- 
-                 if (this.onGround()) {
-+                    if(!block.blockBehaviour().isStepOnLogicReplaced(this.level(), blockposition, iblockdata, this)) // MCCLab start - Adding BlockBehaviour
-                     block.stepOn(this.level(), blockposition, iblockdata, this);
-                 }
- 
-@@ -1849,7 +1852,9 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -1935,7 +1937,9 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
      }
  
      public boolean fireImmune() {
@@ -1009,7 +1001,7 @@ index 4b54d0ea31062972e68ee8fafe3cfaf68f65a5cd..4360a2aefc3eeff06244eb630245ecb8
      }
  
      public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
-@@ -2531,6 +2536,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -2663,6 +2667,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
                  }
              }
  
@@ -1017,7 +1009,7 @@ index 4b54d0ea31062972e68ee8fafe3cfaf68f65a5cd..4360a2aefc3eeff06244eb630245ecb8
              // CraftBukkit start - stores eventually existing bukkit values
              if (this.bukkitEntity != null) {
                  this.bukkitEntity.storeBukkitValues(nbttagcompound);
-@@ -2656,6 +2662,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -2789,6 +2794,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
              }
              // CraftBukkit end
  
@@ -1025,7 +1017,7 @@ index 4b54d0ea31062972e68ee8fafe3cfaf68f65a5cd..4360a2aefc3eeff06244eb630245ecb8
              // CraftBukkit start
              // Paper - move world parsing/loading to PlayerList#placeNewPlayer
              this.getBukkitEntity().readBukkitValues(nbt);
-@@ -2692,7 +2699,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -2825,7 +2831,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
              if (spawnReason == null) {
                  if (spawnedViaMobSpawner) {
                      spawnReason = org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER;
@@ -1034,38 +1026,55 @@ index 4b54d0ea31062972e68ee8fafe3cfaf68f65a5cd..4360a2aefc3eeff06244eb630245ecb8
                      if (!nbt.getBoolean("PersistenceRequired")) {
                          spawnReason = org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.NATURAL;
                      }
-@@ -2800,6 +2807,8 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -2933,6 +2939,8 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
      }
      @Nullable
-     public ItemEntity spawnAtLocation(ItemStack stack, float yOffset, @Nullable java.util.function.Consumer<? super ItemEntity> delayedAddConsumer) {
+     public ItemEntity spawnAtLocation(ServerLevel world, ItemStack stack, float yOffset, @Nullable java.util.function.Consumer<? super ItemEntity> delayedAddConsumer) {
 +        if(!de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.canDrop(stack))
 +            return null;
          // Paper end - Restore vanilla drops behavior
          if (stack.isEmpty()) {
              return null;
-@@ -3875,7 +3884,9 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -4139,7 +4147,8 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
      }
  
-     public boolean canChangeDimensions(Level from, Level to) {
--        return this.isAlive() && this.valid; // Paper - Fix item duplication and teleport issues
+     public boolean canTeleport(Level from, Level to) {
+-        if (!this.isAlive() || !this.valid) return false; // Paper - Fix item duplication and teleport issues
 +        return de.verdox.mccreativelab.behaviour.EntityBehaviourUtil.canChangeDimensions(this, () -> { // MCCLab - Add EntityBehaviour
-+            return this.isAlive() && this.valid; // Paper - Fix item duplication and teleport issues
-+        }); // MCCLab - Add EntityBehaviour
++            if (!this.isAlive() || !this.valid) return false; // Paper - Fix item duplication and teleport issues
+         if (from.dimension() == Level.END && to.dimension() == Level.OVERWORLD) {
+             Iterator iterator = this.getPassengers().iterator();
+ 
+@@ -4157,6 +4166,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+         }
+ 
+         return true;
++    }); // MCCLab - Add EntityBehaviour
      }
  
      public float getBlockExplosionResistance(Explosion explosion, BlockGetter world, BlockPos pos, BlockState blockState, FluidState fluidState, float max) {
 diff --git a/src/main/java/net/minecraft/world/entity/LivingEntity.java b/src/main/java/net/minecraft/world/entity/LivingEntity.java
-index 2aa6374cd4a96efd85899be8cd3172a8257bfe6b..a2b979b2a5c889463f6f2e0d2f46318462e049d2 100644
+index f36a075dbee2b96d01899e02460b1d8443e91749..9c75420eb7915244fa68e4d967ff42c8c1fc197b 100644
 --- a/src/main/java/net/minecraft/world/entity/LivingEntity.java
 +++ b/src/main/java/net/minecraft/world/entity/LivingEntity.java
-@@ -3566,11 +3566,15 @@ public abstract class LivingEntity extends Entity implements Attackable {
+@@ -3414,7 +3414,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
+                     throw new MatchException((String) null, (Throwable) null);
              }
-         }
+ 
+-            ItemStack itemstack2 = itemstack1; final ItemStack oldEquipment = itemstack2; // Paper - PlayerArmorChangeEvent - obfhelper 
++            ItemStack itemstack2 = itemstack1; final ItemStack oldEquipment = itemstack2; // Paper - PlayerArmorChangeEvent - obfhelper
+ 
+             itemstack = this.getItemBySlot(enumitemslot); final ItemStack newEquipment = itemstack;// Paper - PlayerArmorChangeEvent - obfhelper
+             if (this.equipmentHasChanged(itemstack2, itemstack)) {
+@@ -3707,12 +3707,16 @@ public abstract class LivingEntity extends Entity implements Attackable {
          // Paper end - Add EntityMoveEvent
--        if (!this.level().isClientSide && this.isSensitiveToWater() && this.isInWaterRainOrBubble()) {
--            this.hurt(this.damageSources().drown(), 1.0F);
-+        if (!this.level().isClientSide && this.isSensitiveToWaterCustom() && this.isInWaterRainOrBubble()) { // MCCLab - Add EntityBehaviour
-+            this.hurt(this.damageSources().drown(), de.verdox.mccreativelab.behaviour.EntityBehaviourUtil.Living.waterDamage(this, () -> 1.0F)); // MCCLab - Add EntityBehaviour
+         world = this.level();
+         if (world instanceof ServerLevel worldserver) {
+-            if (this.isSensitiveToWater() && this.isInWaterRainOrBubble()) {
+-                this.hurtServer(worldserver, this.damageSources().drown(), 1.0F);
++            if (this.isSensitiveToWaterCustom() && this.isInWaterRainOrBubble()) {
++                this.hurtServer(worldserver, this.damageSources().drown(), de.verdox.mccreativelab.behaviour.EntityBehaviourUtil.Living.waterDamage(this, () -> 1.0F));
+             }
          }
  
      }
@@ -1076,7 +1085,7 @@ index 2aa6374cd4a96efd85899be8cd3172a8257bfe6b..a2b979b2a5c889463f6f2e0d2f463184
  
      public boolean isSensitiveToWater() {
          return false;
-@@ -3775,12 +3779,13 @@ public abstract class LivingEntity extends Entity implements Attackable {
+@@ -3940,12 +3944,13 @@ public abstract class LivingEntity extends Entity implements Attackable {
      }
  
      public void onItemPickup(ItemEntity item) {
@@ -1096,10 +1105,10 @@ index 2aa6374cd4a96efd85899be8cd3172a8257bfe6b..a2b979b2a5c889463f6f2e0d2f463184
  
      public void take(Entity item, int count) {
 diff --git a/src/main/java/net/minecraft/world/entity/Mob.java b/src/main/java/net/minecraft/world/entity/Mob.java
-index 763abeea3f14f15c27d600e0bdae44b387687bb4..4e8c52125a608545d2b86c5a099fe8c820f4b73c 100644
+index dbd321f3dc3cc80737830db63aed47a6935e8e89..5d10630ed7fc670245ccf9329e635567b991ec96 100644
 --- a/src/main/java/net/minecraft/world/entity/Mob.java
 +++ b/src/main/java/net/minecraft/world/entity/Mob.java
-@@ -341,10 +341,20 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
+@@ -344,10 +344,20 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
          return type != EntityType.GHAST;
      }
  
@@ -1120,15 +1129,15 @@ index 763abeea3f14f15c27d600e0bdae44b387687bb4..4e8c52125a608545d2b86c5a099fe8c8
      public void ate() {
          this.gameEvent(GameEvent.EAT);
      }
-@@ -685,7 +695,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
-             while (iterator.hasNext()) {
-                 ItemEntity entityitem = (ItemEntity) iterator.next();
+@@ -684,7 +694,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
+                 while (iterator.hasNext()) {
+                     ItemEntity entityitem = (ItemEntity) iterator.next();
  
--                if (!entityitem.isRemoved() && !entityitem.getItem().isEmpty() && !entityitem.hasPickUpDelay() && this.wantsToPickUp(entityitem.getItem())) {
-+                if (!entityitem.isRemoved() && !entityitem.getItem().isEmpty() && !entityitem.hasPickUpDelay() && this.wantsToPickUpCustom(entityitem.getItem())) {
-                     // Paper start - Item#canEntityPickup
-                     if (!entityitem.canMobPickup) {
-                         continue;
+-                    if (!entityitem.isRemoved() && !entityitem.getItem().isEmpty() && !entityitem.hasPickUpDelay() && this.wantsToPickUp(worldserver, entityitem.getItem())) {
++                    if (!entityitem.isRemoved() && !entityitem.getItem().isEmpty() && !entityitem.hasPickUpDelay() && this.wantsToPickUpCustom(worldserver, entityitem.getItem())) {
+                         // Paper start - Item#canEntityPickup
+                         if (!entityitem.canMobPickup) {
+                             continue;
 @@ -736,7 +746,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
          }
  
@@ -1138,7 +1147,7 @@ index 763abeea3f14f15c27d600e0bdae44b387687bb4..4e8c52125a608545d2b86c5a099fe8c8
          if (entityitem != null) {
              canPickup = !org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, entityitem, 0, !canPickup).isCancelled();
          }
-@@ -853,6 +863,20 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
+@@ -851,6 +861,20 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
          return i > 1 || i == 1 && !datacomponentmap.has(DataComponents.DAMAGE);
      }
  
@@ -1159,7 +1168,7 @@ index 763abeea3f14f15c27d600e0bdae44b387687bb4..4e8c52125a608545d2b86c5a099fe8c8
      public boolean canHoldItem(ItemStack stack) {
          return true;
      }
-@@ -890,11 +914,11 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
+@@ -888,11 +912,11 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
                  final double dzSqr = Math.pow(entityhuman.getZ() - this.getZ(), 2);
                  final double distanceSquared = dxSqr + dzSqr + dySqr;
                  // Despawn if hard/soft limit is exceeded
@@ -1173,7 +1182,7 @@ index 763abeea3f14f15c27d600e0bdae44b387687bb4..4e8c52125a608545d2b86c5a099fe8c8
                          this.discard(EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
                      }
                  } else {
-@@ -1465,7 +1489,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
+@@ -1451,7 +1475,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
                  if (enuminteractionresult1 != InteractionResult.PASS) {
                      return enuminteractionresult1;
                  } else {
@@ -1196,10 +1205,10 @@ index d98b28e9488a5a7736719cf656736bb026ec8c7e..0906ae0f0cfc725412f3db4dba449627
  
                  return mob.closerThan(target, (double) j);
 diff --git a/src/main/java/net/minecraft/world/entity/ai/behavior/MeleeAttack.java b/src/main/java/net/minecraft/world/entity/ai/behavior/MeleeAttack.java
-index f26896b6e88cc825e035ae2e3b9b3e15ea76ab9b..3727025513fb33eade6ff08158133d45e0e8a6df 100644
+index 74d9439957ddcd54810eb86aa4de9c562b9e40c5..90c911c528a35a6bfd29c2624284bcba9097061c 100644
 --- a/src/main/java/net/minecraft/world/entity/ai/behavior/MeleeAttack.java
 +++ b/src/main/java/net/minecraft/world/entity/ai/behavior/MeleeAttack.java
-@@ -41,7 +41,7 @@ public class MeleeAttack {
+@@ -47,7 +47,7 @@ public class MeleeAttack {
      private static boolean isHoldingUsableProjectileWeapon(Mob mob) {
          return mob.isHolding(stack -> {
              Item item = stack.getItem();
@@ -1209,7 +1218,7 @@ index f26896b6e88cc825e035ae2e3b9b3e15ea76ab9b..3727025513fb33eade6ff08158133d45
      }
  }
 diff --git a/src/main/java/net/minecraft/world/entity/ai/goal/BegGoal.java b/src/main/java/net/minecraft/world/entity/ai/goal/BegGoal.java
-index 04f43bbb3d41a88c98f116b144061e18a2d70f40..003148d7c3d4120e1b1693325235360f72fef5ec 100644
+index bd9d75aaaf9061b8d582b394119cc2d5056a81e0..e788a4f2a0f8d7ad3bbf54f43c262b546289d01b 100644
 --- a/src/main/java/net/minecraft/world/entity/ai/goal/BegGoal.java
 +++ b/src/main/java/net/minecraft/world/entity/ai/goal/BegGoal.java
 @@ -62,7 +62,7 @@ public class BegGoal extends Goal {
@@ -1221,37 +1230,24 @@ index 04f43bbb3d41a88c98f116b144061e18a2d70f40..003148d7c3d4120e1b1693325235360f
                  return true;
              }
          }
-diff --git a/src/main/java/net/minecraft/world/entity/ai/sensing/NearestItemSensor.java b/src/main/java/net/minecraft/world/entity/ai/sensing/NearestItemSensor.java
-index a5bd308d1b3ea5db185c06a287167d1d8894a987..384acc82865a0924afee9ddd08f0ab750a89be55 100644
---- a/src/main/java/net/minecraft/world/entity/ai/sensing/NearestItemSensor.java
-+++ b/src/main/java/net/minecraft/world/entity/ai/sensing/NearestItemSensor.java
-@@ -24,7 +24,7 @@ public class NearestItemSensor extends Sensor<Mob> {
-     @Override
-     protected void doTick(ServerLevel world, Mob entity) {
-         Brain<?> brain = entity.getBrain();
--        List<ItemEntity> list = world.getEntitiesOfClass(ItemEntity.class, entity.getBoundingBox().inflate(32.0, 16.0, 32.0), itemEntity -> itemEntity.closerThan(entity, MAX_DISTANCE_TO_WANTED_ITEM) && entity.wantsToPickUp(itemEntity.getItem())); // Paper - Perf: Move predicate into getEntities
-+        List<ItemEntity> list = world.getEntitiesOfClass(ItemEntity.class, entity.getBoundingBox().inflate(32.0, 16.0, 32.0), itemEntity -> itemEntity.closerThan(entity, MAX_DISTANCE_TO_WANTED_ITEM) && entity.wantsToPickUpCustom(itemEntity.getItem())); // Paper - Perf: Move predicate into getEntities // MCCLab - Add EntityBehaviour
-         list.sort(Comparator.comparingDouble(entity::distanceToSqr));
-         // Paper start - Perf: remove streams from hot code
-         ItemEntity nearest = null;
 diff --git a/src/main/java/net/minecraft/world/entity/ai/targeting/TargetingConditions.java b/src/main/java/net/minecraft/world/entity/ai/targeting/TargetingConditions.java
-index aecb0ad814586bfc5e56755ee14379a69388b38c..d03a953ade84c79ee1e83ad121879bd1ed22ece4 100644
+index 52982c1e6a4da36392569c791853279f5f9ac31a..d078a5d6233351bcaeedafbf58be9949127b33a0 100644
 --- a/src/main/java/net/minecraft/world/entity/ai/targeting/TargetingConditions.java
 +++ b/src/main/java/net/minecraft/world/entity/ai/targeting/TargetingConditions.java
-@@ -71,7 +71,7 @@ public class TargetingConditions {
+@@ -70,7 +70,7 @@ public class TargetingConditions {
+                     return false;
                  }
              } else {
-                 if (this.isCombat
--                    && (!baseEntity.canAttack(targetEntity) || !baseEntity.canAttackType(targetEntity.getType()) || baseEntity.isAlliedTo(targetEntity))) {
-+                    && (!baseEntity.canAttack(targetEntity) || !de.verdox.mccreativelab.behaviour.EntityBehaviourUtil.Living.canAttackType(baseEntity, targetEntity.getType(), () -> baseEntity.canAttackType(targetEntity.getType())) || baseEntity.isAlliedTo(targetEntity))) { // MCCreativeLab - Add EntityBehaviour
+-                if (this.isCombat && (!tester.canAttack(target) || !tester.canAttackType(target.getType()) || tester.isAlliedTo(target))) {
++                if (this.isCombat && (!tester.canAttack(target) || !de.verdox.mccreativelab.behaviour.EntityBehaviourUtil.Living.canAttackType(tester, target.getType(), () -> tester.canAttackType(target.getType())) || tester.isAlliedTo(target))) {
                      return false;
                  }
  
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Animal.java b/src/main/java/net/minecraft/world/entity/animal/Animal.java
-index 1808e1b01afa3041a54c9c9a7586d4d61960527a..4edda89b1b38770f72df9ead54bc1cc93d56c09d 100644
+index 5677dc97ed83652f261100cf391883cfac7d16fe..ad0877e31299ba0b391ce1311ed9ed918631cd1d 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Animal.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Animal.java
-@@ -140,11 +140,17 @@ public abstract class Animal extends AgeableMob {
+@@ -150,11 +150,17 @@ public abstract class Animal extends AgeableMob {
  
      public abstract boolean isFood(ItemStack stack);
  
@@ -1270,7 +1266,7 @@ index 1808e1b01afa3041a54c9c9a7586d4d61960527a..4edda89b1b38770f72df9ead54bc1cc9
              int i = this.getAge();
  
              if (!this.level().isClientSide && i == 0 && this.canFallInLove()) {
-@@ -228,7 +234,7 @@ public abstract class Animal extends AgeableMob {
+@@ -254,7 +260,7 @@ public abstract class Animal extends AgeableMob {
      }
  
      public boolean canMate(Animal other) {
@@ -1279,7 +1275,7 @@ index 1808e1b01afa3041a54c9c9a7586d4d61960527a..4edda89b1b38770f72df9ead54bc1cc9
      }
  
      public void spawnChildFromBreeding(ServerLevel world, Animal other) {
-@@ -250,6 +256,7 @@ public abstract class Animal extends AgeableMob {
+@@ -276,6 +282,7 @@ public abstract class Animal extends AgeableMob {
              this.finalizeSpawnChildFromBreeding(world, other, entityageable, experience);
              world.addFreshEntityWithPassengers(entityageable, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BREEDING);
              // CraftBukkit end
@@ -1288,28 +1284,19 @@ index 1808e1b01afa3041a54c9c9a7586d4d61960527a..4edda89b1b38770f72df9ead54bc1cc9
      }
  
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Cat.java b/src/main/java/net/minecraft/world/entity/animal/Cat.java
-index 23d4dcc82115fd1a0a77565a0472304042d5f12d..43eaced4fb1959ccf59f2e59139f40708fff2ab3 100644
+index 471d5727b964922d8e898be9e1d5c30f9d3bac97..6d713e3eb938949b895dce02f3d12589cc18a14c 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Cat.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Cat.java
-@@ -247,7 +247,7 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
+@@ -402,7 +402,7 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
  
-     @Override
-     protected void usePlayerItem(Player player, InteractionHand hand, ItemStack stack) {
--        if (this.isFood(stack)) {
-+        if (this.isFoodCustom(stack)) { // MCCLab - Add EntityBehaviour
-             this.playSound(SoundEvents.CAT_EAT, 1.0F, 1.0F);
-         }
- 
-@@ -393,7 +393,7 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
- 
-                         return InteractionResult.sidedSuccess(this.level().isClientSide());
+                         return InteractionResult.SUCCESS;
                      }
 -                } else if (this.isFood(itemstack) && this.getHealth() < this.getMaxHealth()) {
 +                } else if (this.isFoodCustom(itemstack) && this.getHealth() < this.getMaxHealth()) { // MCCLab - Add EntityBehaviour
                      if (!this.level().isClientSide()) {
                          this.usePlayerItem(player, hand, itemstack);
                          FoodProperties foodinfo = (FoodProperties) itemstack.get(DataComponents.FOOD);
-@@ -412,7 +412,7 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
+@@ -422,7 +422,7 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
  
                  return enuminteractionresult;
              }
@@ -1319,45 +1306,36 @@ index 23d4dcc82115fd1a0a77565a0472304042d5f12d..43eaced4fb1959ccf59f2e59139f4070
                  this.usePlayerItem(player, hand, itemstack);
                  this.tryToTame(player);
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Dolphin.java b/src/main/java/net/minecraft/world/entity/animal/Dolphin.java
-index da45cc62985f8b67cdfeffc21cb33837db673555..0ae5df6d5cd690c0a3c8cd114a9754e1c080ce12 100644
+index 5af4d590a9b0f17ba53c6959d9c18bd1269878a4..14cc1e9c6f264634c7a32e21cf6bb487c7d528b7 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Dolphin.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Dolphin.java
-@@ -222,7 +222,7 @@ public class Dolphin extends WaterAnimal {
+@@ -244,7 +244,7 @@ public class Dolphin extends AgeableWaterCreature {
          if (this.getItemBySlot(EquipmentSlot.MAINHAND).isEmpty()) {
-             ItemStack itemstack = item.getItem();
+             ItemStack itemstack = itemEntity.getItem();
  
 -            if (this.canHoldItem(itemstack)) {
 +            if (this.canHoldItemCustom(itemstack)) { // MCCLab - Add EntityBehaviour
                  // CraftBukkit start - call EntityPickupItemEvent
-                 if (CraftEventFactory.callEntityPickupItemEvent(this, item, 0, false).isCancelled()) {
+                 if (CraftEventFactory.callEntityPickupItemEvent(this, itemEntity, 0, false).isCancelled()) {
                      return;
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Fox.java b/src/main/java/net/minecraft/world/entity/animal/Fox.java
-index 9a0adf65d4d54852301a91b6fe444e4c5a139f5d..c925d03e60fa2c10c24a3ba85cd9c19b9cf57ff4 100644
+index a9a8ebb2cebe668628d5bdb33fa1399e0ab1e08b..1a5f06f015f3a370b68b730186cacea429c620fa 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Fox.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Fox.java
-@@ -358,7 +358,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
+@@ -512,7 +512,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Variant> {
+     protected void pickUpItem(ServerLevel world, ItemEntity itemEntity) {
+         ItemStack itemstack = itemEntity.getItem();
  
-     @Override
-     protected void usePlayerItem(Player player, InteractionHand hand, ItemStack stack) {
--        if (this.isFood(stack)) {
-+        if (this.isFoodCustom(stack)) { // MCCLab - Add EntityBehaviour
-             this.playSound(this.getEatingSound(stack), 1.0F, 1.0F);
-         }
- 
-@@ -527,7 +527,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
-     protected void pickUpItem(ItemEntity item) {
-         ItemStack itemstack = item.getItem();
- 
--        if (!org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, item, itemstack.getCount() - 1, !this.canHoldItem(itemstack)).isCancelled()) { // CraftBukkit - call EntityPickupItemEvent
-+        if (!org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, item, itemstack.getCount() - 1, !this.canHoldItemCustom(itemstack)).isCancelled()) { // CraftBukkit - call EntityPickupItemEvent // MCCLab - Add EntityBehaviour
-             itemstack = item.getItem(); // CraftBukkit - update ItemStack from event
+-        if (!org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, itemEntity, itemstack.getCount() - 1, !this.canHoldItem(itemstack)).isCancelled()) { // CraftBukkit - call EntityPickupItemEvent
++        if (!org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, itemEntity, itemstack.getCount() - 1, !this.canHoldItemCustom(itemstack)).isCancelled()) { // CraftBukkit - call EntityPickupItemEvent // MCCLab - Add EntityBehaviour
+             itemstack = itemEntity.getItem(); // CraftBukkit - update ItemStack from event
              int i = itemstack.getCount();
  
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Ocelot.java b/src/main/java/net/minecraft/world/entity/animal/Ocelot.java
-index 97f4cc522706ec5914672aa4fdfbc35edc94aeb6..b8376341827b44096c68678a0dba48a17a2527af 100644
+index 0554ee499c452db6c1e6852f5022b1f197adb024..245e4f57f61662c55c88ada3fc02780316cde9b0 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Ocelot.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Ocelot.java
-@@ -165,7 +165,7 @@ public class Ocelot extends Animal {
+@@ -164,7 +164,7 @@ public class Ocelot extends Animal {
      public InteractionResult mobInteract(Player player, InteractionHand hand) {
          ItemStack itemstack = player.getItemInHand(hand);
  
@@ -1366,33 +1344,11 @@ index 97f4cc522706ec5914672aa4fdfbc35edc94aeb6..b8376341827b44096c68678a0dba48a1
              this.usePlayerItem(player, hand, itemstack);
              if (!this.level().isClientSide) {
                  if (this.random.nextInt(3) == 0 && !org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTameEvent(this, player).isCancelled()) { // CraftBukkit - added event call and isCancelled check
-diff --git a/src/main/java/net/minecraft/world/entity/animal/Panda.java b/src/main/java/net/minecraft/world/entity/animal/Panda.java
-index e108f876d3f129c6287f13d68427aed2a6f0c5b1..8bb57a31b607b412b0cf4294f5379f0029bef54e 100644
---- a/src/main/java/net/minecraft/world/entity/animal/Panda.java
-+++ b/src/main/java/net/minecraft/world/entity/animal/Panda.java
-@@ -664,7 +664,7 @@ public class Panda extends Animal {
-         } else if (this.isOnBack()) {
-             this.setOnBack(false);
-             return InteractionResult.sidedSuccess(this.level().isClientSide);
--        } else if (this.isFood(itemstack)) {
-+        } else if (this.isFoodCustom(itemstack)) { // MCCLab - Add EntityBehaviour
-             if (this.getTarget() != null) {
-                 this.gotBamboo = true;
-             }
-@@ -718,7 +718,7 @@ public class Panda extends Animal {
-     }
- 
-     private boolean isFoodOrCake(ItemStack stack) {
--        return this.isFood(stack) || stack.is(Blocks.CAKE.asItem());
-+        return this.isFoodCustom(stack) || stack.is(Blocks.CAKE.asItem()); // MCCLab - Add EntityBehaviour
-     }
- 
-     @Nullable
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Pig.java b/src/main/java/net/minecraft/world/entity/animal/Pig.java
-index 03d29d5114237f5700c188510a12f26507844c3d..3fcfbebcc7565bca08d54144e1e5545966a1a602 100644
+index c39b2580a67c9b0bf8631f108e0628fa9732ada1..ae7484ccbf7f22bc43aafbd5c74e85c3f7488851 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Pig.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Pig.java
-@@ -153,7 +153,7 @@ public class Pig extends Animal implements ItemSteerable, Saddleable {
+@@ -154,7 +154,7 @@ public class Pig extends Animal implements ItemSteerable, Saddleable {
  
      @Override
      public InteractionResult mobInteract(Player player, InteractionHand hand) {
@@ -1401,24 +1357,11 @@ index 03d29d5114237f5700c188510a12f26507844c3d..3fcfbebcc7565bca08d54144e1e55459
  
          if (!flag && this.isSaddled() && !this.isVehicle() && !player.isSecondaryUseActive()) {
              if (!this.level().isClientSide) {
-diff --git a/src/main/java/net/minecraft/world/entity/animal/Wolf.java b/src/main/java/net/minecraft/world/entity/animal/Wolf.java
-index 22024d79b566ad5d388ceb644605ada3123ca608..b4eaaf58a5255651fbc44a7d90d96a6922d411b8 100644
---- a/src/main/java/net/minecraft/world/entity/animal/Wolf.java
-+++ b/src/main/java/net/minecraft/world/entity/animal/Wolf.java
-@@ -442,7 +442,7 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
- 
-             return flag ? InteractionResult.CONSUME : InteractionResult.PASS;
-         } else if (this.isTame()) {
--            if (this.isFood(itemstack) && this.getHealth() < this.getMaxHealth()) {
-+            if (this.isFoodCustom(itemstack) && this.getHealth() < this.getMaxHealth()) { // MCCLab - Add EntityBehaviour
-                 itemstack.consume(1, player);
-                 FoodProperties foodinfo = (FoodProperties) itemstack.get(DataComponents.FOOD);
-                 float f = foodinfo != null ? (float) foodinfo.nutrition() : 1.0F;
 diff --git a/src/main/java/net/minecraft/world/entity/animal/camel/Camel.java b/src/main/java/net/minecraft/world/entity/animal/camel/Camel.java
-index 8941752e4600ccd11b3fa1147b2e414785589eed..23eb5853fdc9f77e092f2061800d5c4fa6ad7ee0 100644
+index f3c884ab9c09f04dd01cabf2ee9de3b5b620563d..3497ea4c5853a395bc90e920a4610d7b427e3a26 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/camel/Camel.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/camel/Camel.java
-@@ -354,7 +354,7 @@ public class Camel extends AbstractHorse implements PlayerRideableJumping, Saddl
+@@ -356,7 +356,7 @@ public class Camel extends AbstractHorse {
  
              if (enuminteractionresult.consumesAction()) {
                  return enuminteractionresult;
@@ -1427,7 +1370,7 @@ index 8941752e4600ccd11b3fa1147b2e414785589eed..23eb5853fdc9f77e092f2061800d5c4f
                  return this.fedFood(player, itemstack);
              } else {
                  if (this.getPassengers().size() < 2 && !this.isBaby()) {
-@@ -381,7 +381,7 @@ public class Camel extends AbstractHorse implements PlayerRideableJumping, Saddl
+@@ -383,7 +383,7 @@ public class Camel extends AbstractHorse {
  
      @Override
      protected boolean handleEating(Player player, ItemStack item) {
@@ -1437,11 +1380,11 @@ index 8941752e4600ccd11b3fa1147b2e414785589eed..23eb5853fdc9f77e092f2061800d5c4f
          } else {
              boolean flag = this.getHealth() < this.getMaxHealth();
 diff --git a/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java b/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java
-index 376bcbc189008464f4d518c1e07643431ba96306..b96b0593f19d68a58e3a95c9c1045e5d7184a375 100644
+index 76aca47d8638d5c37c57d3a59fa7f8ceaa5a53b4..33f2fa08b97702b08b423d734632f14a6dfa035e 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java
-@@ -245,6 +245,7 @@ public class Goat extends Animal {
-             return InteractionResult.sidedSuccess(this.level().isClientSide);
+@@ -249,6 +249,7 @@ public class Goat extends Animal {
+             return InteractionResult.SUCCESS;
          } else {
              boolean isFood = this.isFood(itemstack); // Paper - track before stack is possibly decreased to 0 (Fixes MC-244739)
 +            isFood = this.isFoodCustom(itemstack); // MCCLab - Add EntityBehaviour
@@ -1449,10 +1392,10 @@ index 376bcbc189008464f4d518c1e07643431ba96306..b96b0593f19d68a58e3a95c9c1045e5d
  
              if (enuminteractionresult.consumesAction() && isFood) { // Paper
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/AbstractChestedHorse.java b/src/main/java/net/minecraft/world/entity/animal/horse/AbstractChestedHorse.java
-index 5654c614f07f07ff642ba4851b0cb6fa185924ae..de84c39a1a7c154c65f444c0e2fd6955ca19a759 100644
+index 112b82ba7709b36e996e2f984c72ce40ca718720..d1b2a20ddf5f144b7b2fc640200d9dad4aec6d6e 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/AbstractChestedHorse.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/horse/AbstractChestedHorse.java
-@@ -160,7 +160,7 @@ public abstract class AbstractChestedHorse extends AbstractHorse {
+@@ -157,7 +157,7 @@ public abstract class AbstractChestedHorse extends AbstractHorse {
          if (!this.isVehicle() && !bl) {
              ItemStack itemStack = player.getItemInHand(hand);
              if (!itemStack.isEmpty()) {
@@ -1462,10 +1405,10 @@ index 5654c614f07f07ff642ba4851b0cb6fa185924ae..de84c39a1a7c154c65f444c0e2fd6955
                  }
  
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/Horse.java b/src/main/java/net/minecraft/world/entity/animal/horse/Horse.java
-index b1188d05700cafc3a6956171bacde4962d6659be..cebf708f3c268e935a63438c700ad3a3ff7da845 100644
+index b5ec7c8ad0e482930d1a54b590b26093f4e477ea..02294c3239ab119b8b2efcbf2006322f1aede5db 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/Horse.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/horse/Horse.java
-@@ -146,7 +146,7 @@ public class Horse extends AbstractHorse implements VariantHolder<Variant> {
+@@ -134,7 +134,7 @@ public class Horse extends AbstractHorse implements VariantHolder<Variant> {
          if (!this.isVehicle() && !bl) {
              ItemStack itemStack = player.getItemInHand(hand);
              if (!itemStack.isEmpty()) {
@@ -1475,10 +1418,10 @@ index b1188d05700cafc3a6956171bacde4962d6659be..cebf708f3c268e935a63438c700ad3a3
                  }
  
 diff --git a/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java b/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java
-index fadd341ff398886a4da102eefa1beb95a63bbd6d..1617a4e6b5dea7ca23166ae10b3b843cd69af7b4 100644
+index af2f6e690fc51d319b77d081466c2dc7a1d8fe19..1392a43ec4da98506b31f5976976ad5f111b92e1 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java
-@@ -382,7 +382,7 @@ public class Sniffer extends Animal {
+@@ -377,7 +377,7 @@ public class Sniffer extends Animal {
      @Override
      public InteractionResult mobInteract(Player player, InteractionHand hand) {
          ItemStack itemstack = player.getItemInHand(hand);
@@ -1488,23 +1431,23 @@ index fadd341ff398886a4da102eefa1beb95a63bbd6d..1617a4e6b5dea7ca23166ae10b3b843c
  
          if (enuminteractionresult.consumesAction() && flag) {
 diff --git a/src/main/java/net/minecraft/world/entity/item/ItemEntity.java b/src/main/java/net/minecraft/world/entity/item/ItemEntity.java
-index 4423973d4d9a2c3879d98d1d4c8b8c117c677ac5..83c9a086fbcc82705fdfa772c5d4b2f9013c2d92 100644
+index 0f086af57a5ff08c264dcbf89a8c3931ec73a609..8b1db8e860095e93cc4d2c82cf6c722fc1349dff 100644
 --- a/src/main/java/net/minecraft/world/entity/item/ItemEntity.java
 +++ b/src/main/java/net/minecraft/world/entity/item/ItemEntity.java
-@@ -375,7 +375,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+@@ -388,7 +388,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
              return false;
-         } else if (!this.getItem().isEmpty() && this.getItem().is(Items.NETHER_STAR) && source.is(DamageTypeTags.IS_EXPLOSION)) {
+         } else if (!world.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) && source.getEntity() instanceof Mob) {
              return false;
 -        } else if (!this.getItem().canBeHurtBy(source)) {
 +        } else if (!this.getItem().canBeHurtBy(source)) { //MCCLab - Adding ItemBehaviour
              return false;
-         } else if (this.level().isClientSide) {
-             return true;
+         } else {
+             // CraftBukkit start
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Strider.java b/src/main/java/net/minecraft/world/entity/monster/Strider.java
-index 2c5bfad3c1ae9a19b4762831a3abdd5e89ba24b3..f7ff66708b45ada913badae5f6637fa2093706c0 100644
+index 711b7eb8e9fdedbc87965828e573fe8d5c357d53..9146336611b6c6ba9360dfe3b1f3847ae8003cca 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Strider.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Strider.java
-@@ -454,7 +454,7 @@ public class Strider extends Animal implements ItemSteerable, Saddleable {
+@@ -452,7 +452,7 @@ public class Strider extends Animal implements ItemSteerable, Saddleable {
  
      @Override
      public InteractionResult mobInteract(Player player, InteractionHand hand) {
@@ -1513,37 +1456,11 @@ index 2c5bfad3c1ae9a19b4762831a3abdd5e89ba24b3..f7ff66708b45ada913badae5f6637fa2
  
          if (!flag && this.isSaddled() && !this.isVehicle() && !player.isSecondaryUseActive()) {
              if (!this.level().isClientSide) {
-diff --git a/src/main/java/net/minecraft/world/entity/npc/InventoryCarrier.java b/src/main/java/net/minecraft/world/entity/npc/InventoryCarrier.java
-index 7e1a533f545d35b2fc55805e26f574461fe7899f..06555314fe85ee7479224071339623685ebd9b42 100644
---- a/src/main/java/net/minecraft/world/entity/npc/InventoryCarrier.java
-+++ b/src/main/java/net/minecraft/world/entity/npc/InventoryCarrier.java
-@@ -20,7 +20,7 @@ public interface InventoryCarrier {
-     static void pickUpItem(Mob entity, InventoryCarrier inventoryOwner, ItemEntity item) {
-         ItemStack itemstack = item.getItem();
- 
--        if (entity.wantsToPickUp(itemstack)) {
-+        if (entity.wantsToPickUpCustom(itemstack)) { // MCCLab - Add EntityBehaviour
-             SimpleContainer inventorysubcontainer = inventoryOwner.getInventory();
-             boolean flag = inventorysubcontainer.canAddItem(itemstack);
- 
-diff --git a/src/main/java/net/minecraft/world/entity/player/Player.java b/src/main/java/net/minecraft/world/entity/player/Player.java
-index 09bcbc0ae36e4e69fee87a7e0c49acf496117a39..84c8cf25ad4ca9992972bf4a2701e1016f7ac941 100644
---- a/src/main/java/net/minecraft/world/entity/player/Player.java
-+++ b/src/main/java/net/minecraft/world/entity/player/Player.java
-@@ -1012,7 +1012,7 @@ public abstract class Player extends LivingEntity {
-     @Override
-     protected void blockUsingShield(LivingEntity attacker) {
-         super.blockUsingShield(attacker);
--        if (attacker.canDisableShield()) {
-+        if (de.verdox.mccreativelab.behaviour.EntityBehaviourUtil.Living.canDisableShield(this, () -> attacker.canDisableShield())) { // MCCreativeLab - Add EntityBehaviour
-             this.disableShield(attacker); // Paper - Add PlayerShieldDisableEvent
-         }
- 
 diff --git a/src/main/java/net/minecraft/world/entity/projectile/ThrownPotion.java b/src/main/java/net/minecraft/world/entity/projectile/ThrownPotion.java
-index 86c4b593a97431efd062b8c9d86bf92269c00536..3bc8936b498901b21d6de5ba245e1d0141f71a04 100644
+index 9d79b193fe2a737a20d1709548b2cd6c454ff27b..281622f6261367bf2a2cff377ce549b960bf53c9 100644
 --- a/src/main/java/net/minecraft/world/entity/projectile/ThrownPotion.java
 +++ b/src/main/java/net/minecraft/world/entity/projectile/ThrownPotion.java
-@@ -49,7 +49,7 @@ public class ThrownPotion extends ThrowableItemProjectile implements ItemSupplie
+@@ -50,7 +50,7 @@ public class ThrownPotion extends ThrowableItemProjectile {
      public static final double SPLASH_RANGE = 4.0D;
      private static final double SPLASH_RANGE_SQ = 16.0D;
      public static final Predicate<net.minecraft.world.entity.LivingEntity> WATER_SENSITIVE_OR_ON_FIRE = (entityliving) -> {
@@ -1552,7 +1469,7 @@ index 86c4b593a97431efd062b8c9d86bf92269c00536..3bc8936b498901b21d6de5ba245e1d01
      };
  
      public ThrownPotion(EntityType<? extends ThrownPotion> type, Level world) {
-@@ -149,7 +149,7 @@ public class ThrownPotion extends ThrowableItemProjectile implements ItemSupplie
+@@ -151,7 +151,7 @@ public class ThrownPotion extends ThrowableItemProjectile {
              double d0 = this.distanceToSqr((Entity) entityliving);
  
              if (d0 < 16.0D) {
@@ -1562,10 +1479,10 @@ index 86c4b593a97431efd062b8c9d86bf92269c00536..3bc8936b498901b21d6de5ba245e1d01
                  }
  
 diff --git a/src/main/java/net/minecraft/world/food/FoodData.java b/src/main/java/net/minecraft/world/food/FoodData.java
-index bd3f78e6453cfe18aa3da38176b04d734d83bb4b..734e7e395e978643355ce70feb5f0b772373f87c 100644
+index 6a686be6a69ae890d519a54ca099d4ba14e5b9e1..f6d352bd208e3b0d44b7ee196bd8ee5661f9b150 100644
 --- a/src/main/java/net/minecraft/world/food/FoodData.java
 +++ b/src/main/java/net/minecraft/world/food/FoodData.java
-@@ -85,7 +85,7 @@ public class FoodData {
+@@ -76,7 +76,7 @@ public class FoodData {
  
          if (flag && this.saturationLevel > 0.0F && player.isHurt() && this.foodLevel >= 20) {
              ++this.tickTimer;
@@ -1574,7 +1491,7 @@ index bd3f78e6453cfe18aa3da38176b04d734d83bb4b..734e7e395e978643355ce70feb5f0b77
                  float f = Math.min(this.saturationLevel, 6.0F);
  
                  player.heal(f / 6.0F, org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.SATIATED, true); // CraftBukkit - added RegainReason // Paper - This is fast regen
-@@ -93,17 +93,17 @@ public class FoodData {
+@@ -84,17 +84,17 @@ public class FoodData {
                  player.causeFoodExhaustion(f, org.bukkit.event.entity.EntityExhaustionEvent.ExhaustionReason.REGEN); // CraftBukkit - EntityExhaustionEvent
                  this.tickTimer = 0;
              }
@@ -1584,7 +1501,7 @@ index bd3f78e6453cfe18aa3da38176b04d734d83bb4b..734e7e395e978643355ce70feb5f0b77
 -            if (this.tickTimer >= this.unsaturatedRegenRate) { // CraftBukkit - add regen rate manipulation
 +            if (this.tickTimer >= this.getUnsaturatedRegenRate()) { // CraftBukkit - add regen rate manipulation // MCCLab - Add FoodBehaviour
                  player.heal(1.0F, org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.SATIATED); // CraftBukkit - added RegainReason
-                 // this.a(6.0F); CraftBukkit - EntityExhaustionEvent
+                 // this.addExhaustion(6.0F); CraftBukkit - EntityExhaustionEvent
                  player.causeFoodExhaustion(player.level().spigotConfig.regenExhaustion, org.bukkit.event.entity.EntityExhaustionEvent.ExhaustionReason.REGEN); // CraftBukkit - EntityExhaustionEvent // Spigot - Change to use configurable value
                  this.tickTimer = 0;
              }
@@ -1594,12 +1511,16 @@ index bd3f78e6453cfe18aa3da38176b04d734d83bb4b..734e7e395e978643355ce70feb5f0b77
 -            if (this.tickTimer >= this.starvationRate) { // CraftBukkit - add regen rate manipulation
 +            if (this.tickTimer >= this.getStarvationRate()) { // CraftBukkit - add regen rate manipulation // MCCLab - Add FoodBehaviour
                  if (player.getHealth() > 10.0F || enumdifficulty == Difficulty.HARD || player.getHealth() > 1.0F && enumdifficulty == Difficulty.NORMAL) {
-                     player.hurt(player.damageSources().starve(), 1.0F);
+                     player.hurtServer(worldserver, player.damageSources().starve(), 1.0F);
                  }
-@@ -168,4 +168,47 @@ public class FoodData {
-     public void setExhaustion(float exhaustion) {
-         this.exhaustionLevel = exhaustion;
+@@ -147,4 +147,51 @@ public class FoodData {
+     public void setSaturation(float saturationLevel) {
+         this.saturationLevel = saturationLevel;
      }
++
++    public void setExhaustion(float exhaustion) {
++        this.exhaustionLevel = exhaustion;
++    }
 +    // MCCLab start - Add FoodBehaviour
 +    public int getSaturatedRegenRate() {
 +        if(de.verdox.mccreativelab.behaviour.FoodBehaviour.FOOD_BEHAVIOUR.isImplemented())
@@ -1645,7 +1566,7 @@ index bd3f78e6453cfe18aa3da38176b04d734d83bb4b..734e7e395e978643355ce70feb5f0b77
 +    // MCCLab end - Add FoodBehaviour
  }
 diff --git a/src/main/java/net/minecraft/world/inventory/CartographyTableMenu.java b/src/main/java/net/minecraft/world/inventory/CartographyTableMenu.java
-index a90e2c56c54797b2fec40eb3865835c5f640a544..be57cafb2988e45e7a70ffcc7cb5ec093f1fe0ce 100644
+index dc42d42ef91bc3e49f967c0a30a0d1b56e09cf21..9781319ef777963224b83f5938cc17bbcb8451a7 100644
 --- a/src/main/java/net/minecraft/world/inventory/CartographyTableMenu.java
 +++ b/src/main/java/net/minecraft/world/inventory/CartographyTableMenu.java
 @@ -105,7 +105,7 @@ public class CartographyTableMenu extends AbstractContainerMenu {
@@ -1657,7 +1578,7 @@ index a90e2c56c54797b2fec40eb3865835c5f640a544..be57cafb2988e45e7a70ffcc7cb5ec09
                  context.execute((world, blockposition) -> {
                      long j = world.getGameTime();
  
-@@ -205,7 +205,7 @@ public class CartographyTableMenu extends AbstractContainerMenu {
+@@ -193,7 +193,7 @@ public class CartographyTableMenu extends AbstractContainerMenu {
  
              itemstack = itemstack1.copy();
              if (slot == 2) {
@@ -1667,10 +1588,10 @@ index a90e2c56c54797b2fec40eb3865835c5f640a544..be57cafb2988e45e7a70ffcc7cb5ec09
                      return ItemStack.EMPTY;
                  }
 diff --git a/src/main/java/net/minecraft/world/inventory/CraftingMenu.java b/src/main/java/net/minecraft/world/inventory/CraftingMenu.java
-index f9e4714cb0ee74505ed72200abed7756aa68dc90..50661447621a9b15fa2ce540850a92cc2d90f797 100644
+index 2e4043248c3ac7a54d894d76b99adc26518d3866..3fc6e3ea88d2119356b29b2ff466b407d3f4d47b 100644
 --- a/src/main/java/net/minecraft/world/inventory/CraftingMenu.java
 +++ b/src/main/java/net/minecraft/world/inventory/CraftingMenu.java
-@@ -167,7 +167,7 @@ public class CraftingMenu extends RecipeBookMenu<CraftingInput, CraftingRecipe>
+@@ -128,7 +128,7 @@ public class CraftingMenu extends AbstractCraftingMenu {
              itemstack = itemstack1.copy();
              if (slot == 0) {
                  this.access.execute((world, blockposition) -> {
@@ -1692,10 +1613,10 @@ index 171de2984f94bdb32de5df3b7f98170545a2563d..fe5d8a4d6af40082e905bead69c4e323
      }
  }
 diff --git a/src/main/java/net/minecraft/world/inventory/StonecutterMenu.java b/src/main/java/net/minecraft/world/inventory/StonecutterMenu.java
-index 5a0015f761f6a25d7bb7b9cfe7a9b4771a6a37ec..cccb0445ae225f5ee84aca03ccfcdf7d9b037a5f 100644
+index ca65965757e6f12abc972250a04817c7547bb0bd..0729b5a32504728b2c3885af8d9fbdc1dfa01aac 100644
 --- a/src/main/java/net/minecraft/world/inventory/StonecutterMenu.java
 +++ b/src/main/java/net/minecraft/world/inventory/StonecutterMenu.java
-@@ -265,7 +265,7 @@ public class StonecutterMenu extends AbstractContainerMenu {
+@@ -256,7 +256,7 @@ public class StonecutterMenu extends AbstractContainerMenu {
  
              itemstack = itemstack1.copy();
              if (slot == 1) {
@@ -1705,10 +1626,10 @@ index 5a0015f761f6a25d7bb7b9cfe7a9b4771a6a37ec..cccb0445ae225f5ee84aca03ccfcdf7d
                      return ItemStack.EMPTY;
                  }
 diff --git a/src/main/java/net/minecraft/world/item/BlockItem.java b/src/main/java/net/minecraft/world/item/BlockItem.java
-index 96fb69ec6db2e7c8c728435f0c537b076259b2fb..27ec050e920ef8be6944d7d0b32967c52f8a01e7 100644
+index c816c935ecc74a811ffdffbe6ded73c06e92324a..bdb1016f4c9eb5cfca4a38436d0dd0c8615436ea 100644
 --- a/src/main/java/net/minecraft/world/item/BlockItem.java
 +++ b/src/main/java/net/minecraft/world/item/BlockItem.java
-@@ -72,6 +72,13 @@ public class BlockItem extends Item {
+@@ -66,6 +66,13 @@ public class BlockItem extends Item {
                  return InteractionResult.FAIL;
              } else {
                  BlockState iblockdata = this.getPlacementState(blockactioncontext1);
@@ -1723,7 +1644,7 @@ index 96fb69ec6db2e7c8c728435f0c537b076259b2fb..27ec050e920ef8be6944d7d0b32967c5
                  org.bukkit.block.BlockState blockstate = null;
                  if (this instanceof PlaceOnWaterBlockItem || this instanceof SolidBucketItem) {
 diff --git a/src/main/java/net/minecraft/world/item/BoneMealItem.java b/src/main/java/net/minecraft/world/item/BoneMealItem.java
-index 83e34ed4287d3434d1d702a6377cc114248a417b..b29a48f5aa46e519f832a321575c3af8a2fbde8f 100644
+index c7d4a09c11f933494ab047921660451c6c1c7280..0573a0c4884b78d21d0860ec4126a15f9b4aeed7 100644
 --- a/src/main/java/net/minecraft/world/item/BoneMealItem.java
 +++ b/src/main/java/net/minecraft/world/item/BoneMealItem.java
 @@ -70,6 +70,7 @@ public class BoneMealItem extends Item {
@@ -1743,10 +1664,10 @@ index 83e34ed4287d3434d1d702a6377cc114248a417b..b29a48f5aa46e519f832a321575c3af8
  
      public static boolean growWaterPlant(ItemStack stack, Level world, BlockPos blockPos, @Nullable Direction facing) {
 diff --git a/src/main/java/net/minecraft/world/item/Item.java b/src/main/java/net/minecraft/world/item/Item.java
-index 8fd54bccb7af59da9113d8a289d12d8fad1fb467..3b3ad54c60c3142345a3db6906182ce2c1a0c14d 100644
+index 3d948c8d325bcef7f4cfc0045f9991acb3aa2f7c..d846712219a33f0bf80557cad9a705240a75db77 100644
 --- a/src/main/java/net/minecraft/world/item/Item.java
 +++ b/src/main/java/net/minecraft/world/item/Item.java
-@@ -206,8 +206,7 @@ public class Item implements FeatureElement, ItemLike {
+@@ -226,8 +226,7 @@ public class Item implements FeatureElement, ItemLike {
      }
  
      public boolean isCorrectToolForDrops(ItemStack stack, BlockState state) {
@@ -1757,10 +1678,10 @@ index 8fd54bccb7af59da9113d8a289d12d8fad1fb467..3b3ad54c60c3142345a3db6906182ce2
  
      public InteractionResult interactLivingEntity(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand) {
 diff --git a/src/main/java/net/minecraft/world/item/ItemStack.java b/src/main/java/net/minecraft/world/item/ItemStack.java
-index 522b817f23f08eb720fe9d05eec7f548d2761603..4123f18aacae3c95841064404c1ddc75fbb8d1b7 100644
+index 33e7d2884195677c4d6340d8b84c1dd85c636ec1..54c8f5bf99e11ab325c27ab74e2c4cfffd4ae86c 100644
 --- a/src/main/java/net/minecraft/world/item/ItemStack.java
 +++ b/src/main/java/net/minecraft/world/item/ItemStack.java
-@@ -264,6 +264,7 @@ public final class ItemStack implements DataComponentHolder {
+@@ -263,6 +263,7 @@ public final class ItemStack implements DataComponentHolder {
      public Optional<TooltipComponent> getTooltipImage() {
          return this.getItem().getTooltipImage(this);
      }
@@ -1768,7 +1689,7 @@ index 522b817f23f08eb720fe9d05eec7f548d2761603..4123f18aacae3c95841064404c1ddc75
  
      @Override
      public DataComponentMap getComponents() {
-@@ -413,6 +414,8 @@ public final class ItemStack implements DataComponentHolder {
+@@ -416,6 +417,8 @@ public final class ItemStack implements DataComponentHolder {
          net.minecraft.world.entity.player.Player entityhuman = context.getPlayer();
          BlockPos blockposition = context.getClickedPos();
  
@@ -1777,7 +1698,7 @@ index 522b817f23f08eb720fe9d05eec7f548d2761603..4123f18aacae3c95841064404c1ddc75
          if (entityhuman != null && !entityhuman.getAbilities().mayBuild && !this.canPlaceOnBlockInAdventureMode(new BlockInWorld(context.getLevel(), blockposition, false))) {
              return InteractionResult.PASS;
          } else {
-@@ -431,7 +434,7 @@ public final class ItemStack implements DataComponentHolder {
+@@ -434,7 +437,7 @@ public final class ItemStack implements DataComponentHolder {
              }
              InteractionResult enuminteractionresult;
              try {
@@ -1786,36 +1707,22 @@ index 522b817f23f08eb720fe9d05eec7f548d2761603..4123f18aacae3c95841064404c1ddc75
              } finally {
                  world.captureBlockStates = false;
              }
-@@ -585,6 +588,14 @@ public final class ItemStack implements DataComponentHolder {
-                     }
+@@ -591,6 +594,14 @@ public final class ItemStack implements DataComponentHolder {
+                         }
  
-                     entityhuman.awardStat(Stats.ITEM_USED.get(item));
-+                    // MCCLab start - Add ItemBehaviour
-+                    if(placeEvent != null && !placeEvent.isCancelled() && placeEvent.canBuild()){
-+                        for (BlockState block : blocks) {
-+                            BlockPos blockPos = CraftLocation.toBlockPosition(block.getLocation());
-+                            de.verdox.mccreativelab.behaviour.BlockBehaviourUtil.getInstance().onPlayerPlaceCallback(entityhuman, blockUsedToPlaceBlock, world.getBlockState(blockPos), world, blockPos);
-+                        }
+                         entityhuman.awardStat(Stats.ITEM_USED.get(item));
++                        // MCCLab start - Add ItemBehaviour
++                        if(placeEvent != null && !placeEvent.isCancelled() && placeEvent.canBuild()){
++                            for (BlockState block : blocks) {
++                                BlockPos blockPos = CraftLocation.toBlockPosition(block.getLocation());
++                                de.verdox.mccreativelab.behaviour.BlockBehaviourUtil.getInstance().onPlayerPlaceCallback(entityhuman, blockUsedToPlaceBlock, world.getBlockState(blockPos), world, blockPos);
++                            }
 +
-+                    } // MCCLab end - Add ItemBehaviour
++                        } // MCCLab end - Add ItemBehaviour
+                     }
                  }
              }
-             world.capturedTileEntities.clear();
-@@ -600,11 +611,11 @@ public final class ItemStack implements DataComponentHolder {
-     }
- 
-     public InteractionResultHolder<ItemStack> use(Level world, net.minecraft.world.entity.player.Player user, InteractionHand hand) {
--        return this.getItem().use(world, user, hand);
-+        return de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.use(this, world, user, hand); // MCCLab - Add ItemBehaviour
-     }
- 
-     public ItemStack finishUsingItem(Level world, LivingEntity user) {
--        return this.getItem().finishUsingItem(this, world, user);
-+        return de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.finishUsingItem(this, world, user); // MCCLab - Add ItemBehaviour
-     }
- 
-     public Tag save(HolderLookup.Provider registries, Tag prefix) {
-@@ -792,12 +803,7 @@ public final class ItemStack implements DataComponentHolder {
+@@ -864,12 +875,7 @@ public final class ItemStack implements DataComponentHolder {
      }
  
      public void mineBlock(Level world, net.minecraft.world.level.block.state.BlockState state, BlockPos pos, net.minecraft.world.entity.player.Player miner) {
@@ -1829,7 +1736,7 @@ index 522b817f23f08eb720fe9d05eec7f548d2761603..4123f18aacae3c95841064404c1ddc75
      }
  
      public boolean isCorrectToolForDrops(net.minecraft.world.level.block.state.BlockState state) {
-@@ -805,7 +811,7 @@ public final class ItemStack implements DataComponentHolder {
+@@ -877,7 +883,7 @@ public final class ItemStack implements DataComponentHolder {
      }
  
      public InteractionResult interactLivingEntity(net.minecraft.world.entity.player.Player user, LivingEntity entity, InteractionHand hand) {
@@ -1838,7 +1745,7 @@ index 522b817f23f08eb720fe9d05eec7f548d2761603..4123f18aacae3c95841064404c1ddc75
      }
  
      public ItemStack copy() {
-@@ -819,7 +825,7 @@ public final class ItemStack implements DataComponentHolder {
+@@ -891,7 +897,7 @@ public final class ItemStack implements DataComponentHolder {
              return ItemStack.EMPTY;
          } else {
              ItemStack itemstack = new ItemStack(originalItem ? this.item : this.getItem(), this.count, this.components.copy()); // Paper - Perf: Optimize Hoppers
@@ -1847,7 +1754,7 @@ index 522b817f23f08eb720fe9d05eec7f548d2761603..4123f18aacae3c95841064404c1ddc75
              itemstack.setPopTime(this.getPopTime());
              return itemstack;
          }
-@@ -930,8 +936,11 @@ public final class ItemStack implements DataComponentHolder {
+@@ -998,8 +1004,11 @@ public final class ItemStack implements DataComponentHolder {
      }
  
      public void onCraftedBy(Level world, net.minecraft.world.entity.player.Player player, int amount) {
@@ -1861,17 +1768,17 @@ index 522b817f23f08eb720fe9d05eec7f548d2761603..4123f18aacae3c95841064404c1ddc75
      }
  
      public void onCraftedBySystem(Level world) {
-@@ -1372,6 +1381,7 @@ public final class ItemStack implements DataComponentHolder {
+@@ -1464,6 +1473,7 @@ public final class ItemStack implements DataComponentHolder {
  
      public void onDestroyed(ItemEntity entity) {
          this.getItem().onDestroyed(entity);
 +        de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.onDestroyed(this, entity); // MCCLab - Add ItemBehaviour
      }
  
-     public SoundEvent getDrinkingSound() {
-@@ -1389,4 +1399,22 @@ public final class ItemStack implements DataComponentHolder {
-     public boolean canBeHurtBy(DamageSource source) {
-         return !this.has(DataComponents.FIRE_RESISTANT) || !source.is(DamageTypeTags.IS_FIRE);
+     public SoundEvent getBreakingSound() {
+@@ -1481,4 +1491,22 @@ public final class ItemStack implements DataComponentHolder {
+ 
+         return repairable != null && repairable.isValidRepairItem(ingredient);
      }
 +    // MCCLab start - Add ItemBehaviour
 +    @Nullable private ItemStack craftRemainingItemInstance;
@@ -1892,70 +1799,8 @@ index 522b817f23f08eb720fe9d05eec7f548d2761603..4123f18aacae3c95841064404c1ddc75
 +    }
 +    // MCCLab end - Add ItemBehaviour
  }
-diff --git a/src/main/java/net/minecraft/world/item/crafting/BannerDuplicateRecipe.java b/src/main/java/net/minecraft/world/item/crafting/BannerDuplicateRecipe.java
-index 0cd0ffff714effcb6488ec387bc21a6b0b2c8d70..ba36988d290b4d902d3dad0e3d05ff800922c72f 100644
---- a/src/main/java/net/minecraft/world/item/crafting/BannerDuplicateRecipe.java
-+++ b/src/main/java/net/minecraft/world/item/crafting/BannerDuplicateRecipe.java
-@@ -82,8 +82,10 @@ public class BannerDuplicateRecipe extends CustomRecipe {
-         for (int i = 0; i < nonNullList.size(); i++) {
-             ItemStack itemStack = input.getItem(i);
-             if (!itemStack.isEmpty()) {
--                if (itemStack.getItem().hasCraftingRemainingItem()) {
--                    nonNullList.set(i, new ItemStack(itemStack.getItem().getCraftingRemainingItem()));
-+                // MCCLab start - Add ItemBehaviour
-+                if (itemStack.hasCraftingRemainingItem()) {
-+                    nonNullList.set(i, itemStack.getCraftingRemainingItem());
-+                // MCCLab end - Add ItemBehaviour
-                 } else if (!itemStack.getOrDefault(DataComponents.BANNER_PATTERNS, BannerPatternLayers.EMPTY).layers().isEmpty()) {
-                     nonNullList.set(i, itemStack.copyWithCount(1));
-                 }
-diff --git a/src/main/java/net/minecraft/world/item/crafting/BookCloningRecipe.java b/src/main/java/net/minecraft/world/item/crafting/BookCloningRecipe.java
-index a1130ac038f1cf2ec7edde9e227d27df2cef0c85..db0c6c30f42b0b5042eb4c1f56dbf9038f100aad 100644
---- a/src/main/java/net/minecraft/world/item/crafting/BookCloningRecipe.java
-+++ b/src/main/java/net/minecraft/world/item/crafting/BookCloningRecipe.java
-@@ -86,8 +86,8 @@ public class BookCloningRecipe extends CustomRecipe {
- 
-         for (int i = 0; i < nonNullList.size(); i++) {
-             ItemStack itemStack = input.getItem(i);
--            if (itemStack.getItem().hasCraftingRemainingItem()) {
--                nonNullList.set(i, new ItemStack(itemStack.getItem().getCraftingRemainingItem()));
-+            if (itemStack.hasCraftingRemainingItem()) { // MCCLab - Add ItemBehaviour
-+                nonNullList.set(i, itemStack.getCraftingRemainingItem()); // MCCLab - Add ItemBehaviour
-             } else if (itemStack.getItem() instanceof WrittenBookItem) {
-                 nonNullList.set(i, itemStack.copyWithCount(1));
-                 break;
-diff --git a/src/main/java/net/minecraft/world/item/crafting/Recipe.java b/src/main/java/net/minecraft/world/item/crafting/Recipe.java
-index b57568d5e9c4c148a4b3c303c925a813fdd5dc67..3f637f1be676b10bb603f897bd9b3c7d252f4d3d 100644
---- a/src/main/java/net/minecraft/world/item/crafting/Recipe.java
-+++ b/src/main/java/net/minecraft/world/item/crafting/Recipe.java
-@@ -30,10 +30,10 @@ public interface Recipe<T extends RecipeInput> {
-         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(input.size(), ItemStack.EMPTY);
- 
-         for (int i = 0; i < nonnulllist.size(); ++i) {
--            Item item = input.getItem(i).getItem();
-+            ItemStack item = input.getItem(i); // MCCLab - Add ItemBehaviour
- 
-             if (item.hasCraftingRemainingItem()) {
--                nonnulllist.set(i, new ItemStack(item.getCraftingRemainingItem()));
-+                nonnulllist.set(i, item.getCraftingRemainingItem()); // MCCLab - Add ItemBehaviour
-             }
-         }
- 
-diff --git a/src/main/java/net/minecraft/world/level/Explosion.java b/src/main/java/net/minecraft/world/level/Explosion.java
-index f696afd7e241bf1966a2d505b5d59bff824b43e4..4492861474bda51ed08c37356fa66aa4a212aac0 100644
---- a/src/main/java/net/minecraft/world/level/Explosion.java
-+++ b/src/main/java/net/minecraft/world/level/Explosion.java
-@@ -529,7 +529,7 @@ public class Explosion {
-         while (iterator.hasNext()) {
-             Entity entity = (Entity) iterator.next();
- 
--            if (!entity.ignoreExplosion(this)) {
-+            if (!de.verdox.mccreativelab.behaviour.EntityBehaviourUtil.ignoreExplosion(entity,level, x, y, z, fire, this, () -> entity.ignoreExplosion(this))) { // MCCLab - Add EntityBehaviour
-                 double d7 = Math.sqrt(entity.distanceToSqr(vec3d)) / (double) f2;
- 
-                 if (d7 <= 1.0D) {
 diff --git a/src/main/java/net/minecraft/world/level/ExplosionDamageCalculator.java b/src/main/java/net/minecraft/world/level/ExplosionDamageCalculator.java
-index 0ef9b402d129b072134688c06719a56328581158..05750caf2ce81246df2f25ecdaa89a88679d022e 100644
+index 62a99769b0f96749af5cf1c4767eb54a735a51a9..4cb1e980d7c09385ef4fd7073bf38e846f507e2c 100644
 --- a/src/main/java/net/minecraft/world/level/ExplosionDamageCalculator.java
 +++ b/src/main/java/net/minecraft/world/level/ExplosionDamageCalculator.java
 @@ -11,7 +11,7 @@ public class ExplosionDamageCalculator {
@@ -1968,10 +1813,10 @@ index 0ef9b402d129b072134688c06719a56328581158..05750caf2ce81246df2f25ecdaa89a88
  
      public boolean shouldBlockExplode(Explosion explosion, BlockGetter world, BlockPos pos, BlockState state, float power) {
 diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
-index 507671476c3d2d92a2fdb05be24443af27d26dcf..d9c443bba11341e16fa3c9bb5f04ac3f21b74e3d 100644
+index 0de2b79481352b52438dde284262019b29949ad8..2b203c35953c78fc1d8b3299614459b318246674 100644
 --- a/src/main/java/net/minecraft/world/level/Level.java
 +++ b/src/main/java/net/minecraft/world/level/Level.java
-@@ -1209,7 +1209,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -1281,7 +1281,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
              if (flag1) {
                  this.gameEvent((Holder) GameEvent.BLOCK_DESTROY, pos, GameEvent.Context.of(breakingEntity, iblockdata));
              }
@@ -1981,23 +1826,23 @@ index 507671476c3d2d92a2fdb05be24443af27d26dcf..d9c443bba11341e16fa3c9bb5f04ac3f
          }
      }
 diff --git a/src/main/java/net/minecraft/world/level/NaturalSpawner.java b/src/main/java/net/minecraft/world/level/NaturalSpawner.java
-index e524b27d185da3e88668f8ef107517272860bd66..cc312e0154282525abafc61fa821e72b70eb7697 100644
+index c1b76a1ebc1eea7ab70cf61d8175a31794dd122a..0c1f9773f5395c3236b1d7d817d21ef7df210649 100644
 --- a/src/main/java/net/minecraft/world/level/NaturalSpawner.java
 +++ b/src/main/java/net/minecraft/world/level/NaturalSpawner.java
-@@ -381,7 +381,7 @@ public final class NaturalSpawner {
+@@ -407,7 +407,7 @@ public final class NaturalSpawner {
      }
  
      private static boolean isValidPositionForMob(ServerLevel world, Mob entity, double squaredDistance) {
--        return squaredDistance > (double) (entity.getType().getCategory().getDespawnDistance() * entity.getType().getCategory().getDespawnDistance()) && entity.removeWhenFarAway(squaredDistance) ? false : entity.checkSpawnRules(world, MobSpawnType.NATURAL) && entity.checkSpawnObstruction(world);
-+        return squaredDistance > (double) (entity.getType().getCategory().getDespawnDistance() * entity.getType().getCategory().getDespawnDistance()) && entity.removeWhenFarAwayCustom(squaredDistance) ? false : entity.checkSpawnRules(world, MobSpawnType.NATURAL) && entity.checkSpawnObstruction(world); // MCCLab - Add EntityBehaviour
+-        return squaredDistance > (double) (entity.getType().getCategory().getDespawnDistance() * entity.getType().getCategory().getDespawnDistance()) && entity.removeWhenFarAway(squaredDistance) ? false : entity.checkSpawnRules(world, EntitySpawnReason.NATURAL) && entity.checkSpawnObstruction(world);
++        return squaredDistance > (double) (entity.getType().getCategory().getDespawnDistance() * entity.getType().getCategory().getDespawnDistance()) && entity.removeWhenFarAwayCustom(squaredDistance) ? false : entity.checkSpawnRules(world, EntitySpawnReason.NATURAL) && entity.checkSpawnObstruction(world);
      }
  
      private static Optional<MobSpawnSettings.SpawnerData> getRandomSpawnMobAt(ServerLevel world, StructureManager structureAccessor, ChunkGenerator chunkGenerator, MobCategory spawnGroup, RandomSource random, BlockPos pos) {
 diff --git a/src/main/java/net/minecraft/world/level/block/Block.java b/src/main/java/net/minecraft/world/level/block/Block.java
-index 29947de9eb6887f2e61516523ff08d8b581b0f53..1560b403836a57b5b5a618e9cdfe9f4d30c182ea 100644
+index b6d6c2cb9b227a17fb4ce42bc75f92206fbea043..c0e3feefe22410c851de80bad51990610ed3fad6 100644
 --- a/src/main/java/net/minecraft/world/level/block/Block.java
 +++ b/src/main/java/net/minecraft/world/level/block/Block.java
-@@ -410,6 +410,12 @@ public class Block extends BlockBehaviour implements ItemLike {
+@@ -406,6 +406,12 @@ public class Block extends BlockBehaviour implements ItemLike {
  
      }
  
@@ -2010,65 +1855,31 @@ index 29947de9eb6887f2e61516523ff08d8b581b0f53..1560b403836a57b5b5a618e9cdfe9f4d
      public float getExplosionResistance() {
          return this.explosionResistance;
      }
-diff --git a/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java b/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
-index 730aca233f6e7564d4cb85b5b628d23c4f01d2f4..7b941c51f2596c9d75a7d1e2cea0c457a27c4d4a 100644
---- a/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
-+++ b/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
-@@ -375,9 +375,9 @@ public abstract class AbstractFurnaceBlockEntity extends BaseContainerBlockEntit
- 
-                         itemstack.shrink(1);
-                         if (itemstack.isEmpty()) {
--                            Item item1 = item.getCraftingRemainingItem();
-+                            ItemStack item1 = itemstack.getCraftingRemainingItem(); // MCCLab - Add ItemBehaviour
- 
--                            blockEntity.items.set(1, item1 == null ? ItemStack.EMPTY : new ItemStack(item1));
-+                            blockEntity.items.set(1, item1 == null ? ItemStack.EMPTY : item1); // MCCLab - Add ItemBehaviour
-                         }
-                     }
-                 }
-diff --git a/src/main/java/net/minecraft/world/level/block/entity/BrewingStandBlockEntity.java b/src/main/java/net/minecraft/world/level/block/entity/BrewingStandBlockEntity.java
-index 0a93bacd62249bae1800ff306b8a7c765b0e5a8b..3cc4773145b7b01cb737ba1cf1fabd5aa5cf3c76 100644
---- a/src/main/java/net/minecraft/world/level/block/entity/BrewingStandBlockEntity.java
-+++ b/src/main/java/net/minecraft/world/level/block/entity/BrewingStandBlockEntity.java
-@@ -288,8 +288,10 @@ public class BrewingStandBlockEntity extends BaseContainerBlockEntity implements
-         }
- 
-         itemstack.shrink(1);
--        if (itemstack.getItem().hasCraftingRemainingItem()) {
--            ItemStack itemstack1 = new ItemStack(itemstack.getItem().getCraftingRemainingItem());
-+        // MCCLab start - Add ItemBehaviour
-+        if (itemstack.hasCraftingRemainingItem()) {
-+            ItemStack itemstack1 = itemstack.getCraftingRemainingItem();
-+        // MCCLab end - Add ItemBehaviour
- 
-             if (itemstack.isEmpty()) {
-                 itemstack = itemstack1;
 diff --git a/src/main/java/net/minecraft/world/level/block/piston/PistonBaseBlock.java b/src/main/java/net/minecraft/world/level/block/piston/PistonBaseBlock.java
-index e0c62227b279a5fe0f3868fbf9ce8c78c515a09c..242d880ede925b14e0e284c57e89350b6678bd44 100644
+index 4b51472502d08ea357da437afeb4b581979e9cff..ceb1e41db53e7f0ab8c52961a2a3860600f9f169 100644
 --- a/src/main/java/net/minecraft/world/level/block/piston/PistonBaseBlock.java
 +++ b/src/main/java/net/minecraft/world/level/block/piston/PistonBaseBlock.java
-@@ -450,6 +450,8 @@ public class PistonBaseBlock extends DirectionalBlock {
+@@ -454,6 +454,7 @@ public class PistonBaseBlock extends DirectionalBlock {
+                 blockposition3 = blockposition3.relative(enumdirection1);
                  map.remove(blockposition3);
-                 BlockState iblockdata2 = (BlockState) Blocks.MOVING_PISTON.defaultBlockState().setValue(PistonBaseBlock.FACING, dir);
- 
+                 iblockdata2 = (BlockState) Blocks.MOVING_PISTON.defaultBlockState().setValue(PistonBaseBlock.FACING, dir);
 +                BlockState beforeUpdate = world.getBlockState(oldPos); // MCCLab - Add BlockBehaviour
-+
                  world.setBlock(blockposition3, iblockdata2, 68);
                  // Paper start - fix a variety of piston desync dupes
                  if (!allowDesync) {
-@@ -462,6 +464,7 @@ public class PistonBaseBlock extends DirectionalBlock {
+@@ -466,6 +467,7 @@ public class PistonBaseBlock extends DirectionalBlock {
                  }
                  // Paper end - fix a variety of piston desync dupes
                  aiblockdata[i++] = iblockdata1;
 +                de.verdox.mccreativelab.behaviour.BlockBehaviourUtil.getInstance().onPistonMove(beforeUpdate, world, oldPos, blockposition3, pos, enumdirection1); // MCCLab - Add BlockBehaviour
              }
  
-             if (retract) {
+             if (extend) {
 diff --git a/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java b/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
-index d0109633e8bdf109cfc9178963d7b6cf92f8b189..f09c8c7e2ead70da45a9b368579d40bbb1b14506 100644
+index 5b6fbfd1a7a2d87fb2b87d5d1e674206cdf9b280..0818deaf15bae78b2fe0a5d49bf7a471a460d926 100644
 --- a/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
 +++ b/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
-@@ -398,6 +398,11 @@ public abstract class BlockBehaviour implements FeatureElement {
+@@ -397,6 +397,11 @@ public abstract class BlockBehaviour implements FeatureElement {
          return this.properties.destroyTime;
      }
  
@@ -2080,7 +1891,7 @@ index d0109633e8bdf109cfc9178963d7b6cf92f8b189..f09c8c7e2ead70da45a9b368579d40bb
      public static class Properties {
  
          public static final Codec<BlockBehaviour.Properties> CODEC = Codec.unit(() -> {
-@@ -922,7 +927,7 @@ public abstract class BlockBehaviour implements FeatureElement {
+@@ -964,7 +969,7 @@ public abstract class BlockBehaviour implements FeatureElement {
          protected boolean shapeExceedsCube = true; // Paper - moved from actual method to here
          public void initCache() {
              this.fluidState = ((Block) this.owner).getFluidState(this.asState());
@@ -2089,15 +1900,15 @@ index d0109633e8bdf109cfc9178963d7b6cf92f8b189..f09c8c7e2ead70da45a9b368579d40bb
              if (!this.getBlock().hasDynamicShape()) {
                  this.cache = new BlockBehaviour.BlockStateBase.Cache(this.asState());
              }
-@@ -1172,6 +1177,7 @@ public abstract class BlockBehaviour implements FeatureElement {
- 
-         public void handleNeighborChanged(Level world, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify) {
-             this.getBlock().neighborChanged(this.asState(), world, pos, sourceBlock, sourcePos, notify);
-+            if(blockBehaviour().isVanillaNeighbourBlockUpdateReplaced(asState(), world, pos, sourceBlock, sourcePos, notify)) return;  // MCCLab - Add BlockBehaviour
+@@ -1227,6 +1232,7 @@ public abstract class BlockBehaviour implements FeatureElement {
+         public void handleNeighborChanged(Level world, BlockPos pos, Block sourceBlock, @Nullable Orientation wireOrientation, boolean notify) {
+             DebugPackets.sendNeighborsUpdatePacket(world, pos);
+             this.getBlock().neighborChanged(this.asState(), world, pos, sourceBlock, wireOrientation, notify);
++            if(blockBehaviour().isVanillaNeighbourBlockUpdateReplaced(asState(), world, pos, sourceBlock, sourcePos, wireOrientation, notify)) return;  // MCCLab - Add BlockBehaviour
          }
  
          public final void updateNeighbourShapes(LevelAccessor world, BlockPos pos, int flags) {
-@@ -1212,6 +1218,8 @@ public abstract class BlockBehaviour implements FeatureElement {
+@@ -1267,6 +1273,8 @@ public abstract class BlockBehaviour implements FeatureElement {
  
          public void onRemove(Level world, BlockPos pos, BlockState state, boolean moved) {
              this.getBlock().onRemove(this.asState(), world, pos, state, moved);
@@ -2105,8 +1916,8 @@ index d0109633e8bdf109cfc9178963d7b6cf92f8b189..f09c8c7e2ead70da45a9b368579d40bb
 +               blockBehaviour().onRemoveCallback(state, world, pos, state, moved); // MCCLab - Add BlockBehaviour
          }
  
-         public void onExplosionHit(Level world, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> stackMerger) {
-@@ -1219,10 +1227,12 @@ public abstract class BlockBehaviour implements FeatureElement {
+         public void onExplosionHit(ServerLevel world, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> stackMerger) {
+@@ -1274,10 +1282,12 @@ public abstract class BlockBehaviour implements FeatureElement {
          }
  
          public void tick(ServerLevel world, BlockPos pos, RandomSource random) {
@@ -2119,18 +1930,7 @@ index d0109633e8bdf109cfc9178963d7b6cf92f8b189..f09c8c7e2ead70da45a9b368579d40bb
              this.getBlock().randomTick(this.asState(), world, pos, random);
          }
  
-@@ -1240,7 +1250,9 @@ public abstract class BlockBehaviour implements FeatureElement {
-         }
- 
-         public ItemInteractionResult useItemOn(ItemStack stack, Level world, Player player, InteractionHand hand, BlockHitResult hit) {
--            return this.getBlock().useItemOn(stack, this.asState(), world, hit.getBlockPos(), player, hand, hit);
-+            return blockBehaviour().useItemOn(asState(), world, hit.getBlockPos(), player, hand, hit, () -> { // MCCLab start - Add BlockBehaviour
-+                return this.getBlock().useItemOn(stack, this.asState(), world, hit.getBlockPos(), player, hand, hit);
-+            }); // MCCLab end - Add BlockBehaviour
-         }
- 
-         public InteractionResult useWithoutItem(Level world, Player player, BlockHitResult hit) {
-@@ -1248,6 +1260,7 @@ public abstract class BlockBehaviour implements FeatureElement {
+@@ -1307,6 +1317,7 @@ public abstract class BlockBehaviour implements FeatureElement {
          }
  
          public void attack(Level world, BlockPos pos, Player player) {
@@ -2138,17 +1938,17 @@ index d0109633e8bdf109cfc9178963d7b6cf92f8b189..f09c8c7e2ead70da45a9b368579d40bb
              this.getBlock().attack(this.asState(), world, pos, player);
          }
  
-@@ -1260,7 +1273,9 @@ public abstract class BlockBehaviour implements FeatureElement {
+@@ -1319,7 +1330,9 @@ public abstract class BlockBehaviour implements FeatureElement {
          }
  
-         public BlockState updateShape(Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
+         public BlockState updateShape(LevelReader world, ScheduledTickAccess tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
 +            return blockBehaviour().updateShape(asState(), direction, neighborState, world, pos, neighborPos, () -> { // MCCLab - Add BlockBehaviour
-             return this.getBlock().updateShape(this.asState(), direction, neighborState, world, pos, neighborPos);
+             return this.getBlock().updateShape(this.asState(), world, tickView, pos, direction, neighborPos, neighborState, random);
 +            }); // MCCLab - Add BlockBehaviour
          }
  
          public boolean isPathfindable(PathComputationType type) {
-@@ -1280,7 +1295,9 @@ public abstract class BlockBehaviour implements FeatureElement {
+@@ -1339,7 +1352,9 @@ public abstract class BlockBehaviour implements FeatureElement {
          }
  
          public boolean canSurvive(LevelReader world, BlockPos pos) {
@@ -2158,7 +1958,7 @@ index d0109633e8bdf109cfc9178963d7b6cf92f8b189..f09c8c7e2ead70da45a9b368579d40bb
          }
  
          public boolean hasPostProcess(BlockGetter world, BlockPos pos) {
-@@ -1318,6 +1335,7 @@ public abstract class BlockBehaviour implements FeatureElement {
+@@ -1377,6 +1392,7 @@ public abstract class BlockBehaviour implements FeatureElement {
  
          @Nullable
          public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockEntityType<T> blockEntityType) {
@@ -2166,7 +1966,7 @@ index d0109633e8bdf109cfc9178963d7b6cf92f8b189..f09c8c7e2ead70da45a9b368579d40bb
              return this.getBlock() instanceof EntityBlock ? ((EntityBlock) this.getBlock()).getTicker(world, this.asState(), blockEntityType) : null;
          }
  
-@@ -1337,6 +1355,13 @@ public abstract class BlockBehaviour implements FeatureElement {
+@@ -1396,6 +1412,13 @@ public abstract class BlockBehaviour implements FeatureElement {
              return this.isRandomlyTicking;
          }
  
@@ -2215,10 +2015,10 @@ index aadd0650a9d1a580e1b4f5ef360d5d42edf37eca..30efd2c35b8764acca7188ba707c5d33
 +    // MCCLab end - Add BlockBehaviour
  }
 diff --git a/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java b/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
-index 7c11853c5090fbc4fa5b3e73a69acf166158fdec..44952b445c94a204b231cf319b1206efc14b7165 100644
+index 4640baec5bed6c2d53cc0f8ca1d273cc115abe9b..4009f84fb309846fd359a96f653a714bdcf847b8 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
-@@ -404,6 +404,7 @@ public class LevelChunk extends ChunkAccess implements ca.spottedleaf.moonrise.p
+@@ -428,6 +428,7 @@ public class LevelChunk extends ChunkAccess implements ca.spottedleaf.moonrise.p
                      // CraftBukkit - Don't place while processing the BlockPlaceEvent, unless it's a BlockContainer. Prevents blocks such as TNT from activating when cancelled.
                      if (!this.level.isClientSide && doPlace && (!this.level.captureBlockStates || block instanceof net.minecraft.world.level.block.BaseEntityBlock)) {
                          iblockdata.onPlace(this.level, blockposition, iblockdata1, flag);
@@ -2227,12 +2027,12 @@ index 7c11853c5090fbc4fa5b3e73a69acf166158fdec..44952b445c94a204b231cf319b1206ef
  
                      if (iblockdata.hasBlockEntity()) {
 diff --git a/src/main/java/net/minecraft/world/level/chunk/LevelChunkSection.java b/src/main/java/net/minecraft/world/level/chunk/LevelChunkSection.java
-index c3b1caa352b988ec44fa2b2eb0536517711f5460..daf20918fabad2ba21339d27cb5f985f716e6cb8 100644
+index e4ae25c83ab9dd1aaa530a5456275ef63cdb8511..d49d9a298dd6f553eec12294aab9dcbab1af2f7d 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/LevelChunkSection.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/LevelChunkSection.java
-@@ -37,6 +37,28 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
-     private int specialCollidingBlocks;
-     private final ca.spottedleaf.moonrise.common.list.IBlockDataList tickingBlocks = new ca.spottedleaf.moonrise.common.list.IBlockDataList();
+@@ -38,6 +38,28 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+     private short specialCollidingBlocks;
+     private final ca.spottedleaf.moonrise.common.list.ShortList tickingBlocks = new ca.spottedleaf.moonrise.common.list.ShortList();
  
 +    // MCCLab start - Add BlockBehaviour
 +    @org.jetbrains.annotations.NotNull private net.minecraft.world.level.Level level;
@@ -2257,16 +2057,14 @@ index c3b1caa352b988ec44fa2b2eb0536517711f5460..daf20918fabad2ba21339d27cb5f985f
 +    // MCCLab end - Add BlockBehaviour
 +
      @Override
-     public final int moonrise$getSpecialCollidingBlocks() {
-         return this.specialCollidingBlocks;
-@@ -48,8 +70,13 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+     public final boolean moonrise$hasSpecialCollidingBlocks() {
+         return this.specialCollidingBlocks != 0;
+@@ -57,7 +79,11 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+         this.biomes = section.biomes.copy();
      }
-     // Paper end - block counting
  
--    public LevelChunkSection(PalettedContainer<BlockState> datapaletteblock, PalettedContainer<Holder<Biome>> palettedcontainerro) {
-+    public LevelChunkSection(net.minecraft.world.level.Level level, net.minecraft.world.level.ChunkPos chunkPos, PalettedContainer<BlockState> datapaletteblock, PalettedContainer<Holder<Biome>> palettedcontainerro, int chunkSectionY) { // MCCLab - Add BlockBehaviour
-         // CraftBukkit end
-+        // MCCLab start - Add BlockBehaviour   
+-    public LevelChunkSection(PalettedContainer<BlockState> datapaletteblock, PalettedContainer<Holder<Biome>> palettedcontainerro) { // CraftBukkit - read/write
++    public LevelChunkSection(PalettedContainer<BlockState> datapaletteblock, PalettedContainer<Holder<Biome>> palettedcontainerro, int chunkSectionY) { // CraftBukkit - read/write // MCCLab - Add BlockBehaviour
 +        this.level = level;
 +        this.chunkPos = chunkPos;
 +        this.chunkSectionY = chunkSectionY;
@@ -2274,10 +2072,10 @@ index c3b1caa352b988ec44fa2b2eb0536517711f5460..daf20918fabad2ba21339d27cb5f985f
          this.states = datapaletteblock;
          this.biomes = palettedcontainerro;
          this.recalcBlockCounts();
-@@ -61,6 +88,11 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
-         // Paper end
+@@ -69,6 +95,11 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+     // Paper end
          this.states = new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(), PalettedContainer.Strategy.SECTION_STATES, level == null || level.chunkPacketBlockController == null ? null : level.chunkPacketBlockController.getPresetBlockStates(level, chunkPos, chunkSectionY)); // Paper - Anti-Xray - Add preset block states
-         this.biomes = new PalettedContainer<>(biomeRegistry.asHolderIdMap(), biomeRegistry.getHolderOrThrow(Biomes.PLAINS), PalettedContainer.Strategy.SECTION_BIOMES, null); // Paper - Anti-Xray - Add preset biomes
+         this.biomes = new PalettedContainer<>(biomeRegistry.asHolderIdMap(), biomeRegistry.getOrThrow(Biomes.PLAINS), PalettedContainer.Strategy.SECTION_BIOMES, null); // Paper - Anti-Xray - Add preset biomes
 +        // MCCLab start - Add BlockBehaviour
 +        this.level = level;
 +        this.chunkPos = chunkPos;
@@ -2286,7 +2084,7 @@ index c3b1caa352b988ec44fa2b2eb0536517711f5460..daf20918fabad2ba21339d27cb5f985f
      }
  
      public BlockState getBlockState(int x, int y, int z) {
-@@ -92,12 +124,18 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+@@ -139,12 +170,18 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
              iblockdata1 = (BlockState) this.states.getAndSetUnchecked(x, y, z, state);
          }
  
@@ -2306,7 +2104,7 @@ index c3b1caa352b988ec44fa2b2eb0536517711f5460..daf20918fabad2ba21339d27cb5f985f
                  --this.tickingBlockCount;
              }
          }
-@@ -108,7 +146,7 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+@@ -155,7 +192,7 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
  
          if (!state.isAir()) {
              ++this.nonEmptyBlockCount;
@@ -2315,7 +2113,7 @@ index c3b1caa352b988ec44fa2b2eb0536517711f5460..daf20918fabad2ba21339d27cb5f985f
                  ++this.tickingBlockCount;
              }
          }
-@@ -187,11 +225,22 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+@@ -220,11 +257,22 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
                      continue;
                  }
  
@@ -2331,27 +2129,17 @@ index c3b1caa352b988ec44fa2b2eb0536517711f5460..daf20918fabad2ba21339d27cb5f985f
 +                // MCCLab end - Add BlockBehaviour
 +
                  if (ca.spottedleaf.moonrise.patches.collisions.CollisionUtil.isSpecialCollidingBlock(state)) {
-                     this.specialCollidingBlocks += paletteCount;
+                     this.specialCollidingBlocks += (short)paletteCount;
                  }
-                 this.nonEmptyBlockCount += paletteCount;
+                 this.nonEmptyBlockCount += (short)paletteCount;
 -                if (state.isRandomlyTicking()) {
 +                if (level != null ? state.isRandomlyTicking(level, globalX, globalY, globalZ, state) : state.isRandomlyTicking()) {
-                     this.tickingBlockCount += paletteCount;
-                     final int[] raw = coordinates.elements();
- 
+                     this.tickingBlockCount += (short)paletteCount;
+                     final short[] raw = coordinates.elements();
+                     final int rawLen = raw.length;
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/ChunkSerializer.java b/src/main/java/net/minecraft/world/level/chunk/storage/ChunkSerializer.java
-index 4bd048387651250135f963303c78c17f8473cfee..4b8c4949684736fcdc04d5f536d404210ec2b0e2 100644
---- a/src/main/java/net/minecraft/world/level/chunk/storage/ChunkSerializer.java
-+++ b/src/main/java/net/minecraft/world/level/chunk/storage/ChunkSerializer.java
-@@ -176,7 +176,7 @@ public class ChunkSerializer {
-                     object = new PalettedContainer<>(iregistry.asHolderIdMap(), iregistry.getHolderOrThrow(Biomes.PLAINS), PalettedContainer.Strategy.SECTION_BIOMES, null); // Paper - Anti-Xray - Add preset biomes
-                 }
- 
--                LevelChunkSection chunksection = new LevelChunkSection(datapaletteblock, (PalettedContainer) object); // CraftBukkit - read/write
-+                LevelChunkSection chunksection = new LevelChunkSection(world, chunkPos, datapaletteblock, (PalettedContainer) object, world.getSectionYFromSectionIndex(k)); // MCCLab - Add BlockBehaviour // CraftBukkit - read/write 
- 
-                 achunksection[k] = chunksection;
-                 SectionPos sectionposition = SectionPos.of(chunkPos, b0);
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/src/main/java/net/minecraft/world/level/levelgen/feature/OreFeature.java b/src/main/java/net/minecraft/world/level/levelgen/feature/OreFeature.java
 index 506b2afd099c9b7e9ac3f6f2fcea8e523fae396b..d5227d8ace38ee06716f65d3be101110d06b06b6 100644
 --- a/src/main/java/net/minecraft/world/level/levelgen/feature/OreFeature.java
@@ -2388,7 +2176,7 @@ index 506b2afd099c9b7e9ac3f6f2fcea8e523fae396b..d5227d8ace38ee06716f65d3be101110
                                                                  break;
                                                              }
 diff --git a/src/main/java/net/minecraft/world/level/levelgen/feature/TreeFeature.java b/src/main/java/net/minecraft/world/level/levelgen/feature/TreeFeature.java
-index 64c22e5fb5ebc609667507ea8a6b1b8d0da768a1..7064624f8d5deda868312d2f42a53660a3faa727 100644
+index b5a8ada8400b2fefe12311a2587e104b1b831c2f..0273a3aa8c8c3417a0b09db2eff9b4531f0a04ee 100644
 --- a/src/main/java/net/minecraft/world/level/levelgen/feature/TreeFeature.java
 +++ b/src/main/java/net/minecraft/world/level/levelgen/feature/TreeFeature.java
 @@ -124,16 +124,19 @@ public class TreeFeature extends Feature<TreeConfiguration> {
@@ -2433,10 +2221,10 @@ index ab42bc721d5b6c17c2ca6c7153b757571aea05e8..cfe38ab06d034a91e998612563f9fc5f
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-index 89c8713d2c2206d1b0d8c0a392c9d13b3e736f0c..e86b12e23163163c7410fd3e5691fdf47cf0876d 100644
+index ddabaed899c755925ad8618b78c33dacaf2126ac..e2a8d2141747c93c9800caeb6ba1d3a301e12065 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-@@ -312,6 +312,40 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -313,6 +313,40 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          return bukkitEntityList;
      }
  
@@ -2491,10 +2279,10 @@ index 03eb35d5c67f125c44cf46595c93d124ac7892b8..8157e1340aa5c01b01064b33d33b6afc
          return section;
      }
 diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
-index 6081c588c61406d0d21a15e8e6140d5d5240f0a8..80e953be36bdc0c4a2988b797432010d486d08f2 100644
+index 78975412da0f0c2b802bfce6d30d56b26d8023e2..cee6520b775fb5dcd56f00ec3194a884ee16429b 100644
 --- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
 +++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
-@@ -95,7 +95,9 @@ public final class CraftItemStack extends ItemStack {
+@@ -98,7 +98,9 @@ public final class CraftItemStack extends ItemStack {
              return net.minecraft.world.item.ItemStack.EMPTY;
          }
          final CraftItemStack stack = getCraftStack(original);
@@ -2505,7 +2293,7 @@ index 6081c588c61406d0d21a15e8e6140d5d5240f0a8..80e953be36bdc0c4a2988b797432010d
          // Paper end - re-implement after delegating all api ItemStack calls to CraftItemStack
      }
  
-@@ -132,7 +134,9 @@ public final class CraftItemStack extends ItemStack {
+@@ -135,7 +137,9 @@ public final class CraftItemStack extends ItemStack {
      public static CraftItemStack asCraftCopy(ItemStack original) {
          if (original instanceof CraftItemStack) {
              CraftItemStack stack = (CraftItemStack) original;
@@ -2516,7 +2304,7 @@ index 6081c588c61406d0d21a15e8e6140d5d5240f0a8..80e953be36bdc0c4a2988b797432010d
          }
          return new CraftItemStack(original);
      }
-@@ -157,6 +161,7 @@ public final class CraftItemStack extends ItemStack {
+@@ -167,6 +171,7 @@ public final class CraftItemStack extends ItemStack {
  
      private CraftItemStack(ItemStack item) {
          this(item.getType(), item.getAmount(), item.getDurability(), item.hasItemMeta() ? item.getItemMeta() : null);
@@ -2524,10 +2312,10 @@ index 6081c588c61406d0d21a15e8e6140d5d5240f0a8..80e953be36bdc0c4a2988b797432010d
      }
  
      private CraftItemStack(Material type, int amount, short durability, ItemMeta itemMeta) {
-@@ -514,4 +519,34 @@ public final class CraftItemStack extends ItemStack {
-         return this.pdcView;
+@@ -658,4 +663,34 @@ public final class CraftItemStack extends ItemStack {
      }
-     // Paper end - pdc
+ 
+     // Paper end - data component API
 +    // MCCLab start - Add ItemBehaviour as instance to this specific Item Stack
 +    @Override
 +    public @org.jetbrains.annotations.Nullable de.verdox.mccreativelab.behaviour.ItemBehaviour getItemBehaviour() {

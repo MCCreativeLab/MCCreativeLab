@@ -5,10 +5,10 @@ Subject: [PATCH] Add WorldSelectChunkGeneratorEvent
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index daf49f8d5f114bed81f1d879c1a5bc0d079aae2b..5d6ca4fff0974023e7ccb4f0f6e69c075772a569 100644
+index 6fc8288fd4820f90f2713d860edb58f025caff24..31ef4b67c8e46b068d00b0a07fb6cf66f80e717c 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -1949,7 +1949,9 @@ public final class CraftServer implements Server {
+@@ -1965,7 +1965,9 @@ public final class CraftServer implements Server {
              }
          }
  

@@ -5,7 +5,7 @@ Subject: [PATCH] Adding MilkGivingEntity to API
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Cow.java b/src/main/java/net/minecraft/world/entity/animal/Cow.java
-index e336934f37075a827843e4b1bb2b6b660d2c60c9..42a5ab8af640c89d43da08f19f852e376284ee36 100644
+index 3e00bbff266fc71b07014e7e047d77b7f809239f..0819eff04c3aa16e21acb22f8a34e69d0567e539 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Cow.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Cow.java
 @@ -44,6 +44,7 @@ public class Cow extends Animal {
@@ -32,10 +32,10 @@ index e336934f37075a827843e4b1bb2b6b660d2c60c9..42a5ab8af640c89d43da08f19f852e37
              PlayerBucketFillEvent event = CraftEventFactory.callPlayerBucketFillEvent((ServerLevel) player.level(), player, this.blockPosition(), this.blockPosition(), null, itemstack, Items.MILK_BUCKET, hand);
  
 diff --git a/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java b/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java
-index b96b0593f19d68a58e3a95c9c1045e5d7184a375..f4c3e19063df4a443d1dbdd4af262b16c479a4d7 100644
+index 33f2fa08b97702b08b423d734632f14a6dfa035e..819a769106a261a6cc46bed98f733a94baa84829 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java
-@@ -75,6 +75,7 @@ public class Goat extends Animal {
+@@ -74,6 +74,7 @@ public class Goat extends Animal {
      public static final EntityDataAccessor<Boolean> DATA_HAS_RIGHT_HORN = SynchedEntityData.defineId(Goat.class, EntityDataSerializers.BOOLEAN);
      private boolean isLoweringHead;
      private int lowerHeadTick;
@@ -43,7 +43,7 @@ index b96b0593f19d68a58e3a95c9c1045e5d7184a375..f4c3e19063df4a443d1dbdd4af262b16
  
      public Goat(EntityType<? extends Goat> type, Level world) {
          super(type, world);
-@@ -230,6 +231,12 @@ public class Goat extends Animal {
+@@ -234,6 +235,12 @@ public class Goat extends Animal {
          ItemStack itemstack = player.getItemInHand(hand);
  
          if (itemstack.is(Items.BUCKET) && !this.isBaby()) {
@@ -97,10 +97,10 @@ index 2c21de478bff9cdf13ba46cd041831d54c11e924..5069d0333d088da35b44e2f5ee6c47a0
 +    // Paper end - // Paper - Can give milk API attribute
  }
 diff --git a/src/test/java/org/bukkit/craftbukkit/entity/EntityTypesTest.java b/src/test/java/org/bukkit/craftbukkit/entity/EntityTypesTest.java
-index da2f0127ad92b12cc6a77afb0e66322a21d3d25a..9316015a8bde256ba9516e248b87adabdac26ad1 100644
+index b638519bba1a33c97800958f119d38c430296499..827deeea62390145c7b6d854b954e8add26cca60 100644
 --- a/src/test/java/org/bukkit/craftbukkit/entity/EntityTypesTest.java
 +++ b/src/test/java/org/bukkit/craftbukkit/entity/EntityTypesTest.java
-@@ -102,6 +102,7 @@ public class EntityTypesTest {
+@@ -106,6 +106,7 @@ public class EntityTypesTest {
              Minecart.class,
              Mob.class,
              Monster.class,

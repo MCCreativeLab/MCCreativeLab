@@ -1410,7 +1410,7 @@ diff --git a/src/main/java/io/papermc/paper/event/player/PlayerTradeEvent.java b
 old mode 100755
 new mode 100644
 diff --git a/src/main/java/org/bukkit/entity/Entity.java b/src/main/java/org/bukkit/entity/Entity.java
-index d0ae8a94db20281d3664d74718c65234eb2e5f83..09dc6e36d4142743bbcce5b911a0318ad03bab81 100644
+index 19272cff8d6d040e95b2644d70acdac606e06c16..7b8f9f69de214895b09b0bd58881e0269acc9583 100644
 --- a/src/main/java/org/bukkit/entity/Entity.java
 +++ b/src/main/java/org/bukkit/entity/Entity.java
 @@ -768,6 +768,35 @@ public interface Entity extends Metadatable, CommandSender, Nameable, Persistent
@@ -1450,7 +1450,7 @@ index d0ae8a94db20281d3664d74718c65234eb2e5f83..09dc6e36d4142743bbcce5b911a0318a
       * Add a tag to this entity.
       * <br>
 diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
-index b59222b8c262545d100a9fd28b3bf1d2a4cf4eb0..25f7eee19da7369642e5d01b73d9de14200aa25a 100644
+index 8c9654cd19af8b28fa276a55c5060eb389e60c1c..e73c891ed867c833ab7f28dfdb98a413f8e3108a 100644
 --- a/src/main/java/org/bukkit/inventory/ItemStack.java
 +++ b/src/main/java/org/bukkit/inventory/ItemStack.java
 @@ -143,6 +143,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
@@ -1469,10 +1469,10 @@ index b59222b8c262545d100a9fd28b3bf1d2a4cf4eb0..25f7eee19da7369642e5d01b73d9de14
      }
  
      /**
-@@ -1137,4 +1139,22 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
-         return Bukkit.getUnsafe().computeTooltipLines(this, tooltipContext, player);
+@@ -1318,4 +1320,22 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+         return this.craftDelegate.matchesWithoutData(item, excludeTypes, ignoreCount);
      }
-     // Paper end - expose itemstack tooltip lines
+     // Paper end - data component API
 +
 +    // MCCLab start - Add ItemBehaviour as instance to this specific Item Stack
 +    public void setItemBehaviour(@Nullable de.verdox.mccreativelab.behaviour.ItemBehaviour itemBehaviour){

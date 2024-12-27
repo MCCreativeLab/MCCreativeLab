@@ -5,10 +5,10 @@ Subject: [PATCH] FurnaceRunOutOfFuelEvent called correctly now
 
 
 diff --git a/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java b/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
-index 40d934ae0ddd2c08a4f9ace65ed188efe953eab5..d7315114859714176a0c4699b4ab3923f7865a52 100644
+index 9c89397a838d904f45b735c903d8ed16c29363aa..94732a36ab28b79f288a67122a395b009cd715f7 100644
 --- a/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
 +++ b/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
-@@ -419,7 +419,9 @@ public abstract class AbstractFurnaceBlockEntity extends BaseContainerBlockEntit
+@@ -306,7 +306,9 @@ public abstract class AbstractFurnaceBlockEntity extends BaseContainerBlockEntit
  
          if (flag1) {
              setChanged(world, pos, state);

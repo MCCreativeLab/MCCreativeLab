@@ -5,10 +5,10 @@ Subject: [PATCH] Add FurnaceRunOutOfFuelEvent
 
 
 diff --git a/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java b/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
-index b748b8d045284775d438fc6739d44e354c148e4c..b0cfecaadf035ccb4ded2be738c9717d808842b2 100644
+index 15e0861486a2bda3e2f4049b1b5a299c870acd31..9c89397a838d904f45b735c903d8ed16c29363aa 100644
 --- a/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
 +++ b/src/main/java/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
-@@ -419,6 +419,8 @@ public abstract class AbstractFurnaceBlockEntity extends BaseContainerBlockEntit
+@@ -306,6 +306,8 @@ public abstract class AbstractFurnaceBlockEntity extends BaseContainerBlockEntit
  
          if (flag1) {
              setChanged(world, pos, state);

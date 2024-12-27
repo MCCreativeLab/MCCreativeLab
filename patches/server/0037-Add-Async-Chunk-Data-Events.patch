@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Fri, 27 Dec 2024 17:34:26 +0000
+Subject: [PATCH] Add Async Chunk Data Events
+
+
+diff --git a/src/main/java/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java b/src/main/java/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
+index eafa4e6d55cd0f9314ac0f2b96a7f48fbb5e1a4c..755bf624f667cbe1dd9e4e804cc8b4d5299ae393 100644
+--- a/src/main/java/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
++++ b/src/main/java/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
+@@ -1756,6 +1756,7 @@ public final class NewChunkHolder {
+             final CallbackCompletable<CompoundTag> completable = new CallbackCompletable<>();
+ 
+             final Runnable run = () -> {
++                org.bukkit.Bukkit.getPluginManager().callEvent(new de.verdox.mccreativelab.events.ChunkDataSaveEvent(world.getWorld(), new org.bukkit.craftbukkit.CraftChunk(world, chunk.locX, chunk.locZ), new de.verdox.mccreativelab.events.ChunkDataEvent.ChunkPos(chunk.locX, chunk.locZ), chunk.persistentDataContainer, unloaded)); // MCC - Add Async Chunk Data Events
+                 final CompoundTag data = chunkData.write();
+ 
+                 completable.complete(data);
+diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/SerializableChunkData.java b/src/main/java/net/minecraft/world/level/chunk/storage/SerializableChunkData.java
+index 018b24d7611c3fd11536441431abf8f125850129..4f4195e33ec8e11a7fc80d776d344cb97cf72192 100644
+--- a/src/main/java/net/minecraft/world/level/chunk/storage/SerializableChunkData.java
++++ b/src/main/java/net/minecraft/world/level/chunk/storage/SerializableChunkData.java
+@@ -400,6 +400,7 @@ public record SerializableChunkData(Registry<Biome> biomeRegistry, ChunkPos chun
+         // CraftBukkit start - load chunk persistent data from nbt - SPIGOT-6814: Already load PDC here to account for 1.17 to 1.18 chunk upgrading.
+         if (this.persistentDataContainer instanceof CompoundTag) {
+             ((ChunkAccess) object).persistentDataContainer.putAll((CompoundTag) this.persistentDataContainer);
++            org.bukkit.Bukkit.getPluginManager().callEvent(new de.verdox.mccreativelab.events.ChunkDataLoadEvent(world.getWorld(), new org.bukkit.craftbukkit.CraftChunk(world, expectedPos.x, expectedPos.z), new de.verdox.mccreativelab.events.ChunkDataEvent.ChunkPos(expectedPos.x, expectedPos.z), ((ChunkAccess) object).persistentDataContainer)); // MCC - Add Async Chunk Data Events
+         }
+         // CraftBukkit end
+ 

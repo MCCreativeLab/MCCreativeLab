@@ -5,7 +5,7 @@ Subject: [PATCH] Temp Patch
 
 
 diff --git a/src/main/java/de/verdox/mccreativelab/CreativeLabImpl.java b/src/main/java/de/verdox/mccreativelab/CreativeLabImpl.java
-index 287c9fd46016a33379acae37c842b638bf06ce94..628b2ce2b803fe23b3b33fd62a77866dd6b2135f 100644
+index 287c9fd46016a33379acae37c842b638bf06ce94..4d714e0b4d414b8a190c2202e6c26ee807053479 100644
 --- a/src/main/java/de/verdox/mccreativelab/CreativeLabImpl.java
 +++ b/src/main/java/de/verdox/mccreativelab/CreativeLabImpl.java
 @@ -1,7 +1,26 @@
@@ -238,10 +238,10 @@ index 0000000000000000000000000000000000000000..e723abdde093a582bac403692f778931
 +    }
 +}
 diff --git a/src/main/java/net/minecraft/world/item/BlockItem.java b/src/main/java/net/minecraft/world/item/BlockItem.java
-index 27ec050e920ef8be6944d7d0b32967c52f8a01e7..4a453dde16579bf4ee62fa66337b864ace7056ca 100644
+index bdb1016f4c9eb5cfca4a38436d0dd0c8615436ea..338a4a87978226ec8a4a0b07cb70c5e657ec92cf 100644
 --- a/src/main/java/net/minecraft/world/item/BlockItem.java
 +++ b/src/main/java/net/minecraft/world/item/BlockItem.java
-@@ -286,4 +286,62 @@ public class BlockItem extends Item {
+@@ -275,4 +275,62 @@ public class BlockItem extends Item {
      public FeatureFlagSet requiredFeatures() {
          return this.getBlock().requiredFeatures();
      }
@@ -305,10 +305,10 @@ index 27ec050e920ef8be6944d7d0b32967c52f8a01e7..4a453dde16579bf4ee62fa66337b864a
 +    }
  }
 diff --git a/src/main/java/net/minecraft/world/level/block/ComposterBlock.java b/src/main/java/net/minecraft/world/level/block/ComposterBlock.java
-index d3d12f9114173f4971f95d7ef895a4374705bd3f..df25dbd097e0badd80a424de5bd3ca74b8f08fb4 100644
+index db837b250fc35af5b528bf973b3b07f63e79bc46..9046946bcb9323e20280272d3a853fc4a54cc1cc 100644
 --- a/src/main/java/net/minecraft/world/level/block/ComposterBlock.java
 +++ b/src/main/java/net/minecraft/world/level/block/ComposterBlock.java
-@@ -78,6 +78,7 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
+@@ -77,6 +77,7 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
          float f3 = 0.85F;
          float f4 = 1.0F;
  

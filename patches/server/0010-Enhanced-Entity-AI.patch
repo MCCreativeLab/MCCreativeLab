@@ -1593,10 +1593,10 @@ index 40352c1cff78e04e09a6d7845714810321abd53c..5d96da6627c58e7d5ebeec1952fd547c
      @VisibleForTesting
      public void removeAllBehaviors() {
 diff --git a/src/main/java/net/minecraft/world/entity/ai/behavior/Behavior.java b/src/main/java/net/minecraft/world/entity/ai/behavior/Behavior.java
-index 9379dd4056018b52c93ed4888dcdc94579bd9691..139aecc7129740f93eee46374681612ec243c413 100644
+index ba951cc1aaa94b58ee7985f197d41cc8be747fc8..3f493fa18f0f692953823caa576ac83fd34de838 100644
 --- a/src/main/java/net/minecraft/world/entity/ai/behavior/Behavior.java
 +++ b/src/main/java/net/minecraft/world/entity/ai/behavior/Behavior.java
-@@ -42,6 +42,10 @@ public abstract class Behavior<E extends LivingEntity> implements BehaviorContro
+@@ -40,6 +40,10 @@ public abstract class Behavior<E extends LivingEntity> implements BehaviorContro
          // Paper end - configurable behavior tick rate and timings
      }
  
@@ -1607,7 +1607,7 @@ index 9379dd4056018b52c93ed4888dcdc94579bd9691..139aecc7129740f93eee46374681612e
      @Override
      public Behavior.Status getStatus() {
          return this.status;
-@@ -127,4 +131,16 @@ public abstract class Behavior<E extends LivingEntity> implements BehaviorContro
+@@ -121,4 +125,16 @@ public abstract class Behavior<E extends LivingEntity> implements BehaviorContro
          STOPPED,
          RUNNING;
      }
@@ -1625,7 +1625,7 @@ index 9379dd4056018b52c93ed4888dcdc94579bd9691..139aecc7129740f93eee46374681612e
 +    }
  }
 diff --git a/src/main/java/net/minecraft/world/entity/ai/goal/EatBlockGoal.java b/src/main/java/net/minecraft/world/entity/ai/goal/EatBlockGoal.java
-index 4e2c23ccdf4e4a4d65b291dbe20952bae1838bff..6e734ef2da4307e2a86fc70a00427240df7e7303 100644
+index 32bb591371fe78ba10a2bc52389ef33978cbc0eb..d482ad09f54ca06a3a9e4c8b946f8cedf5c9b1e6 100644
 --- a/src/main/java/net/minecraft/world/entity/ai/goal/EatBlockGoal.java
 +++ b/src/main/java/net/minecraft/world/entity/ai/goal/EatBlockGoal.java
 @@ -22,11 +22,23 @@ public class EatBlockGoal extends Goal {
@@ -1668,18 +1668,7 @@ index 4e2c23ccdf4e4a4d65b291dbe20952bae1838bff..6e734ef2da4307e2a86fc70a00427240
          }
      }
  
-@@ -73,22 +86,28 @@ public class EatBlockGoal extends Goal {
-             BlockPos blockposition = this.mob.blockPosition();
- 
-             final BlockState blockState = this.level.getBlockState(blockposition); // Paper - fix wrong block state
--            if (EatBlockGoal.IS_TALL_GRASS.test(blockState)) { // Paper - fix wrong block state
--                if (CraftEventFactory.callEntityChangeBlockEvent(this.mob, blockposition, blockState.getFluidState().createLegacyBlock(), !this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING))) { // CraftBukkit // Paper - fix wrong block state
-+            org.bukkit.block.BlockState bukkitBlockState = this.level.getWorld().getBlockState(blockposition.getX(), blockposition.getY(), blockposition.getZ());
-+            if (bukkitBlockStatePredicate.test(bukkitBlockState)) { // Paper - fix wrong block state
-+                if (CraftEventFactory.callEntityChangeBlockEvent(this.mob, blockposition, blockState.getFluidState()
-+                                                                                                    .createLegacyBlock(), !this.level
-+                    .getGameRules()
-+                    .getBoolean(GameRules.RULE_MOBGRIEFING))) { // CraftBukkit // Paper - fix wrong block state
+@@ -78,7 +91,7 @@ public class EatBlockGoal extends Goal {
                      this.level.destroyBlock(blockposition, false);
                  }
  
@@ -1688,12 +1677,7 @@ index 4e2c23ccdf4e4a4d65b291dbe20952bae1838bff..6e734ef2da4307e2a86fc70a00427240
              } else {
                  BlockPos blockposition1 = blockposition.below();
  
-                 if (this.level.getBlockState(blockposition1).is(Blocks.GRASS_BLOCK)) {
--                    if (CraftEventFactory.callEntityChangeBlockEvent(this.mob, blockposition1, Blocks.DIRT.defaultBlockState(), !this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING))) { // CraftBukkit // Paper - Fix wrong block state
-+                    if (CraftEventFactory.callEntityChangeBlockEvent(this.mob, blockposition1, Blocks.DIRT.defaultBlockState(), !this.level
-+                        .getGameRules()
-+                        .getBoolean(GameRules.RULE_MOBGRIEFING))) { // CraftBukkit // Paper - Fix wrong block state
-                         this.level.levelEvent(2001, blockposition1, Block.getId(Blocks.GRASS_BLOCK.defaultBlockState()));
+@@ -88,7 +101,7 @@ public class EatBlockGoal extends Goal {
                          this.level.setBlock(blockposition1, Blocks.DIRT.defaultBlockState(), 2);
                      }
  
@@ -1769,7 +1753,7 @@ index 137ec75ee803789deb7b1ca93dd9369c9af362b9..cb433002b980ad0ee8f7c265975e308e
          } else if (!this.creeper.getSensing().hasLineOfSight(this.target)) {
              this.creeper.setSwellDir(-1);
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index c7df339aeb62ee627edaf1bb4c8474b61e357ba6..08671e6bc21260b01c3be4e21c7efcedbb7ec356 100644
+index ac8af406180bc680d46e8edc3da0fc2e5211345a..309c55ad355da1d987e25d8d3177b90890f5420c 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 @@ -13,6 +13,8 @@ import com.mojang.brigadier.StringReader;
@@ -1781,7 +1765,7 @@ index c7df339aeb62ee627edaf1bb4c8474b61e357ba6..08671e6bc21260b01c3be4e21c7efced
  import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
  import java.awt.image.BufferedImage;
  import java.io.ByteArrayOutputStream;
-@@ -255,6 +257,7 @@ import org.bukkit.scoreboard.Criteria;
+@@ -258,6 +260,7 @@ import org.bukkit.scoreboard.Criteria;
  import org.bukkit.structure.StructureManager;
  import org.bukkit.util.StringUtil;
  import org.bukkit.util.permissions.DefaultPermissions;
@@ -1789,7 +1773,7 @@ index c7df339aeb62ee627edaf1bb4c8474b61e357ba6..08671e6bc21260b01c3be4e21c7efced
  import org.yaml.snakeyaml.LoaderOptions;
  import org.yaml.snakeyaml.Yaml;
  import org.yaml.snakeyaml.constructor.SafeConstructor;
-@@ -381,6 +384,15 @@ public final class CraftServer implements Server {
+@@ -396,6 +399,15 @@ public final class CraftServer implements Server {
      }
      // Paper end - Folia reagion threading API
  
@@ -1805,7 +1789,7 @@ index c7df339aeb62ee627edaf1bb4c8474b61e357ba6..08671e6bc21260b01c3be4e21c7efced
      static {
          ConfigurationSerialization.registerClass(CraftOfflinePlayer.class);
          ConfigurationSerialization.registerClass(CraftPlayerProfile.class);
-@@ -1131,6 +1143,7 @@ public final class CraftServer implements Server {
+@@ -1145,6 +1157,7 @@ public final class CraftServer implements Server {
          io.papermc.paper.plugin.PluginInitializerManager.reload(this.console); // Paper
          this.loadPlugins();
          this.enablePlugins(PluginLoadOrder.STARTUP);
@@ -1814,10 +1798,10 @@ index c7df339aeb62ee627edaf1bb4c8474b61e357ba6..08671e6bc21260b01c3be4e21c7efced
          this.spark.registerCommandAfterPlugins(this); // Paper - spark
          if (io.papermc.paper.plugin.PluginInitializerManager.instance().pluginRemapper != null) io.papermc.paper.plugin.PluginInitializerManager.instance().pluginRemapper.pluginsEnabled(); // Paper - Remap plugins
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
-index 57b71a3894638253c6d24d4967a96768834bb02b..db8570fe58b878f76d4c46a953ec333953f43baf 100644
+index d0c409f4efad289e3e325f44b500fc72589d89d4..561a2dfcf10655e1addc5aa2bbabe48b785fc3d4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
-@@ -921,6 +921,11 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
+@@ -928,6 +928,11 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
          this.getHandle().getBrain().setMemory(CraftMemoryKey.bukkitToMinecraft(memoryKey), CraftMemoryMapper.toNms(t));
      }
  

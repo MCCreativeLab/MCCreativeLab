@@ -5,12 +5,12 @@ Subject: [PATCH] Removing enums
 
 
 diff --git a/src/main/java/io/papermc/paper/registry/PaperRegistries.java b/src/main/java/io/papermc/paper/registry/PaperRegistries.java
-index 12220f78ffaf06433ada72fd0c7f22b97d55287d..d972781f9e7675985c155c7d83da2bf53aa904ca 100644
+index 132afec6bceb6c866de0aeb83db9613d4e74e2e7..fa630358bba4df12cce28a35c091562f0e361864 100644
 --- a/src/main/java/io/papermc/paper/registry/PaperRegistries.java
 +++ b/src/main/java/io/papermc/paper/registry/PaperRegistries.java
-@@ -85,6 +85,11 @@ public final class PaperRegistries {
-             entry(Registries.MAP_DECORATION_TYPE, RegistryKey.MAP_DECORATION_TYPE, MapCursor.Type.class, CraftMapCursor.CraftType::new),
-             entry(Registries.MENU, RegistryKey.MENU, MenuType.class, CraftMenuType::new),
+@@ -99,6 +99,11 @@ public final class PaperRegistries {
+             entry(Registries.SOUND_EVENT, RegistryKey.SOUND_EVENT, Sound.class, CraftSound::new),
+             entry(Registries.DATA_COMPONENT_TYPE, RegistryKey.DATA_COMPONENT_TYPE, DataComponentType.class, PaperDataComponentType::of),
  
 +            entry(Registries.ATTRIBUTE, RegistryKey.ATTRIBUTE, org.bukkit.attribute.Attribute.class, org.bukkit.craftbukkit.attribute.CraftAttribute::new),
 +            entry(Registries.POINT_OF_INTEREST_TYPE, RegistryKey.POI_TYPE, org.bukkit.PoiType.class, org.bukkit.craftbukkit.CraftPoiType::new),
@@ -18,16 +18,8 @@ index 12220f78ffaf06433ada72fd0c7f22b97d55287d..d972781f9e7675985c155c7d83da2bf5
 +            entry(Registries.ACTIVITY, RegistryKey.ENTITY_ACTIVITY, org.bukkit.EntityActivity.class, org.bukkit.craftbukkit.CraftEntityActivity::new),
 +
              // data-drivens
+             entry(Registries.BIOME, RegistryKey.BIOME, Biome.class, CraftBiome::new).delayed(),
              entry(Registries.STRUCTURE, RegistryKey.STRUCTURE, Structure.class, CraftStructure::new).delayed(),
-             entry(Registries.TRIM_MATERIAL, RegistryKey.TRIM_MATERIAL, TrimMaterial.class, CraftTrimMaterial::new).delayed(),
-@@ -98,7 +103,6 @@ public final class PaperRegistries {
-             // api-only
-             apiOnly(Registries.BIOME, RegistryKey.BIOME, () -> org.bukkit.Registry.BIOME),
-             apiOnly(Registries.PAINTING_VARIANT, RegistryKey.PAINTING_VARIANT, () -> org.bukkit.Registry.ART),
--            apiOnly(Registries.ATTRIBUTE, RegistryKey.ATTRIBUTE, () -> org.bukkit.Registry.ATTRIBUTE),
-             apiOnly(Registries.ENTITY_TYPE, RegistryKey.ENTITY_TYPE, () -> org.bukkit.Registry.ENTITY_TYPE),
-             apiOnly(Registries.PARTICLE_TYPE, RegistryKey.PARTICLE_TYPE, () -> org.bukkit.Registry.PARTICLE_TYPE),
-             apiOnly(Registries.POTION, RegistryKey.POTION, () -> org.bukkit.Registry.POTION),
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftEntityActivity.java b/src/main/java/org/bukkit/craftbukkit/CraftEntityActivity.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..776a4b14e0a5d78ef183c1c012d7ffcae8b59876
@@ -144,46 +136,11 @@ index 0000000000000000000000000000000000000000..5c6d277657dcc5aa7a03cceb87124fa8
 +        return "CraftPoiType{key=" + this.getKey() + "}";
 +    }
 +}
-diff --git a/src/main/java/org/bukkit/craftbukkit/CraftRegistry.java b/src/main/java/org/bukkit/craftbukkit/CraftRegistry.java
-index 53c70846666b746af6706ed2e363fe388e463e56..d40ca67a69b155079f777a6263dc7723ae92c7b9 100644
---- a/src/main/java/org/bukkit/craftbukkit/CraftRegistry.java
-+++ b/src/main/java/org/bukkit/craftbukkit/CraftRegistry.java
-@@ -154,10 +154,6 @@ public class CraftRegistry<B extends Keyed, M> implements Registry<B> {
-             if (bClass == Particle.class) {
-                 return bukkit.get(FieldRename.PARTICLE_TYPE_RENAME.apply(namespacedKey, apiVersion));
-             }
--
--            if (bClass == Attribute.class) {
--                return bukkit.get(FieldRename.ATTRIBUTE_RENAME.apply(namespacedKey, apiVersion));
--            }
-         }
- 
-         return bukkit.get(namespacedKey);
 diff --git a/src/main/java/org/bukkit/craftbukkit/attribute/CraftAttribute.java b/src/main/java/org/bukkit/craftbukkit/attribute/CraftAttribute.java
-index 10e4318782107644f67818109784fff60d017e0a..d1a0d654ef7677f1e63726ad38164dec4bd25d66 100644
+index 0d04f0a34d1d1894845b720a407f7190ea78d514..eef30b964e5739a5459b76593ceb1f24497c10c5 100644
 --- a/src/main/java/org/bukkit/craftbukkit/attribute/CraftAttribute.java
 +++ b/src/main/java/org/bukkit/craftbukkit/attribute/CraftAttribute.java
-@@ -12,17 +12,9 @@ import org.bukkit.craftbukkit.legacy.FieldRename;
- import org.bukkit.craftbukkit.util.ApiVersion;
- import org.bukkit.craftbukkit.util.CraftNamespacedKey;
- 
--public class CraftAttribute {
--
-+public class CraftAttribute extends Attribute implements org.bukkit.craftbukkit.util.Handleable<net.minecraft.world.entity.ai.attributes.Attribute> {
-     public static Attribute minecraftToBukkit(net.minecraft.world.entity.ai.attributes.Attribute minecraft) {
--        Preconditions.checkArgument(minecraft != null);
--
--        net.minecraft.core.Registry<net.minecraft.world.entity.ai.attributes.Attribute> registry = CraftRegistry.getMinecraftRegistry(Registries.ATTRIBUTE);
--        Attribute bukkit = Registry.ATTRIBUTE.get(CraftNamespacedKey.fromMinecraft(registry.getResourceKey(minecraft).orElseThrow().location()));
--
--        Preconditions.checkArgument(bukkit != null);
--
--        return bukkit;
-+        return CraftRegistry.minecraftToBukkit(minecraft, Registries.ATTRIBUTE, Registry.ATTRIBUTE);
-     }
- 
-     public static Attribute minecraftHolderToBukkit(Holder<net.minecraft.world.entity.ai.attributes.Attribute> minecraft) {
-@@ -31,23 +23,11 @@ public class CraftAttribute {
+@@ -27,16 +27,7 @@ public class CraftAttribute implements Attribute, Handleable<net.minecraft.world
  
      public static Attribute stringToBukkit(String string) {
          Preconditions.checkArgument(string != null);
@@ -201,42 +158,11 @@ index 10e4318782107644f67818109784fff60d017e0a..d1a0d654ef7677f1e63726ad38164dec
      }
  
      public static net.minecraft.world.entity.ai.attributes.Attribute bukkitToMinecraft(Attribute bukkit) {
--        Preconditions.checkArgument(bukkit != null);
--
--        return CraftRegistry.getMinecraftRegistry(Registries.ATTRIBUTE)
--                .getOptional(CraftNamespacedKey.toMinecraft(bukkit.getKey())).orElseThrow();
-+        return CraftRegistry.bukkitToMinecraft(bukkit);
-     }
- 
-     public static Holder<net.minecraft.world.entity.ai.attributes.Attribute> bukkitToMinecraftHolder(Attribute bukkit) {
-@@ -68,4 +48,22 @@ public class CraftAttribute {
- 
-         return bukkit.getKey().toString();
-     }
-+
-+    private final NamespacedKey key;
-+    private final net.minecraft.world.entity.ai.attributes.Attribute handle;
-+
-+    public CraftAttribute(NamespacedKey key, net.minecraft.world.entity.ai.attributes.Attribute handle) {
-+        this.key = key;
-+        this.handle = handle;
-+    }
-+
-+    @Override
-+    public @org.jetbrains.annotations.NotNull NamespacedKey getKey() {
-+        return key;
-+    }
-+
-+    @Override
-+    public net.minecraft.world.entity.ai.attributes.Attribute getHandle() {
-+        return handle;
-+    }
- }
 diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java
-index 60ec9b228518de0521b12f3f4ef26cb30260315a..72a099fbca2bcfa3bb4bb4b48dd65605411a7b37 100644
+index f246df4e117dddd08ae6314050ad3e73114d765b..a9be4b619f4e6f23b9d3ebeff7a405de7092e587 100644
 --- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java
 +++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java
-@@ -825,7 +825,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -933,7 +933,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
                      continue;
                  }
                  AttributeModifier modifier = (AttributeModifier) o;
@@ -245,7 +171,7 @@ index 60ec9b228518de0521b12f3f4ef26cb30260315a..72a099fbca2bcfa3bb4bb4b48dd65605
                  if (attribute == null) {
                      continue;
                  }
-@@ -2020,7 +2020,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -2328,7 +2328,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
              if (modCollection == null || modCollection.isEmpty()) {
                  continue;
              }
@@ -255,11 +181,11 @@ index 60ec9b228518de0521b12f3f4ef26cb30260315a..72a099fbca2bcfa3bb4bb4b48dd65605
          builder.put(key.BUKKIT, mods);
      }
 diff --git a/src/test/java/org/bukkit/support/provider/RegistriesArgumentProvider.java b/src/test/java/org/bukkit/support/provider/RegistriesArgumentProvider.java
-index f4ba15a1b4b43822bd81b513af56c6667237c327..3092a1b5499de898b0eceaa73c1a406504679d0e 100644
+index dc5fadb3d98b443df54b554168d60fe0b0226664..567eab3ac448f6e6fd9d2bdec245da13702f259a 100644
 --- a/src/test/java/org/bukkit/support/provider/RegistriesArgumentProvider.java
 +++ b/src/test/java/org/bukkit/support/provider/RegistriesArgumentProvider.java
-@@ -12,17 +12,25 @@ import net.minecraft.world.entity.animal.FrogVariant;
- import net.minecraft.world.entity.animal.WolfVariant;
+@@ -14,6 +14,8 @@ import net.minecraft.world.entity.animal.WolfVariant;
+ import net.minecraft.world.entity.decoration.PaintingVariant;
  import net.minecraft.world.entity.npc.VillagerProfession;
  import net.minecraft.world.entity.npc.VillagerType;
 +import net.minecraft.world.entity.schedule.Activity;
@@ -267,29 +193,27 @@ index f4ba15a1b4b43822bd81b513af56c6667237c327..3092a1b5499de898b0eceaa73c1a4065
  import net.minecraft.world.item.Instrument;
  import net.minecraft.world.level.block.entity.BannerPattern;
  import net.minecraft.world.level.saveddata.maps.MapDecorationType;
- import org.bukkit.GameEvent;
- import org.bukkit.JukeboxSong;
- import org.bukkit.MusicInstrument;
+@@ -25,6 +27,7 @@ import org.bukkit.MusicInstrument;
+ import org.bukkit.Sound;
+ import org.bukkit.attribute.Attribute;
+ import org.bukkit.block.Biome;
 +import org.bukkit.*;
-+import org.bukkit.attribute.Attribute;
-+import org.bukkit.block.Biome;
  import org.bukkit.block.BlockType;
  import org.bukkit.block.banner.PatternType;
- import org.bukkit.craftbukkit.CraftGameEvent;
- import org.bukkit.craftbukkit.CraftJukeboxSong;
- import org.bukkit.craftbukkit.CraftMusicInstrument;
+ import org.bukkit.craftbukkit.CraftArt;
+@@ -35,6 +38,7 @@ import org.bukkit.craftbukkit.CraftMusicInstrument;
+ import org.bukkit.craftbukkit.CraftSound;
+ import org.bukkit.craftbukkit.attribute.CraftAttribute;
+ import org.bukkit.craftbukkit.block.CraftBiome;
 +import org.bukkit.craftbukkit.*;
-+import org.bukkit.craftbukkit.attribute.CraftAttribute;
-+import org.bukkit.craftbukkit.block.CraftBiome;
  import org.bukkit.craftbukkit.block.CraftBlockType;
  import org.bukkit.craftbukkit.block.banner.CraftPatternType;
  import org.bukkit.craftbukkit.damage.CraftDamageType;
-@@ -83,6 +91,11 @@ public class RegistriesArgumentProvider implements ArgumentsProvider {
-         register(RegistryKey.MAP_DECORATION_TYPE, MapCursor.Type.class, Registries.MAP_DECORATION_TYPE, CraftMapCursor.CraftType.class, MapDecorationType.class);
+@@ -101,6 +105,10 @@ public class RegistriesArgumentProvider implements ArgumentsProvider {
          register(RegistryKey.BANNER_PATTERN, PatternType.class, Registries.BANNER_PATTERN, CraftPatternType.class, BannerPattern.class);
          register(RegistryKey.MENU, MenuType.class, Registries.MENU, CraftMenuType.class, net.minecraft.world.inventory.MenuType.class);
+         register(RegistryKey.DATA_COMPONENT_TYPE, io.papermc.paper.datacomponent.DataComponentType.class, Registries.DATA_COMPONENT_TYPE, io.papermc.paper.datacomponent.PaperDataComponentType.class, net.minecraft.core.component.DataComponentType.class);
 +
-+        register(RegistryKey.ATTRIBUTE, Attribute.class, Registries.ATTRIBUTE, CraftAttribute.class, net.minecraft.world.entity.ai.attributes.Attribute.class);
 +        register(RegistryKey.POI_TYPE, PoiType.class, Registries.POINT_OF_INTEREST_TYPE, CraftPoiType.class, net.minecraft.world.entity.ai.village.poi.PoiType.class);
 +        register(RegistryKey.ENTITY_ACTIVITY, EntityActivity.class, Registries.ACTIVITY, CraftEntityActivity.class, Activity.class);
 +        register(RegistryKey.ENTITY_SCHEDULE, EntitySchedule.class, Registries.SCHEDULE, CraftEntitySchedule.class, Schedule.class);

@@ -5,7 +5,7 @@ Subject: [PATCH] Adding RepairItemBehaviour
 
 
 diff --git a/src/main/java/net/minecraft/world/item/crafting/RepairItemRecipe.java b/src/main/java/net/minecraft/world/item/crafting/RepairItemRecipe.java
-index 5c6c92f47a00a1d2bf8179b7b21e706d1a485bcf..8824a4a4c7c4738656bfa2586175dacfe0a0f1dd 100644
+index 23fa02ea033bdf4e81e44b2d67ee82282632c109..3005a0be665e642acd0e702866b69674083529f8 100644
 --- a/src/main/java/net/minecraft/world/item/crafting/RepairItemRecipe.java
 +++ b/src/main/java/net/minecraft/world/item/crafting/RepairItemRecipe.java
 @@ -2,6 +2,9 @@ package net.minecraft.world.item.crafting;
@@ -26,7 +26,7 @@ index 5c6c92f47a00a1d2bf8179b7b21e706d1a485bcf..8824a4a4c7c4738656bfa2586175dacf
  
  public class RepairItemRecipe extends CustomRecipe {
      public RepairItemRecipe(CraftingBookCategory category) {
-@@ -40,7 +44,7 @@ public class RepairItemRecipe extends CustomRecipe {
+@@ -39,7 +43,7 @@ public class RepairItemRecipe extends CustomRecipe {
      }
  
      private static boolean canCombine(ItemStack first, ItemStack second) {
@@ -35,7 +35,7 @@ index 5c6c92f47a00a1d2bf8179b7b21e706d1a485bcf..8824a4a4c7c4738656bfa2586175dacf
              && first.getCount() == 1
              && second.getCount() == 1
              && first.has(DataComponents.MAX_DAMAGE)
-@@ -66,7 +70,7 @@ public class RepairItemRecipe extends CustomRecipe {
+@@ -65,7 +69,7 @@ public class RepairItemRecipe extends CustomRecipe {
              int j = itemStack.getMaxDamage() - itemStack.getDamageValue();
              int k = itemStack2.getMaxDamage() - itemStack2.getDamageValue();
              int l = j + k + i * 5 / 100;

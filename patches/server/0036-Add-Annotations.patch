@@ -179,10 +179,10 @@ index bcf9a9c2a596830f8f71532808227285b509dcd1..ce3cb026441c1c9d758510df9a633ca4
              throw new IllegalStateException("Cannot create VillagerProfessions in minecraft namespace");
          CUSTOM_BOOTSTRAPPERS.add(() -> {
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-index e86b12e23163163c7410fd3e5691fdf47cf0876d..ecad1bac9130cd3136c5fe5f3321ea86b819c218 100644
+index e2a8d2141747c93c9800caeb6ba1d3a301e12065..74c1c2eaa6f58d779e780b8ee19b243e1ee97328 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-@@ -59,6 +59,7 @@ import org.bukkit.util.NumberConversions;
+@@ -60,6 +60,7 @@ import org.bukkit.util.NumberConversions;
  import org.bukkit.util.Vector;
  
  import net.md_5.bungee.api.chat.BaseComponent; // Spigot
@@ -190,7 +190,7 @@ index e86b12e23163163c7410fd3e5691fdf47cf0876d..ecad1bac9130cd3136c5fe5f3321ea86
  
  public abstract class CraftEntity implements org.bukkit.entity.Entity {
      private static PermissibleBase perm;
-@@ -314,7 +315,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -315,7 +316,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
  
      // MCCreativeLab start - Add EntityBehaviour
      @Override
@@ -199,7 +199,7 @@ index e86b12e23163163c7410fd3e5691fdf47cf0876d..ecad1bac9130cd3136c5fe5f3321ea86
          if(!entityTypeClass.isAssignableFrom(getClass()))
              throw new IllegalArgumentException(getClass().getName()+" is not of type "+entityTypeClass.getClass().getName());
          getHandle().behaviour = behaviour;
-@@ -328,7 +329,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -329,7 +330,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
  
      @Override
      @org.jetbrains.annotations.Nullable
@@ -208,7 +208,7 @@ index e86b12e23163163c7410fd3e5691fdf47cf0876d..ecad1bac9130cd3136c5fe5f3321ea86
          if(!hasCustomEntityBehaviour())
              return null;
          if(!behaviourType.isAssignableFrom(getHandle().behaviour.getClass()))
-@@ -337,7 +338,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -338,7 +339,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
      }
  
      @Override

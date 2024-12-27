@@ -5,10 +5,10 @@ Subject: [PATCH] Adding MCCreativeLabExtension plugin
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index e4852c2fa12ffbe429a89a0c8746a7142e882e1a..6ad594b31838c5063cd91e88cbfa4131ae5e7999 100644
+index d45d98b58b636556abdd538113eb2b2f3eb0b4f0..57589f4eb59db9c32fbc0b6251b500f0c2207634 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
-@@ -198,37 +198,51 @@ tasks.registerRunTask("runServer") {
+@@ -217,37 +217,51 @@ tasks.registerRunTask("runServer") {
      description = "Spin up a test server from the Mojang mapped server jar"
      classpath(tasks.includeMappings.flatMap { it.outputJar })
      classpath(runtimeClasspathWithoutVanillaServer)

@@ -5,7 +5,7 @@ Subject: [PATCH] Add SerializationBehaviour TODOs
 
 
 diff --git a/src/main/java/net/minecraft/world/level/storage/LevelStorageSource.java b/src/main/java/net/minecraft/world/level/storage/LevelStorageSource.java
-index 85ba843ce7e1f62971e736fa2cc028c47b274ce4..18ffee3290e75decb986173d2446ce9e0d42859a 100644
+index cdca5ae69991cc068bfbc0686b5defb3604a5440..d052f95070e75092bc1ff53a22fa22f61d2c30a7 100644
 --- a/src/main/java/net/minecraft/world/level/storage/LevelStorageSource.java
 +++ b/src/main/java/net/minecraft/world/level/storage/LevelStorageSource.java
 @@ -271,6 +271,7 @@ public class LevelStorageSource {

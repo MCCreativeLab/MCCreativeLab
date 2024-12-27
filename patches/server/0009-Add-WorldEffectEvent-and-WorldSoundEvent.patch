@@ -134,10 +134,10 @@ index 0000000000000000000000000000000000000000..a808416df475ea14399e9e725f3a8788
 +
 +}
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index 5b09c288c81f2eafc042d2fb50a69f55dadc925c..5b9b0e97753b69ffbf78cd6491bb40121d3795c2 100644
+index 10da770c9f968aac11e1678996a17d8b99bd170b..92522cb81c1a86ae7e96dd357b708877a63617b8 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
-@@ -1646,27 +1646,22 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
+@@ -1694,12 +1694,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
  
      @Override
      public void playSeededSound(@Nullable Player source, double x, double y, double z, Holder<SoundEvent> sound, SoundSource category, float volume, float pitch, long seed) {
@@ -152,15 +152,7 @@ index 5b09c288c81f2eafc042d2fb50a69f55dadc925c..5b9b0e97753b69ffbf78cd6491bb4012
      }
  
      @Override
-     public void globalLevelEvent(int eventId, BlockPos pos, int data) {
--        if (this.getGameRules().getBoolean(GameRules.RULE_GLOBAL_SOUND_EVENTS)) {
--            this.server.getPlayerList().broadcastAll(new ClientboundLevelEventPacket(eventId, pos, data, true));
--        } else {
--            this.levelEvent((Player) null, eventId, pos, data);
--        }
--
-+        de.verdox.mccreativelab.event.EventToPacketFactory.globalLevelEvent(this, eventId, pos ,data); // Paper - add WorldEffectEvent
-     }
+@@ -1732,7 +1732,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
  
      @Override
      public void levelEvent(@Nullable Player player, int eventId, BlockPos pos, int data) {

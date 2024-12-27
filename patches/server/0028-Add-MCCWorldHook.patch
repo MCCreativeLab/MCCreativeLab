@@ -27,10 +27,10 @@ index ab551246757609af229e3b190a6da52dd35d6085..287c9fd46016a33379acae37c842b638
      public de.verdox.mccreativelab.advancement.AdvancementBuilder createAdvancement() {
          return new de.verdox.mccreativelab.advancement.CraftAdvancementBuilder();
 diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
-index d9c443bba11341e16fa3c9bb5f04ac3f21b74e3d..ea3257c90f5b01b8c4291749680fc605f217a41c 100644
+index 2b203c35953c78fc1d8b3299614459b318246674..616c949da92b2e46cfe1277977f327dc73342bea 100644
 --- a/src/main/java/net/minecraft/world/level/Level.java
 +++ b/src/main/java/net/minecraft/world/level/Level.java
-@@ -163,6 +163,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -164,6 +164,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
      public int wakeupInactiveRemainingMonsters;
      public int wakeupInactiveRemainingVillagers;
      // Paper end
@@ -38,7 +38,7 @@ index d9c443bba11341e16fa3c9bb5f04ac3f21b74e3d..ea3257c90f5b01b8c4291749680fc605
      public boolean populating;
      public final org.spigotmc.SpigotWorldConfig spigotConfig; // Spigot
      // Paper start - add paper world config
-@@ -1154,6 +1155,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -1226,6 +1227,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
                  this.onBlockStateChange(blockposition, iblockdata1, iblockdata2);
              }
              // CraftBukkit end
@@ -47,10 +47,10 @@ index d9c443bba11341e16fa3c9bb5f04ac3f21b74e3d..ea3257c90f5b01b8c4291749680fc605
      }
      // CraftBukkit end
 diff --git a/src/main/java/net/minecraft/world/level/block/Block.java b/src/main/java/net/minecraft/world/level/block/Block.java
-index 1560b403836a57b5b5a618e9cdfe9f4d30c182ea..fb0182b22bae77d752eb359a28f76f549e14a39c 100644
+index c0e3feefe22410c851de80bad51990610ed3fad6..de3b2ad6d143d939f4a85901a28a2865daf0f62b 100644
 --- a/src/main/java/net/minecraft/world/level/block/Block.java
 +++ b/src/main/java/net/minecraft/world/level/block/Block.java
-@@ -346,7 +346,12 @@ public class Block extends BlockBehaviour implements ItemLike {
+@@ -338,7 +338,12 @@ public class Block extends BlockBehaviour implements ItemLike {
      public static void dropResources(BlockState state, Level world, BlockPos pos, @Nullable BlockEntity blockEntity, @Nullable Entity entity, ItemStack tool, boolean dropExperience) {
      // Paper end - Properly handle xp dropping
          if (world instanceof ServerLevel) {
