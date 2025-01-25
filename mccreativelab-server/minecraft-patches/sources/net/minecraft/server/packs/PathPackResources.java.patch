@@ -1,0 +1,18 @@
+--- a/net/minecraft/server/packs/PathPackResources.java
++++ b/net/minecraft/server/packs/PathPackResources.java
+@@ -86,7 +_,14 @@
+                 if (resourceLocation == null) {
+                     Util.logAndPauseIfInIde(String.format(Locale.ROOT, "Invalid path in pack: %s:%s, ignoring", namespace, string));
+                 } else {
+-                    resourceOutput.accept(resourceLocation, IoSupplier.create(path1));
++                    //resourceOutput.accept(resourceLocation, IoSupplier.create(path1));
++                    // MCCLab start - Add DataPackInterceptor
++                    de.verdox.mccreativelab.CraftDataPackInterceptor craft = (de.verdox.mccreativelab.CraftDataPackInterceptor) de.verdox.mccreativelab.MCCreativeLab.getDataPackInterceptor();
++                    IoSupplier<InputStream> result = craft.evaluate(resourceLocation, path1, IoSupplier.create(path1));
++                    if(result == null)
++                        return;
++                    resourceOutput.accept(resourceLocation, result);
++                    // MCCLab end - Add DataPackInterceptor
+                 }
+             });
+         } catch (NotDirectoryException | NoSuchFileException var10) {
