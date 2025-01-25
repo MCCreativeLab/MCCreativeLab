@@ -1,0 +1,57 @@
+--- a/io/papermc/paper/inventory/recipe/StackedContentsExtrasMap.java
++++ b/io/papermc/paper/inventory/recipe/StackedContentsExtrasMap.java
+@@ -10,6 +_,9 @@
+ import net.minecraft.world.item.crafting.CraftingInput;
+ import net.minecraft.world.item.crafting.Ingredient;
+ import net.minecraft.world.item.crafting.Recipe;
++import org.bukkit.inventory.RecipeChoice;
++
++import java.util.ArrayList;
+ 
+ public final class StackedContentsExtrasMap {
+ 
+@@ -17,6 +_,11 @@
+     public Object2IntMap<ItemOrExact.Item> regularRemoved = new Object2IntOpenHashMap<>(); // needed for re-using the regular contents (for ShapelessRecipe)
+     public final ObjectSet<ItemStack> exactIngredients = new ObjectOpenCustomHashSet<>(ItemStackLinkedSet.TYPE_AND_TAG);
+ 
++    // Paper start - Adding PredicateChoice
++    public boolean hasPredicateChoice = false;
++    public final java.util.List<RecipeChoice.PredicateChoice> predicateChoices = new ArrayList<>();
++    // Paper end - Adding PredicateChoice
++
+     public StackedContentsExtrasMap(final StackedContents<ItemOrExact> contents) {
+         this.contents = contents;
+     }
+@@ -28,6 +_,15 @@
+                 this.exactIngredients.addAll(ingredient.itemStacks());
+             }
+         }
++
++        // Paper start - Adding PredicateChoice
++        for (net.minecraft.world.item.crafting.Ingredient ingredient : recipe.placementInfo().ingredients()) {
++            if (ingredient.itemPredicate != null) {
++                hasPredicateChoices = true;
++                this.predicateChoices.add(ingredient.itemPredicate);
++            }
++        }
++        // Paper end - Adding PredicateChoice
+     }
+ 
+     public void accountInput(final CraftingInput input) {
+@@ -63,6 +_,16 @@
+             this.contents.account(new ItemOrExact.Exact(stack), count);
+             return true;
+         }
++        // Paper start - Adding PredicateChoice
++        if (hasPredicateChoice) {
++            for (org.bukkit.inventory.RecipeChoice.PredicateChoice predicateChoice : predicateChoices) {
++                if(!predicateChoice.test(stack.getBukkitStack())){
++                    continue;
++                }
++                this.contents.account(new ItemOrExact.Exact(stack), count);
++            }
++        }
++        // Paper end - Adding PredicateChoice
+         return false;
+     }
+ }

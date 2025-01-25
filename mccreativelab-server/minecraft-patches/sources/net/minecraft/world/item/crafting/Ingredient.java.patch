@@ -1,0 +1,37 @@
+--- a/net/minecraft/world/item/crafting/Ingredient.java
++++ b/net/minecraft/world/item/crafting/Ingredient.java
+@@ -83,6 +_,11 @@
+ 
+     @Override
+     public boolean test(ItemStack stack) {
++        // Paper start - Adding PredicateChoice
++        if (itemPredicate != null) {
++            return itemPredicate.test(stack.getBukkitStack());
++        }
++        // Paper end - Adding PredicateChoice
+         // CraftBukkit start
+         if (this.isExact()) {
+             return this.itemStacks.contains(stack); // Paper - Improve exact choice recipe ingredients (hashing FTW!)
+@@ -124,7 +_,22 @@
+         return new Ingredient(items);
+     }
+ 
++    // Paper start - Adding PredicateChoice
++    @javax.annotation.Nullable public org.bukkit.inventory.RecipeChoice.PredicateChoice itemPredicate;
++    public static Ingredient ofPredicateChoice(org.bukkit.inventory.RecipeChoice.PredicateChoice predicateChoice){
++        Ingredient ingredient = Ingredient.of(predicateChoice.recipeBookExamples().stream().map(itemStack -> ((org.bukkit.craftbukkit.inventory.CraftItemStack) itemStack).handle).map(ItemStack::getItem));
++        ingredient.itemPredicate = predicateChoice;
++        return ingredient;
++    }
++    // Paper end - Adding PredicateChoice
++
++
+     public SlotDisplay display() {
++        // Paper start - Show Predicate Choice examples in recipe book
++        if (itemPredicate != null) {
++            return new SlotDisplay.Composite(itemPredicate.recipeBookExamples().stream().<SlotDisplay>map(itemStack -> new SlotDisplay.ItemStackSlotDisplay(((org.bukkit.craftbukkit.inventory.CraftItemStack) itemStack).handle)).toList());
++        }
++        // Paper end - Show Predicate Choice examples in recipe book
+         // Paper start - show exact ingredients in recipe book
+         if (this.isExact()) {
+             return new SlotDisplay.Composite(this.itemStacks().stream().<SlotDisplay>map(SlotDisplay.ItemStackSlotDisplay::new).toList());

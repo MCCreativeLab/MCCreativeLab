@@ -1,0 +1,28 @@
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftRecipe.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftRecipe.java
+@@ -30,6 +_,13 @@
+         // Paper end
+         Ingredient stack;
+ 
++        // Paper start - Add Predicate Choice
++        if(bukkit instanceof RecipeChoice.PredicateChoice predicateChoice) {
++            stack = Ingredient.ofPredicateChoice(predicateChoice);
++        }
++        // Paper end - Add Predicate Choice
++
++
+         if (bukkit == null) {
+             stack = Ingredient.of();
+         } else if (bukkit instanceof RecipeChoice.MaterialChoice) {
+@@ -59,6 +_,11 @@
+     }
+ 
+     public static RecipeChoice toBukkit(Ingredient list) {
++        // Paper start - Add Predicate Choice
++        if(list.itemPredicate != null){
++            return list.itemPredicate;
++        }
++        // Paper end - Add Predicate Choice
+         if (list.isEmpty()) {
+             return RecipeChoice.empty(); // Paper - null breaks API contracts
+         }
