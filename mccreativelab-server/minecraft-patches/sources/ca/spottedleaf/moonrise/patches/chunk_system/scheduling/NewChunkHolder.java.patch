@@ -1,0 +1,10 @@
+--- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
++++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
+@@ -1755,6 +_,7 @@
+             final CallbackCompletable<CompoundTag> completable = new CallbackCompletable<>();
+ 
+             final Runnable run = () -> {
++                org.bukkit.Bukkit.getPluginManager().callEvent(new de.verdox.mccreativelab.events.ChunkDataSaveEvent(world.getWorld(), new org.bukkit.craftbukkit.CraftChunk(world, chunk.locX, chunk.locZ), new de.verdox.mccreativelab.events.ChunkDataEvent.ChunkPos(chunk.locX, chunk.locZ), chunk.persistentDataContainer, unloaded)); // MCCreativeLab - Add Async Chunk Data Events
+                 final CompoundTag data = chunkData.write();
+ 
+                 completable.complete(data);

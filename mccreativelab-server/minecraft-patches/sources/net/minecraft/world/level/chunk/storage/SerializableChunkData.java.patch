@@ -1,0 +1,10 @@
+--- a/net/minecraft/world/level/chunk/storage/SerializableChunkData.java
++++ b/net/minecraft/world/level/chunk/storage/SerializableChunkData.java
+@@ -427,6 +_,7 @@
+         // CraftBukkit start - load chunk persistent data from nbt - SPIGOT-6814: Already load PDC here to account for 1.17 to 1.18 chunk upgrading.
+         if (this.persistentDataContainer instanceof CompoundTag compoundTag) {
+             chunkAccess.persistentDataContainer.putAll(compoundTag);
++            org.bukkit.Bukkit.getPluginManager().callEvent(new de.verdox.mccreativelab.events.ChunkDataLoadEvent(level.getWorld(), new org.bukkit.craftbukkit.CraftChunk(level, pos.x, pos.z), new de.verdox.mccreativelab.events.ChunkDataEvent.ChunkPos(pos.x, pos.z), chunkAccess.persistentDataContainer)); // MCC - Add Async Chunk Data Events
+         }
+         // CraftBukkit end
+ 
