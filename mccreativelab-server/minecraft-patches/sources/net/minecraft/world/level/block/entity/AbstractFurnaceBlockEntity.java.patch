@@ -1,0 +1,15 @@
+--- a/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
++++ b/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
+@@ -273,6 +_,12 @@
+ 
+         if (flag) {
+             setChanged(level, pos, state);
++            // Paper start - Add FurnaceRunOutOfFuelEvent
++            if(isLit) {
++                new io.papermc.paper.event.block.FurnaceRunOutOfFuelEvent(org.bukkit.craftbukkit.block.CraftBlock.at(level, pos)).callEvent();
++            }
++            // Paper end - Add FurnaceRunOutOfFuelEvent
++
+         }
+     }
+ 
