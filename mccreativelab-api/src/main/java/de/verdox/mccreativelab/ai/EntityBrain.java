@@ -2,8 +2,6 @@ package de.verdox.mccreativelab.ai;
 
 import de.verdox.mccreativelab.ai.builder.ActivityBuilder;
 import de.verdox.mccreativelab.ai.builder.BehaviorFactory;
-import org.bukkit.EntityActivity;
-import org.bukkit.EntitySchedule;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.memory.MemoryKey;
@@ -16,9 +14,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public interface EntityBrain<E extends LivingEntity> {
+/*
     @NotNull BehaviorFactory getBehaviorFactory();
 
-    @NotNull ActivityBuilder<E> createActivityBuilder(@NotNull EntityActivity entityActivity);
+    //@NotNull ActivityBuilder<E> createActivityBuilder(@NotNull EntityActivity entityActivity);
 
     void tick(@NotNull World world, @NotNull E entity);
 
@@ -89,5 +88,6 @@ public interface EntityBrain<E extends LivingEntity> {
     @NotNull EntityBrain<E> copyWithoutBehaviours();
 
     void stopAll(@NotNull World world, @NotNull E entity);
+*/
 
 }

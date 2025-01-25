@@ -15,13 +15,13 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public interface VanillaRegistryManipulator {
-    @NotNull RegistryEntryReference<Attribute> createAttribute(@NotNull NamespacedKey namespacedKey, double defaultValue, double min, double max);
+    //@NotNull RegistryEntryReference<Attribute> createAttribute(@NotNull NamespacedKey namespacedKey, double defaultValue, double min, double max);
 
-    @NotNull <T> RegistryEntryReference<MemoryKey<T>> createMemoryKey(@NotNull NamespacedKey namespacedKey, @NotNull Class<? extends T> storedType);
+    //@NotNull <T> RegistryEntryReference<MemoryKey<T>> createMemoryKey(@NotNull NamespacedKey namespacedKey, @NotNull Class<? extends T> storedType);
 
     //@NotNull RegistryEntryReference<PoiType> createPoiType(@NotNull NamespacedKey namespacedKey, @NotNull Set<BlockData> states, int ticketCount, int searchDistance);
 
-    @NotNull RegistryEntryReference<Villager.Profession> createProfession(@NotNull NamespacedKey namespacedKey, @NotNull Predicate<PoiType> heldWorkStation, @NotNull Predicate<PoiType> acquirableWorkstation, @NotNull Set<Material> gatherableItems, @NotNull Set<Material> secondaryJobSites, @NotNull Sound.Type workSound);
+    //@NotNull RegistryEntryReference<Villager.Profession> createProfession(@NotNull NamespacedKey namespacedKey, @NotNull Predicate<PoiType> heldWorkStation, @NotNull Predicate<PoiType> acquirableWorkstation, @NotNull Set<Material> gatherableItems, @NotNull Set<Material> secondaryJobSites, @NotNull Sound.Type workSound);
 
-    record RegistryEntryReference<T>(@NotNull NamespacedKey namespacedKey, @NotNull Supplier<T> dataSupplier){}
+   // record RegistryEntryReference<T>(@NotNull NamespacedKey namespacedKey, @NotNull Supplier<T> dataSupplier){}
 }

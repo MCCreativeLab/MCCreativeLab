@@ -19,12 +19,12 @@ import java.util.function.*;
 
 public interface BehaviorFactory {
 
-    @NotNull OneShotBehavior<Mob> acquirePOI(@NotNull Predicate<PoiType> poiTypePredicate, @NotNull MemoryKey<Location> poiPosModule, @NotNull MemoryKey<Location> potentialPoiPosModule, boolean onlyRunIfChild, boolean entityEvent);
+/*    @NotNull OneShotBehavior<Mob> acquirePOI(@NotNull Predicate<PoiType> poiTypePredicate, @NotNull MemoryKey<Location> poiPosModule, @NotNull MemoryKey<Location> potentialPoiPosModule, boolean onlyRunIfChild, boolean entityEvent);
 
     @NotNull
     default OneShotBehavior<Mob> acquirePOI(@NotNull Predicate<PoiType> poiTypePredicate, @NotNull MemoryKey<Location> poiPosModule, boolean onlyRunIfChild, boolean entityEvent) {
         return acquirePOI(poiTypePredicate, poiPosModule, poiPosModule, onlyRunIfChild, entityEvent);
-    }
+    }*/
 
     @NotNull AIBehavior<Animals> animalMakeLove(@NotNull EntityType targetType, float speed, int approachDistance);
 
@@ -189,7 +189,7 @@ public interface BehaviorFactory {
 
     @NotNull AIBehavior<Villager> useBonemeal();
 
-    @NotNull OneShotBehavior<Villager> validateNearbyPoi(@NotNull Predicate<PoiType> poiTypePredicate, @NotNull MemoryKey<Location> poiMemory);
+    //@NotNull OneShotBehavior<Villager> validateNearbyPoi(@NotNull Predicate<PoiType> poiTypePredicate, @NotNull MemoryKey<Location> poiMemory);
 
     @NotNull OneShotBehavior<Villager> villageBoundRandomStroll(float walkSpeed, int horizontalRange, int verticalRange);
 
