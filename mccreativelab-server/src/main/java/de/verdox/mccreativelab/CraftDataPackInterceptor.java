@@ -76,30 +76,23 @@ public class CraftDataPackInterceptor implements DataPackInterceptor {
         assetTypeName = assetTypeName.substring(indexOfStartKey + 1);
         PackAssetType packAssetType = new PackAssetType(assetTypeName);
         Key key = Key.key(resourceLocation.getNamespace(), FilenameUtils.removeExtension(resourceLocation.getPath().replace(assetTypeName + "/", "")));
-        if (packAssetType == null) {
-            LOGGER.error("Could not determine PackAssetType " + assetTypeName + " from " + resourceLocation);
-            return ioSupplier;
-        }
 
         if (excludedTypes.contains(packAssetType) || stringPatternExcludes.stream().anyMatch(s -> resourceLocation.toString().contains(s)) || (exclusions.containsKey(packAssetType) && exclusions.get(packAssetType).contains(key))) {
-            LOGGER.info("Removing " + packAssetType.parentFolder() + ": " + key);
+            LOGGER.info("Removing {}: {}", packAssetType.parentFolder(), key);
             return null;
         }
 
         try (InputStream inputStream = ioSupplier.get()) {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-            // Lies den Inhalt des InputStreams und schreibe ihn in den ByteArrayOutputStream
             byte[] buffer = new byte[1024];
             int bytesRead;
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 byteArrayOutputStream.write(buffer, 0, bytesRead);
             }
 
-            // Konvertiere den Inhalt des ByteArrayOutputStreams zu einem String
-            String jsonString = byteArrayOutputStream.toString("UTF-8");
+            String jsonString = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
 
-            // Verwende GSON, um den JSON-String in ein JsonObject zu konvertieren
             JsonObject jsonObject;
             try {
                 jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
@@ -119,7 +112,7 @@ public class CraftDataPackInterceptor implements DataPackInterceptor {
                 Map<Key, List<Function<DataPackAsset, Boolean>>> map = modifies.get(packAssetType);
                 if (map.containsKey(key)) {
                     List<Function<DataPackAsset, Boolean>> modifiers = map.get(key);
-                    LOGGER.info("Patching " + packAssetType.parentFolder() + ": " + key);
+                    LOGGER.info("Patching {}: {}", packAssetType.parentFolder(), key);
 
                     for (Function<DataPackAsset, Boolean> modifier : modifiers) {
                         if (!modifier.apply(dataPackAsset)) shouldLoad = false;
@@ -133,13 +126,8 @@ public class CraftDataPackInterceptor implements DataPackInterceptor {
             if (this.installCallback != null)
                 this.installCallback.accept(dataPackAsset);
 
-            // Hier kannst du das JsonObject nach Belieben manipulieren
-            // Zum Beispiel: jsonObject.addProperty("neuesFeld", "Wert");
-
-            // Schließe den FileInputStream
             inputStream.close();
 
-            // Schließe den ByteArrayOutputStream
             byteArrayOutputStream.close();
             return () -> new ByteArrayInputStream(jsonObject.toString().getBytes(StandardCharsets.UTF_8));
 
