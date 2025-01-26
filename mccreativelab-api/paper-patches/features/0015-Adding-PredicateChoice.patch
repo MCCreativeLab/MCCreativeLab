@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: derverdox <mail.ysp@web.de>
+Date: Thu, 21 Mar 2024 16:54:14 +0100
+Subject: [PATCH] - Adding PredicateChoice
+
+
+diff --git a/src/main/java/org/bukkit/inventory/RecipeChoice.java b/src/main/java/org/bukkit/inventory/RecipeChoice.java
+index f1aa67997f904953742e8895e49341c2f73d44a2..e5c6f595d6e05a03b8ade9ac4433de97bb14a59a 100644
+--- a/src/main/java/org/bukkit/inventory/RecipeChoice.java
++++ b/src/main/java/org/bukkit/inventory/RecipeChoice.java
+@@ -290,4 +290,39 @@ public interface RecipeChoice extends Predicate<ItemStack>, Cloneable {
+         }
+         // Paper end - check valid ingredients
+     }
++    // Paper start - Adding PredicateChoice
++    /**
++     * Represents a choice that matches when the item predicate is fulfilled.
++     */
++
++    interface PredicateChoice extends RecipeChoice {
++        static PredicateChoice create(@NotNull Predicate<ItemStack> predicate, ItemStack... recipeBookExamples){
++            Objects.requireNonNull(predicate, "The item predicate cannot be null!");
++            Objects.requireNonNull(predicate, "The mustHaveRecipeBookExample cannot be null!");
++            if(recipeBookExamples.length == 0)
++                throw new IllegalArgumentException("Please provide at least one recipe book example item!");
++            return new PredicateChoiceImpl(predicate, List.of(recipeBookExamples));
++        }
++
++        static PredicateChoice create(@NotNull Predicate<ItemStack> predicate, java.util.Collection<ItemStack> recipeBookExamples){
++            Objects.requireNonNull(predicate, "The item predicate cannot be null!");
++            Objects.requireNonNull(predicate, "The mustHaveRecipeBookExample cannot be null!");
++            if(recipeBookExamples.isEmpty())
++                throw new IllegalArgumentException("Please provide at least one recipe book example item!");
++            return new PredicateChoiceImpl(predicate, List.copyOf(recipeBookExamples));
++        }
++
++        /**
++         * Returns the Item predicate
++         * @return - The item predicate
++         */
++        Predicate<ItemStack> predicate();
++
++        /**
++         *
++         * @return
++         */
++        List<ItemStack> recipeBookExamples();
++    }
++    // Paper end - Adding PredicateChoice
+ }

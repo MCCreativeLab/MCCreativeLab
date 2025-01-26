@@ -1,0 +1,89 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Wed, 29 May 2024 22:38:29 +0000
+Subject: [PATCH] Adding behaviours
+
+
+diff --git a/src/main/java/org/bukkit/entity/Entity.java b/src/main/java/org/bukkit/entity/Entity.java
+index 19272cff8d6d040e95b2644d70acdac606e06c16..7b8f9f69de214895b09b0bd58881e0269acc9583 100644
+--- a/src/main/java/org/bukkit/entity/Entity.java
++++ b/src/main/java/org/bukkit/entity/Entity.java
+@@ -768,6 +768,35 @@ public interface Entity extends Metadatable, CommandSender, Nameable, Persistent
+     @NotNull
+     Set<String> getScoreboardTags();
+ 
++    // MCCreativeLab start - Add EntityBehaviour
++    /**
++     * Sets the custom behaviour for this entity
++     * @param entityTypeClass - The Entity Type class
++     * @param behaviour - The custom behaviour implementation
++     * @param <T> - The Bukkit Entity Type
++     * @param <B> - The EntityBehaviour Type
++     */
++    <T extends Entity, B extends de.verdox.mccreativelab.behavior.entity.EntityBehaviour<T>> void setCustomEntityBehaviour(Class<? extends T> entityTypeClass, B behaviour);
++
++    /**
++     * Gets the custom behaviour for this entity
++     * @param behaviourType - The type of behaviour
++     * @param <T> - The Bukkit Entity Type
++     * @param <B> - The EntityBehaviour Type
++     */
++    @Nullable
++    <T extends Entity, B extends de.verdox.mccreativelab.behavior.entity.EntityBehaviour<T>> B getCustomEntityBehaviour(Class<? extends B> behaviourType);
++    /**
++     * Gets the custom behaviour for this entity if it is available and has the provided type
++     * @param behaviourType - The type of behaviour
++     * @param <T> - The Bukkit Entity Type
++     * @param <B> - The EntityBehaviour Type
++     */
++    <T extends Entity, B extends de.verdox.mccreativelab.behavior.entity.EntityBehaviour<T>> B getCustomEntityBehaviourIfAvailable(Class<? extends B> behaviourType);
++
++    boolean hasCustomEntityBehaviour();
++    // MCCreativeLab end - Add EntityBehaviour
++
+     /**
+      * Add a tag to this entity.
+      * <br>
+diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
+index 8c9654cd19af8b28fa276a55c5060eb389e60c1c..e73c891ed867c833ab7f28dfdb98a413f8e3108a 100644
+--- a/src/main/java/org/bukkit/inventory/ItemStack.java
++++ b/src/main/java/org/bukkit/inventory/ItemStack.java
+@@ -143,6 +143,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+         if (data != null) {
+             createData(data);
+         }
++        de.verdox.mccreativelab.BasicItemFormat.applyItemFormatAndReturn(this);
+     }
+ 
+     /**
+@@ -161,6 +162,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+         if (stack.getType().isLegacy()) {
+             this.data = stack.getData();
+         }
++        de.verdox.mccreativelab.BasicItemFormat.applyItemFormatAndReturn(this);
+     }
+ 
+     /**
+@@ -1318,4 +1320,22 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+         return this.craftDelegate.matchesWithoutData(item, excludeTypes, ignoreCount);
+     }
+     // Paper end - data component API
++
++    // MCCLab start - Add ItemBehaviour as instance to this specific Item Stack
++    public void setItemBehaviour(@Nullable de.verdox.mccreativelab.behavior.ItemBehaviour itemBehaviour){
++        this.craftDelegate.setItemBehaviour(itemBehaviour);
++    }
++
++    public boolean hasCustomItemBehaviour(){
++        return this.craftDelegate.hasCustomItemBehaviour();
++    }
++
++    public @Nullable de.verdox.mccreativelab.behavior.ItemBehaviour getDefinedItemBehaviour(){
++        return this.craftDelegate.getDefinedItemBehaviour();
++    }
++
++    public @Nullable de.verdox.mccreativelab.behavior.ItemBehaviour getItemBehaviour(){
++        return this.craftDelegate.getItemBehaviour();
++    }
++    // MCCLab end - Add ItemBehaviour as instance to this specific Item Stack
+ }
