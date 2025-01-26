@@ -1,0 +1,15 @@
+--- a/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -788,6 +_,12 @@
+         return this.settings.getProperties().forceGameMode ? this.worldData.getGameType() : null;
+     }
+ 
++    // Paper start - Make server resourcepack changeable
++    public void setServerResourcePack(@Nullable MinecraftServer.ServerResourcePackInfo resourcePackInfo){
++        this.settings.getProperties().serverResourcePackInfo = Optional.ofNullable(resourcePackInfo);
++    }
++    // Paper end - Make server resourcepack changeable
++
+     @Override
+     public Optional<MinecraftServer.ServerResourcePackInfo> getServerResourcePack() {
+         return this.settings.getProperties().serverResourcePackInfo;

@@ -1,0 +1,16 @@
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -862,6 +_,13 @@
+         return this.getServer().getServerResourcePack().map(CraftResourcePack::new).orElse(null);
+     }
+ 
++    // Paper start - Make server resourcepack changeable
++    @Override
++    public void setServerResourcePack(@org.jetbrains.annotations.Nullable ResourcePack resourcePack) {
++        this.getServer().setServerResourcePack(resourcePack == null ? null : new MinecraftServer.ServerResourcePackInfo(resourcePack.getId(), resourcePack.getUrl(), resourcePack.getHash(), resourcePack.isRequired(), io.papermc.paper.adventure.PaperAdventure.asVanilla(resourcePack.getPrompt())));
++    }
++    // Paper end - Make server resourcepack changeable
++
+     @Override
+     public String getResourcePack() {
+         return this.getServer().getServerResourcePack().map(MinecraftServer.ServerResourcePackInfo::url).orElse("");

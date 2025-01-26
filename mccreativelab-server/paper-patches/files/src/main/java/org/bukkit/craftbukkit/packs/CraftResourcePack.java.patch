@@ -1,0 +1,16 @@
+--- a/src/main/java/org/bukkit/craftbukkit/packs/CraftResourcePack.java
++++ b/src/main/java/org/bukkit/craftbukkit/packs/CraftResourcePack.java
+@@ -29,9 +_,11 @@
+     }
+ 
+     @Override
+-    public String getPrompt() {
+-        return (this.handle.prompt() == null) ? "" : CraftChatMessage.fromComponent(this.handle.prompt());
++    // Paper start - Make server resource pack changeable
++    public net.kyori.adventure.text.Component getPrompt() {
++        return (this.handle.prompt() == null) ? net.kyori.adventure.text.Component.empty() : io.papermc.paper.adventure.PaperAdventure.asAdventure(this.handle.prompt());
+     }
++    // Paper end - Make server resource pack changeable
+ 
+     @Override
+     public boolean isRequired() {
