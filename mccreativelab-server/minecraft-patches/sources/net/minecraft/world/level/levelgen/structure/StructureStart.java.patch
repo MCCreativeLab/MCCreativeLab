@@ -1,0 +1,12 @@
+--- a/net/minecraft/world/level/levelgen/structure/StructureStart.java
++++ b/net/minecraft/world/level/levelgen/structure/StructureStart.java
+@@ -103,7 +_,8 @@
+             if (!pieces.isEmpty()) {
+                 org.bukkit.craftbukkit.util.TransformerGeneratorAccess transformerAccess = new org.bukkit.craftbukkit.util.TransformerGeneratorAccess();
+                 transformerAccess.setHandle(level);
+-                transformerAccess.setStructureTransformer(new org.bukkit.craftbukkit.util.CraftStructureTransformer(this.generationEventCause, level, structureManager, this.structure, box, chunkPos));
++
++                transformerAccess.setStructureTransformer(new org.bukkit.craftbukkit.util.CraftStructureTransformer(this, this.generationEventCause, level, structureManager, this.structure, box, chunkPos)); // Paper - Add GeneratedStructure to AsyncStructureGenerateEvent
+                 for (StructurePiece piece : pieces) {
+                     piece.postProcess(transformerAccess, structureManager, generator, random, box, chunkPos, blockPos);
+                 }

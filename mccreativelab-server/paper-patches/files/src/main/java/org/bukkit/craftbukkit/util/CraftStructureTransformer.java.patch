@@ -1,0 +1,16 @@
+--- a/src/main/java/org/bukkit/craftbukkit/util/CraftStructureTransformer.java
++++ b/src/main/java/org/bukkit/craftbukkit/util/CraftStructureTransformer.java
+@@ -63,8 +_,11 @@
+     private BlockTransformer[] blockTransformers;
+     private EntityTransformer[] entityTransformers;
+ 
+-    public CraftStructureTransformer(Cause cause, WorldGenLevel generatoraccessseed, StructureManager structuremanager, Structure structure, BoundingBox structureboundingbox, ChunkPos chunkcoordintpair) {
+-        AsyncStructureGenerateEvent event = new AsyncStructureGenerateEvent(structuremanager.level.getMinecraftWorld().getWorld(), !Bukkit.isPrimaryThread(), cause, CraftStructure.minecraftToBukkit(structure), new org.bukkit.util.BoundingBox(structureboundingbox.minX(), structureboundingbox.minY(), structureboundingbox.minZ(), structureboundingbox.maxX(), structureboundingbox.maxY(), structureboundingbox.maxZ()), chunkcoordintpair.x, chunkcoordintpair.z);
++    // Paper start - Adding GeneratedStructure to AsyncStructureGenerateEvent
++    public CraftStructureTransformer(net.minecraft.world.level.levelgen.structure.StructureStart structureStart, Cause cause, WorldGenLevel generatoraccessseed, StructureManager structuremanager, Structure structure, BoundingBox structureboundingbox, ChunkPos chunkcoordintpair) {
++        org.bukkit.generator.structure.GeneratedStructure generatedStructure = new org.bukkit.craftbukkit.generator.structure.CraftGeneratedStructure(structureStart);
++        AsyncStructureGenerateEvent event = new AsyncStructureGenerateEvent(structuremanager.level.getMinecraftWorld().getWorld(), !Bukkit.isPrimaryThread(), generatedStructure, cause, CraftStructure.minecraftToBukkit(structure), new org.bukkit.util.BoundingBox(structureboundingbox.minX(), structureboundingbox.minY(), structureboundingbox.minZ(), structureboundingbox.maxX(), structureboundingbox.maxY(), structureboundingbox.maxZ()), chunkcoordintpair.x, chunkcoordintpair.z);
++    // Paper end - Adding GeneratedStructure to AsyncStructureGenerateEvent
+         Bukkit.getPluginManager().callEvent(event);
+         this.blockTransformers = event.getBlockTransformers().values().toArray(BlockTransformer[]::new);
+         this.entityTransformers = event.getEntityTransformers().values().toArray(EntityTransformer[]::new);
