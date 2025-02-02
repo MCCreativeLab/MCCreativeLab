@@ -1,8 +1,8 @@
 package de.verdox.mccreativelab.behavior;
 
 import de.verdox.mccreativelab.CustomBehaviour;
-import de.verdox.mccreativelab.worldgen.WorldGenChunk;
 import org.bukkit.NamespacedKey;
+import org.bukkit.RegionAccessor;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.util.BlockVector;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ public interface WorldGenerationBehaviour extends Behaviour {
      * @param worldGenChunk The WorldGenChunk of the block
      * @param generatedBlockData The BlockData that was generated
      */
-    default void featureBlockGenerationCallback(@NotNull FeatureType featureType, @NotNull BlockVector blockPosition, @NotNull WorldGenChunk worldGenChunk, @NotNull BlockData generatedBlockData){}
+    default void featureBlockGenerationCallback(@NotNull FeatureType featureType, @NotNull BlockVector blockPosition, @NotNull RegionAccessor worldGenChunk, @NotNull BlockData generatedBlockData){}
     record FeatureType(@NotNull NamespacedKey namespacedKey){
         public static final FeatureType TREE_FEATURE = new FeatureType(NamespacedKey.minecraft("tree_feature"));
         public static final FeatureType ORE_FEATURE = new FeatureType(NamespacedKey.minecraft("ore_feature"));

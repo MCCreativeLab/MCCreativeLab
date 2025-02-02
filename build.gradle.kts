@@ -43,6 +43,7 @@ subprojects {
     repositories {
         mavenCentral()
         maven(paperMavenPublicUrl)
+        maven("https://repo.verdox.de/snapshots")
     }
 
     tasks.withType<AbstractArchiveTask>().configureEach {
@@ -70,12 +71,14 @@ subprojects {
 
     extensions.configure<PublishingExtension> {
         repositories {
-            /*
-            maven("https://repo.papermc.io/repository/maven-snapshots/") {
-                name = "paperSnapshots"
-                credentials(PasswordCredentials::class)
+            maven {
+                name = "verdox"
+                url = uri("https://repo.verdox.de/snapshots")
+                credentials {
+                    username = (findProperty("reposilite.verdox.user") ?: System.getenv("REPO_USER")).toString()
+                    password = (findProperty("reposilite.verdox.key") ?: System.getenv("REPO_PASSWORD")).toString()
+                }
             }
-             */
         }
     }
 }

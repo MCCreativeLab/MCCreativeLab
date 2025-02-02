@@ -1,0 +1,66 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: derverdox <mail.ysp@web.de>
+Date: Sun, 3 Dec 2023 14:20:30 +0100
+Subject: [PATCH] Implementing Basic Item Format
+
+
+diff --git a/src/main/java/net/minecraft/world/item/ItemStack.java b/src/main/java/net/minecraft/world/item/ItemStack.java
+index 54c8f5bf99e11ab325c27ab74e2c4cfffd4ae86c..82277dab9b9112ec27e27c8a729bf8821d604491 100644
+--- a/src/main/java/net/minecraft/world/item/ItemStack.java
++++ b/src/main/java/net/minecraft/world/item/ItemStack.java
+@@ -307,11 +307,13 @@ public final class ItemStack implements DataComponentHolder {
+         this.count = count;
+         this.components = components;
+         this.getItem().verifyComponentsAfterLoad(this);
++        de.verdox.itemformat.BasicItemFormat.applyItemFormatAndReturn(getBukkitStack());
+     }
+ 
+     private ItemStack(@Nullable Void v) {
+         this.item = null;
+         this.components = new PatchedDataComponentMap(DataComponentMap.EMPTY);
++        de.verdox.itemformat.BasicItemFormat.applyItemFormatAndReturn(getBukkitStack());
+     }
+ 
+     public static DataResult<Unit> validateComponents(DataComponentMap components) {
+diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
+index cee6520b775fb5dcd56f00ec3194a884ee16429b..51a4374712ab590e1c4f00ab0f6aafb336f47c53 100644
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
+@@ -179,6 +179,7 @@ public final class CraftItemStack extends ItemStack {
+         this.setAmount(amount);
+         this.setDurability(durability);
+         this.setItemMeta(itemMeta);
++        de.verdox.mccreativelab.BasicItemFormat.applyItemFormatAndReturn(this);
+     }
+ 
+     @Override
+diff --git a/src/test/java/org/bukkit/craftbukkit/inventory/DeprecatedItemMetaCustomValueTest.java b/src/test/java/org/bukkit/craftbukkit/inventory/DeprecatedItemMetaCustomValueTest.java
+index 1c80fe7549d70ae16c7b755c22752549261f072a..3c8110dc83556aa1206ece71aedaaf910e939812 100644
+--- a/src/test/java/org/bukkit/craftbukkit/inventory/DeprecatedItemMetaCustomValueTest.java
++++ b/src/test/java/org/bukkit/craftbukkit/inventory/DeprecatedItemMetaCustomValueTest.java
+@@ -120,8 +120,8 @@ public class DeprecatedItemMetaCustomValueTest {
+         String configValue = configuration.saveToString();
+         YamlConfiguration loadedConfig = YamlConfiguration.loadConfiguration(new StringReader(configValue));
+ 
+-        assertEquals(stack, loadedConfig.getSerializable("testpath", ItemStack.class));
+-        assertNotEquals(new ItemStack(Material.DIAMOND), loadedConfig.getSerializable("testpath", ItemStack.class));
++        assertEquals(stack, de.verdox.mccreativelab.BasicItemFormat.removeConversionTag(loadedConfig.getSerializable("testpath", ItemStack.class)));
++        assertNotEquals(new ItemStack(Material.DIAMOND), de.verdox.mccreativelab.BasicItemFormat.removeConversionTag(loadedConfig.getSerializable("testpath", ItemStack.class)));
+     }
+ 
+     @Test
+diff --git a/src/test/java/org/bukkit/craftbukkit/inventory/PersistentDataContainerTest.java b/src/test/java/org/bukkit/craftbukkit/inventory/PersistentDataContainerTest.java
+index f33b49915d1f1f0838c49ac943e8d4d619450f6b..e9b3b61516c6a3c2f923dd0497d3cb8277c81ded 100644
+--- a/src/test/java/org/bukkit/craftbukkit/inventory/PersistentDataContainerTest.java
++++ b/src/test/java/org/bukkit/craftbukkit/inventory/PersistentDataContainerTest.java
+@@ -154,8 +154,8 @@ public class PersistentDataContainerTest {
+         String configValue = configuration.saveToString();
+         YamlConfiguration loadedConfig = YamlConfiguration.loadConfiguration(new StringReader(configValue));
+ 
+-        assertEquals(stack, loadedConfig.getSerializable("testpath", ItemStack.class));
+-        assertNotEquals(new ItemStack(Material.DIAMOND), loadedConfig.getSerializable("testpath", ItemStack.class));
++        assertEquals(stack, de.verdox.mccreativelab.BasicItemFormat.removeConversionTag(loadedConfig.getSerializable("testpath", ItemStack.class)));
++        assertNotEquals(new ItemStack(Material.DIAMOND), de.verdox.mccreativelab.BasicItemFormat.removeConversionTag(loadedConfig.getSerializable("testpath", ItemStack.class)));
+     }
+ 
+     @Test

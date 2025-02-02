@@ -1,7 +1,7 @@
 package de.verdox.mccreativelab.behaviour;
 
 import de.verdox.mccreativelab.MultiCustomBehaviour;
-import net.minecraft.world.InteractionResultHolder;
+import de.verdox.mccreativelab.behavior.BehaviourResult;
 import net.minecraft.world.level.block.state.BlockState;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -16,8 +16,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
-public class BehaviourUtil {
-    public static final BehaviourResult.Object<Float> FLOAT_DEFAULT = new BehaviourResult.Object<>(0f, BehaviourResult.Object.Type.USE_VANILLA);
+public interface BehaviourUtil {
+    public static final BehaviourResult.Object<Float> FLOAT_DEFAULT = new BehaviourResult.Object<>(0f, BehaviourResult.Object.Type.USE_VANILLA_ONLY);
 
     // ### Standard Implementation
     public static <I, R, T extends BehaviourResult<I, ?>, V> R evaluate(@Nullable V behaviour, @NotNull Function<V, T> logicFunction, Supplier<R> vanillaLogic, @Nullable Converter<I, R> converter) {
@@ -33,8 +33,6 @@ public class BehaviourUtil {
                     return null;
                 return converter.nmsToBukkitValue(vanillaValue);
             });
-            if (evaluatedValue == null)
-                return null;
             return converter.bukkitToNMS(evaluatedValue);
         } catch (Throwable throwable) {
             Bukkit.getLogger()
@@ -49,6 +47,14 @@ public class BehaviourUtil {
 
     public static <V> int evaluateInteger(@Nullable V behaviour, @NotNull Function<V, BehaviourResult.Object<Integer>> logicFunction, Supplier<Integer> vanillaLogic){
         return evaluate(behaviour, logicFunction, vanillaLogic, Converter.DummyConverter.getInstance(Integer.class));
+    }
+
+    public static <V> float evaluateFloat(@Nullable V behaviour, @NotNull Function<V, BehaviourResult.Object<Float>> logicFunction, Supplier<Float> vanillaLogic){
+        return evaluate(behaviour, logicFunction, vanillaLogic, Converter.DummyConverter.getInstance(Float.class));
+    }
+
+    public static <V> double evaluateDouble(@Nullable V behaviour, @NotNull Function<V, BehaviourResult.Object<Double>> logicFunction, Supplier<Double> vanillaLogic){
+        return evaluate(behaviour, logicFunction, vanillaLogic, Converter.DummyConverter.getInstance(Double.class));
     }
 
     public static <V> void evaluateVoid(@Nullable V behaviour, @NotNull Function<V, BehaviourResult.Void> logicFunction, Runnable vanillaLogic){
@@ -151,18 +157,6 @@ public class BehaviourUtil {
             }
         }
 
-        class ItemStackInteraction implements Converter<de.verdox.mccreativelab.behaviour.interaction.ItemStackInteraction, InteractionResultHolder<net.minecraft.world.item.ItemStack>>{
-            public static final ItemStackInteraction INSTANCE = new ItemStackInteraction();
-            @Override
-            public InteractionResultHolder<net.minecraft.world.item.ItemStack> bukkitToNMS(de.verdox.mccreativelab.behaviour.interaction.ItemStackInteraction bukkitValue) {
-                return new InteractionResultHolder<>(InteractionResult.INSTANCE.bukkitToNMS(bukkitValue.interactionResult()), CraftItemStack.asNMSCopy(bukkitValue.stack()));
-            }
-            @Override
-            public de.verdox.mccreativelab.behaviour.interaction.ItemStackInteraction nmsToBukkitValue(InteractionResultHolder<net.minecraft.world.item.ItemStack> nmsValue) {
-                return new de.verdox.mccreativelab.behaviour.interaction.ItemStackInteraction(InteractionResult.INSTANCE.nmsToBukkitValue(nmsValue.getResult()), nmsValue.getObject().getBukkitStack());
-            }
-        }
-
         class ItemStack implements Converter<org.bukkit.inventory.ItemStack, net.minecraft.world.item.ItemStack> {
             public static final ItemStack INSTANCE = new ItemStack();
 
@@ -180,70 +174,6 @@ public class BehaviourUtil {
                 if(nmsValue == null)
                     return new org.bukkit.inventory.ItemStack(Material.AIR);
                 return nmsValue.getBukkitStack();
-            }
-        }
-
-        class InteractionResult implements Converter<de.verdox.mccreativelab.InteractionResult, net.minecraft.world.InteractionResult> {
-            public static final InteractionResult INSTANCE = new InteractionResult();
-
-            private InteractionResult() {
-            }
-
-            @Override
-            public net.minecraft.world.InteractionResult bukkitToNMS(de.verdox.mccreativelab.InteractionResult bukkitValue) {
-                if (bukkitValue == null)
-                    return net.minecraft.world.InteractionResult.PASS;
-                return switch (bukkitValue) {
-                    case SUCCESS -> net.minecraft.world.InteractionResult.SUCCESS;
-                    case SUCCESS_NO_ITEM_USED -> net.minecraft.world.InteractionResult.SUCCESS_NO_ITEM_USED;
-                    case CONSUME -> net.minecraft.world.InteractionResult.CONSUME;
-                    case CONSUME_PARTIAL -> net.minecraft.world.InteractionResult.CONSUME_PARTIAL;
-                    case PASS -> net.minecraft.world.InteractionResult.PASS;
-                    case FAIL -> net.minecraft.world.InteractionResult.FAIL;
-                };
-            }
-
-            @Override
-            public de.verdox.mccreativelab.InteractionResult nmsToBukkitValue(net.minecraft.world.InteractionResult nmsValue) {
-                return switch (nmsValue) {
-                    case SUCCESS -> de.verdox.mccreativelab.InteractionResult.SUCCESS;
-                    case SUCCESS_NO_ITEM_USED -> de.verdox.mccreativelab.InteractionResult.SUCCESS_NO_ITEM_USED;
-                    case CONSUME -> de.verdox.mccreativelab.InteractionResult.CONSUME;
-                    case CONSUME_PARTIAL -> de.verdox.mccreativelab.InteractionResult.CONSUME_PARTIAL;
-                    case PASS -> de.verdox.mccreativelab.InteractionResult.PASS;
-                    case FAIL -> de.verdox.mccreativelab.InteractionResult.FAIL;
-                };
-            }
-        }
-        class ItemInteractionResult implements Converter<de.verdox.mccreativelab.ItemInteractionResult, net.minecraft.world.ItemInteractionResult>{
-            public static final ItemInteractionResult INSTANCE = new ItemInteractionResult();
-
-            @Override
-            public net.minecraft.world.ItemInteractionResult bukkitToNMS(de.verdox.mccreativelab.ItemInteractionResult bukkitValue) {
-                if(bukkitValue == null)
-                    return net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-                return switch (bukkitValue) {
-                    case SUCCESS -> net.minecraft.world.ItemInteractionResult.SUCCESS;
-                    case CONSUME -> net.minecraft.world.ItemInteractionResult.CONSUME;
-                    case CONSUME_PARTIAL -> net.minecraft.world.ItemInteractionResult.CONSUME_PARTIAL;
-                    case PASS_TO_DEFAULT_BLOCK_INTERACTION -> net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-                    case SKIP_DEFAULT_BLOCK_INTERACTION -> net.minecraft.world.ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
-                    case FAIL -> net.minecraft.world.ItemInteractionResult.FAIL;
-                };
-            }
-
-            @Override
-            public de.verdox.mccreativelab.ItemInteractionResult nmsToBukkitValue(net.minecraft.world.ItemInteractionResult nmsValue) {
-                if(nmsValue == null)
-                    return de.verdox.mccreativelab.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-                return switch (nmsValue) {
-                    case SUCCESS -> de.verdox.mccreativelab.ItemInteractionResult.SUCCESS;
-                    case CONSUME -> de.verdox.mccreativelab.ItemInteractionResult.CONSUME;
-                    case CONSUME_PARTIAL -> de.verdox.mccreativelab.ItemInteractionResult.CONSUME_PARTIAL;
-                    case PASS_TO_DEFAULT_BLOCK_INTERACTION -> de.verdox.mccreativelab.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-                    case SKIP_DEFAULT_BLOCK_INTERACTION -> de.verdox.mccreativelab.ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
-                    case FAIL -> de.verdox.mccreativelab.ItemInteractionResult.FAIL;
-                };
             }
         }
 

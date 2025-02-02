@@ -23,11 +23,10 @@ public interface ItemBehaviour extends Behaviour {
      * @param stack - The ItemStack
      * @param block - The block
      * @param miner - The miner
-     * @return - If the block was mined successfully
      */
     @NotNull
-    default BehaviourResult.Bool mineBlock(ItemStack stack, Block block, Player miner) {
-        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+    default BehaviourResult.Void mineBlock(ItemStack stack, Block block, Player miner) {
+        return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
     /**
@@ -45,11 +44,10 @@ public interface ItemBehaviour extends Behaviour {
      * Called when an amount of {@link ItemStack} is crafted by a {@link Player}
      * @param stack - The ItemStack
      * @param player - The crafter
-     * @param amount - The amount crafted
      * @return - Nothing
      */
     @NotNull
-    default BehaviourResult.Void onCraftedBy(ItemStack stack, Player player, int amount) {
+    default BehaviourResult.Void onCraftedBy(ItemStack stack, Player player) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 

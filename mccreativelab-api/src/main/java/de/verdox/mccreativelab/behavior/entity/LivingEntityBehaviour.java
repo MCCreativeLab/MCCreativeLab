@@ -19,43 +19,53 @@ public interface LivingEntityBehaviour<T extends LivingEntity> extends EntityBeh
     }
 
     /**
-     * Gets the water-damage of an {@link LivingEntity} applied when it is sensitive to water
-     * @param entity - The entity
-     * @return - The water damage
-     */
-    @NotNull
-    default BehaviourResult.Object<Float> waterDamage(@NotNull T entity) {
-        return BehaviourResult.Object.DEFAULT_INSTANCE;
-    }
-
-    /**
      * Is called when an {@link LivingEntity} picks up an {@link Item}
      * @param entity - The Entity
      * @param item - The picked up Item
      * @return - nothing
      */
     @NotNull
-    default BehaviourResult.Void onItemPickup(@NotNull T entity, @NotNull Item item){
+    default BehaviourResult.Void onItemPickup(@NotNull T entity, @NotNull Item item) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
     /**
-     * Gets if an {@link LivingEntity} can disable shields
-     * @param entity - The entity
+     * Gets if an {@link LivingEntity} can attack an {@link Entity} with a particular {@link EntityType}
+     * @param entityType - The entity type
      * @return - true if it can
      */
     @NotNull
-    default BehaviourResult.Bool canDisableShield(@NotNull T entity) {
+    default BehaviourResult.Bool canAttackType(@NotNull EntityType entityType) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
     /**
-     * Gets if an {@link LivingEntity} can attack an {@link Entity} with a particular {@link EntityType}
-     * @param entity - The entity
+     * Gets if an {@link LivingEntity} can attack an {@link Entity}
+     * @param other - The entity
      * @return - true if it can
      */
     @NotNull
-    default BehaviourResult.Bool canAttackType(@NotNull T entity, @NotNull EntityType entityType) {
+    default BehaviourResult.Bool canAttack(LivingEntity entity, LivingEntity other) {
+        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * Checks if an entity can be name tagged
+     * @param entity the entity
+     * @return if it can be name tagged
+     */
+    @NotNull
+    default BehaviourResult.Bool canBeNameTagged(LivingEntity entity) {
+        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * Checks if an entity can pick up loot
+     * @param entity the entity
+     * @return if it can pick up loot
+     */
+    @NotNull
+    default BehaviourResult.Bool canPickUpLoot(LivingEntity entity) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 }

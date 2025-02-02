@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Sun, 20 Oct 2024 23:08:49 +0000
+Subject: [PATCH] Fixing to align with bukkit tests
+
+
+diff --git a/src/main/java/de/verdox/itemformat/BasicItemFormat.java b/src/main/java/de/verdox/itemformat/BasicItemFormat.java
+index 9eff8786195ff9543397f5261c2a0091e40646c9..128cd4526d78e8e341ec5377c14fbe86ea012d2e 100644
+--- a/src/main/java/de/verdox/itemformat/BasicItemFormat.java
++++ b/src/main/java/de/verdox/itemformat/BasicItemFormat.java
+@@ -50,4 +50,9 @@ public interface BasicItemFormat {
+     static void applyConversionTag(ItemStack stack){
+         stack.editMeta(meta -> meta.getPersistentDataContainer().set(sessionIDKey, PersistentDataType.STRING, randomSessionID));
+     }
++
++    static ItemStack removeConversionTag(ItemStack stack){
++        stack.editMeta(meta -> meta.getPersistentDataContainer().remove(sessionIDKey));
++        return stack;
++    }
+ }

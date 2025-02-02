@@ -1,0 +1,55 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: derverdox <mail.ysp@web.de>
+Date: Mon, 15 Jan 2024 02:01:20 +0100
+Subject: [PATCH] Enhanced Entity AI API
+
+
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index 8ab94f8189ebd9d4158231871abdebec399deb2c..7be585db91d2a716f28999c5f86dcfdc12fb4cfb 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -2968,4 +2970,11 @@ public final class Bukkit {
+     public static Server.Spigot spigot() {
+         return server.spigot();
+     }
++
++    // Paper start - Add AI Library
++    @NotNull
++    public static de.verdox.mccreativelab.ai.builder.AIFactory getAIFactory(){
++        return server.aiFactory();
++    }
++    // Paper end - Add AI Library
+ }
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index ad816538b30079c62d5e1eb98c6f4b61e12e8d47..4f493427c7f40d005b3495752e8001d1e0e3c81f 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -2607,4 +2609,9 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+      */
+     void allowPausing(@NotNull org.bukkit.plugin.Plugin plugin, boolean value);
+     // Paper end - API to check if the server is sleeping
++
++    // Paper start - Add AI Library
++    @NotNull
++    de.verdox.mccreativelab.ai.builder.AIFactory aiFactory();
++    // Paper end - Add AI Library
+ }
+diff --git a/src/main/java/org/bukkit/entity/LivingEntity.java b/src/main/java/org/bukkit/entity/LivingEntity.java
+index d21a228bbec0302e75c4db5aa1db54f321143587..eebd2b58105feddc6cb16748690e625b57aa68cb 100644
+--- a/src/main/java/org/bukkit/entity/LivingEntity.java
++++ b/src/main/java/org/bukkit/entity/LivingEntity.java
+@@ -972,6 +972,14 @@ public interface LivingEntity extends Attributable, Damageable, ProjectileSource
+      */
+     <T> void setMemory(@NotNull MemoryKey<T> memoryKey, @Nullable T memoryValue);
+ 
++    // MCCLab start - Adding EntityBrain
++    /**
++     * Gets the brain of this entity
++     * @return The brain
++     */
++    <T extends LivingEntity> de.verdox.mccreativelab.ai.EntityBrain<T> getBrain(Class<? extends T> type);
++    //MCCLab end - Adding EntityBrain
++
+     /**
+      * Get the {@link Sound} this entity will make when damaged.
+      *

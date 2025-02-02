@@ -1,0 +1,62 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: derverdox <mail.ysp@web.de>
+Date: Tue, 5 Dec 2023 21:21:01 +0100
+Subject: [PATCH] Adding MCCreativeLabExtension plugin
+
+
+diff --git a/build.gradle.kts b/build.gradle.kts
+index d45d98b58b636556abdd538113eb2b2f3eb0b4f0..57589f4eb59db9c32fbc0b6251b500f0c2207634 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -217,37 +217,51 @@ tasks.registerRunTask("runServer") {
+     description = "Spin up a test server from the Mojang mapped server jar"
+     classpath(tasks.includeMappings.flatMap { it.outputJar })
+     classpath(runtimeClasspathWithoutVanillaServer)
++    jvmArgs("-Dpaper.debug-sync-loads=true", "-Dfile.encoding=UTF-8")
++    environment("IS_IDEA", "true")
+ }
+ 
+ tasks.registerRunTask("runReobfServer") {
+     description = "Spin up a test server from the reobfJar output jar"
+     classpath(tasks.reobfJar.flatMap { it.outputJar })
+     classpath(runtimeClasspathWithoutVanillaServer)
++    jvmArgs("-Dpaper.debug-sync-loads=true", "-Dfile.encoding=UTF-8")
++    environment("IS_IDEA", "true")
+ }
+ 
+ tasks.registerRunTask("runDevServer") {
+     description = "Spin up a test server without assembling a jar"
+     classpath(sourceSets.main.map { it.runtimeClasspath })
+     jvmArgs("-DPaper.pushPaperAssetsRoot=true")
++    jvmArgs("-Dpaper.debug-sync-loads=true", "-Dfile.encoding=UTF-8")
++    environment("IS_IDEA", "true")
+ }
+ 
+ tasks.registerRunTask("runBundler") {
+     description = "Spin up a test server from the Mojang mapped bundler jar"
+     classpath(rootProject.tasks.named<io.papermc.paperweight.tasks.CreateBundlerJar>("createMojmapBundlerJar").flatMap { it.outputZip })
+     mainClass.set(null as String?)
++    jvmArgs("-Dpaper.debug-sync-loads=true", "-Dfile.encoding=UTF-8")
++    environment("IS_IDEA", "true")
+ }
+ tasks.registerRunTask("runReobfBundler") {
+     description = "Spin up a test server from the reobf bundler jar"
+     classpath(rootProject.tasks.named<io.papermc.paperweight.tasks.CreateBundlerJar>("createReobfBundlerJar").flatMap { it.outputZip })
+     mainClass.set(null as String?)
++    jvmArgs("-Dpaper.debug-sync-loads=true", "-Dfile.encoding=UTF-8")
++    environment("IS_IDEA", "true")
+ }
+ tasks.registerRunTask("runPaperclip") {
+     description = "Spin up a test server from the Mojang mapped Paperclip jar"
+     classpath(rootProject.tasks.named<io.papermc.paperweight.tasks.CreatePaperclipJar>("createMojmapPaperclipJar").flatMap { it.outputZip })
+     mainClass.set(null as String?)
++    jvmArgs("-Dpaper.debug-sync-loads=true", "-Dfile.encoding=UTF-8")
++    environment("IS_IDEA", "true")
+ }
+ tasks.registerRunTask("runReobfPaperclip") {
+     description = "Spin up a test server from the reobf Paperclip jar"
+     classpath(rootProject.tasks.named<io.papermc.paperweight.tasks.CreatePaperclipJar>("createReobfPaperclipJar").flatMap { it.outputZip })
+     mainClass.set(null as String?)
++    jvmArgs("-Dpaper.debug-sync-loads=true", "-Dfile.encoding=UTF-8")
++    environment("IS_IDEA", "true")
+ }

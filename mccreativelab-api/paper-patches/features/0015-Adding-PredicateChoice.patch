@@ -23,7 +23,7 @@ index f1aa67997f904953742e8895e49341c2f73d44a2..e5c6f595d6e05a03b8ade9ac4433de97
 +            Objects.requireNonNull(predicate, "The mustHaveRecipeBookExample cannot be null!");
 +            if(recipeBookExamples.length == 0)
 +                throw new IllegalArgumentException("Please provide at least one recipe book example item!");
-+            return new PredicateChoiceImpl(predicate, List.of(recipeBookExamples));
++            return new de.verdox.mccreativelab.recipe.PredicateChoiceImpl(predicate, List.of(recipeBookExamples));
 +        }
 +
 +        static PredicateChoice create(@NotNull Predicate<ItemStack> predicate, java.util.Collection<ItemStack> recipeBookExamples){
@@ -31,7 +31,7 @@ index f1aa67997f904953742e8895e49341c2f73d44a2..e5c6f595d6e05a03b8ade9ac4433de97
 +            Objects.requireNonNull(predicate, "The mustHaveRecipeBookExample cannot be null!");
 +            if(recipeBookExamples.isEmpty())
 +                throw new IllegalArgumentException("Please provide at least one recipe book example item!");
-+            return new PredicateChoiceImpl(predicate, List.copyOf(recipeBookExamples));
++            return new de.verdox.mccreativelab.recipe.PredicateChoiceImpl(predicate, List.copyOf(recipeBookExamples));
 +        }
 +
 +        /**

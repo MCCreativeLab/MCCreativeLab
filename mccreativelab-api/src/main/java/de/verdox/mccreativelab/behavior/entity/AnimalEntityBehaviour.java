@@ -7,7 +7,6 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public interface AnimalEntityBehaviour<T extends Animals> extends AgeableEntityBehaviour<T> {
-
     /**
      * Gets if an {@link Animals} can mate with another {@link Animals}
      * @param entity - The first animal
@@ -28,17 +27,5 @@ public interface AnimalEntityBehaviour<T extends Animals> extends AgeableEntityB
     @NotNull
     default BehaviourResult.Bool isFood(@NotNull T entity, @NotNull ItemStack stack) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
-    }
-
-    /**
-     * Called when an {@link Animals} breeds with another {@link Animals}
-     * @param entity - The first animal
-     * @param other - The second animal
-     * @param child - The child
-     * @return - nothing
-     */
-    @NotNull
-    default BehaviourResult.Callback onBreed(@NotNull T entity, @NotNull Animals other, @NotNull Ageable child) {
-        return BehaviourResult.Callback.DEFAULT_INSTANCE;
     }
 }

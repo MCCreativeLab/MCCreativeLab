@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Wed, 29 May 2024 22:38:29 +0000
+Subject: [PATCH] Adding behaviours
+
+
+diff --git a/src/main/java/net/minecraft/world/level/levelgen/feature/TreeFeature.java b/src/main/java/net/minecraft/world/level/levelgen/feature/TreeFeature.java
+index b5a8ada8400b2fefe12311a2587e104b1b831c2f..0273a3aa8c8c3417a0b09db2eff9b4531f0a04ee 100644
+--- a/src/main/java/net/minecraft/world/level/levelgen/feature/TreeFeature.java
++++ b/src/main/java/net/minecraft/world/level/levelgen/feature/TreeFeature.java
+@@ -124,16 +124,19 @@ public class TreeFeature extends Feature<TreeConfiguration> {
+         BiConsumer<BlockPos, BlockState> biConsumer = (pos, state) -> {
+             set.add(pos.immutable());
+             worldGenLevel.setBlock(pos, state, 19);
++            de.verdox.mccreativelab.worldgen.WorldGenerationCallbackUtil.executeWorldGenCallbacks(de.verdox.mccreativelab.behaviour.WorldGenerationBehaviour.FeatureType.TREE_FEATURE, worldGenLevel, pos, state); // MCCLab - Add WorldGenerationBehaviour
+         };
+         BiConsumer<BlockPos, BlockState> biConsumer2 = (pos, state) -> {
+             set2.add(pos.immutable());
+             worldGenLevel.setBlock(pos, state, 19);
++            de.verdox.mccreativelab.worldgen.WorldGenerationCallbackUtil.executeWorldGenCallbacks(de.verdox.mccreativelab.behaviour.WorldGenerationBehaviour.FeatureType.TREE_FEATURE, worldGenLevel, pos, state); // MCCLab - Add WorldGenerationBehaviour
+         };
+         FoliagePlacer.FoliageSetter foliageSetter = new FoliagePlacer.FoliageSetter() {
+             @Override
+             public void set(BlockPos pos, BlockState state) {
+                 set3.add(pos.immutable());
+                 worldGenLevel.setBlock(pos, state, 19);
++                de.verdox.mccreativelab.worldgen.WorldGenerationCallbackUtil.executeWorldGenCallbacks(de.verdox.mccreativelab.behaviour.WorldGenerationBehaviour.FeatureType.TREE_FEATURE, worldGenLevel, pos, state); // MCCLab - Add WorldGenerationBehaviour
+             }
+ 
+             @Override
+@@ -144,6 +147,7 @@ public class TreeFeature extends Feature<TreeConfiguration> {
+         BiConsumer<BlockPos, BlockState> biConsumer3 = (pos, state) -> {
+             set4.add(pos.immutable());
+             worldGenLevel.setBlock(pos, state, 19);
++            de.verdox.mccreativelab.worldgen.WorldGenerationCallbackUtil.executeWorldGenCallbacks(de.verdox.mccreativelab.behaviour.WorldGenerationBehaviour.FeatureType.TREE_FEATURE, worldGenLevel, pos, state); // MCCLab - Add WorldGenerationBehaviour
+         };
+         boolean bl = this.doPlace(worldGenLevel, randomSource, blockPos, biConsumer, biConsumer2, foliageSetter, treeConfiguration);
+         if (bl && (!set2.isEmpty() || !set3.isEmpty())) {

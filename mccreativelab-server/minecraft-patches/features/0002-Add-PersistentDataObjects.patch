@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Mon, 27 Jan 2025 15:32:37 +0000
+Subject: [PATCH] Add PersistentDataObjects
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index ae220a732c78ab076261f20b5a54c71d7fceb407..05d3fa02f421c9c1289260c2b37314c41e104590 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -999,6 +999,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             this.cancelRecordingMetrics();
+         }
+ 
++        // Paper start - Adding PersistentDataObjects
++        long start = System.currentTimeMillis();
++        int saved = org.bukkit.craftbukkit.persistence.CraftPersistentDataObjectCache.saveAllPersistentDataObjects();
++        long end = System.currentTimeMillis() - start;
++        if(saved > 0)
++            MinecraftServer.LOGGER.info("Took {} ms to save {} persistent data objects", end, saved);
++        // Paper end - Adding PersistentDataObjects
++
+         LOGGER.info("Stopping server");
+         Commands.COMMAND_SENDING_POOL.shutdownNow(); // Paper - Perf: Async command map building; Shutdown and don't bother finishing
+         // CraftBukkit start

@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Mon, 27 Jan 2025 15:42:09 +0000
+Subject: [PATCH] Add BasicItemFormat
+
+
+diff --git a/net/minecraft/world/item/ItemStack.java b/net/minecraft/world/item/ItemStack.java
+index 76f50437396f8f856381d0fbef52953ef7c263f6..08ff882e1df61ba80c5ef4fd307b3db12aabc574 100644
+--- a/net/minecraft/world/item/ItemStack.java
++++ b/net/minecraft/world/item/ItemStack.java
+@@ -284,11 +284,13 @@ public final class ItemStack implements DataComponentHolder {
+         this.count = count;
+         this.components = components;
+         this.getItem().verifyComponentsAfterLoad(this);
++        de.verdox.mccreativelab.BasicItemFormat.applyItemFormatAndReturn(getBukkitStack());
+     }
+ 
+     private ItemStack(@Nullable Void unused) {
+         this.item = null;
+         this.components = new PatchedDataComponentMap(DataComponentMap.EMPTY);
++        de.verdox.mccreativelab.BasicItemFormat.applyItemFormatAndReturn(getBukkitStack());
+     }
+ 
+     public static DataResult<Unit> validateComponents(DataComponentMap components) {

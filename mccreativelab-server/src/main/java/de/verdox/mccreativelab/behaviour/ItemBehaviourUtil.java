@@ -1,5 +1,6 @@
 package de.verdox.mccreativelab.behaviour;
 
+import de.verdox.mccreativelab.behavior.ItemBehaviour;
 import de.verdox.mccreativelab.recipe.CustomItemData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,7 +27,7 @@ import org.bukkit.util.Vector;
 
 import java.util.function.Supplier;
 
-public class ItemBehaviourUtil extends BehaviourUtil {
+public class ItemBehaviourUtil implements BehaviourUtil {
     public static BlockState placeBlockAction(Player player, BlockPos pos, Level world, ItemStack stack, BlockState state, Supplier<BlockState> vanillaLogic){
         return evaluate(getBehaviour(stack),
             itemBehaviour -> itemBehaviour.placeBlockAction(stack.getBukkitStack(), ((CraftPlayer) player.getBukkitEntity()), new Location(world.getWorld(), pos.getX(), pos.getY(), pos.getZ()), Converter.BlockData.INSTANCE.nmsToBukkitValue(state)),
@@ -54,22 +55,14 @@ public class ItemBehaviourUtil extends BehaviourUtil {
     public static boolean isCorrectToolForDrops(ItemStack stack, BlockState blockState) {
         return evaluateBoolean(getBehaviour(stack),
             itemBehaviour -> itemBehaviour.isCorrectToolForDrops(stack.asBukkitMirror(), blockState.createCraftBlockData()),
-            () -> {
-                net.minecraft.world.item.component.Tool tool = stack.get(DataComponents.TOOL);
-                return tool != null && tool.isCorrectForDrops(blockState);
-            }
+            () -> stack.getItem().isCorrectToolForDrops(stack, blockState)
         );
     }
 
     public static void mineBlock(ItemStack stack, Level world, BlockState state, BlockPos pos, Player miner) {
-        boolean mined = evaluateBoolean(getBehaviour(stack),
+        evaluateVoid(getBehaviour(stack),
             itemBehaviour -> itemBehaviour.mineBlock(stack.asBukkitMirror(), world.getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()), (CraftPlayer) miner.getBukkitEntity()),
-            () -> {
-                Item item = stack.getItem();
-                return item.mineBlock(stack, world, state, pos, miner);
-            });
-        if (mined)
-            miner.awardStat(Stats.ITEM_USED.get(stack.getItem()));
+            () -> {});
     }
 
     public static InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity livingEntity, InteractionHand interactionHand) {
@@ -80,11 +73,10 @@ public class ItemBehaviourUtil extends BehaviourUtil {
             , Converter.InteractionResult.INSTANCE);
     }
 
-    public static void onCraftedBy(ItemStack stack, Level world, Player player, int amount) {
+    public static void onCraftedBy(ItemStack stack, Level world, Player player) {
         evaluateVoid(getBehaviour(stack),
-            itemBehaviour -> itemBehaviour.onCraftedBy(stack.asBukkitMirror(), (CraftPlayer) player.getBukkitEntity(), amount),
-            () -> stack.getItem().onCraftedBy(stack, world, player));
-        player.awardStat(Stats.ITEM_CRAFTED.get(stack.getItem()), amount);
+            itemBehaviour -> itemBehaviour.onCraftedBy(stack.asBukkitMirror(), (CraftPlayer) player.getBukkitEntity()),
+            () -> {});
     }
 
     public static void onDestroyed(ItemStack stack, ItemEntity entity) {

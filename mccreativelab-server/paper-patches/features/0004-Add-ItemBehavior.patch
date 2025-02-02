@@ -1,0 +1,78 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Tue, 28 Jan 2025 21:36:54 +0000
+Subject: [PATCH] Add ItemBehavior
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
+index e693c05f28aa74e88d4e2187ba75dffcdd573fde..d4387568fa79435c9b2aa46ff31569f15a4fe3af 100644
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
+@@ -101,7 +101,11 @@ public final class CraftItemStack extends ItemStack {
+             return net.minecraft.world.item.ItemStack.EMPTY;
+         }
+         final CraftItemStack stack = getCraftStack(original);
+-        return stack.handle == null ? net.minecraft.world.item.ItemStack.EMPTY : stack.handle.copy();
++        // MCCreativeLab start - Add ItemBehavior
++        net.minecraft.world.item.ItemStack nms = stack.handle == null ? net.minecraft.world.item.ItemStack.EMPTY : stack.handle.copy();
++        nms.itemBehaviour = original.getDefinedItemBehaviour();
++        return nms;
++        // MCCreativeLab end - Add ItemBehavior
+         // Paper end - re-implement after delegating all api ItemStack calls to CraftItemStack
+     }
+ 
+@@ -138,7 +142,11 @@ public final class CraftItemStack extends ItemStack {
+     public static CraftItemStack asCraftCopy(ItemStack original) {
+         if (original instanceof CraftItemStack) {
+             CraftItemStack stack = (CraftItemStack) original;
+-            return new CraftItemStack(stack.handle == null ? null : stack.handle.copy());
++            // MCCreativeLab start - Add ItemBehavior
++            CraftItemStack newStack = new CraftItemStack(stack.handle == null ? null : stack.handle.copy());
++            newStack.setItemBehaviour(stack.getDefinedItemBehaviour());
++            return newStack;
++            // MCCreativeLab end - Add ItemBehavior
+         }
+         return new CraftItemStack(original);
+     }
+@@ -170,6 +178,7 @@ public final class CraftItemStack extends ItemStack {
+ 
+     private CraftItemStack(ItemStack item) {
+         this(item.getType(), item.getAmount(), item.getDurability(), item.hasItemMeta() ? item.getItemMeta() : null);
++        this.setItemBehaviour(item.getDefinedItemBehaviour()); // MCCLab - Add ItemBehaviour
+     }
+ 
+     private CraftItemStack(Material type, int amount, short durability, ItemMeta itemMeta) {
+@@ -667,4 +676,33 @@ public final class CraftItemStack extends ItemStack {
+     }
+ 
+     // Paper end - data component API
++    // MCCLab start - Add ItemBehaviour as instance to this specific Item Stack
++    @Override
++    public @org.jetbrains.annotations.Nullable de.verdox.mccreativelab.behavior.ItemBehaviour getItemBehaviour() {
++        if(this.handle != null)
++            return this.handle.itemBehaviour;
++        return de.verdox.mccreativelab.behavior.ItemBehaviour.ITEM_BEHAVIOUR.getBehaviour(de.verdox.mccreativelab.recipe.CustomItemData.fromItemStack(this));
++    }
++
++    public @org.jetbrains.annotations.Nullable de.verdox.mccreativelab.behavior.ItemBehaviour getDefinedItemBehaviour() {
++        if(this.handle == null)
++            return null;
++        return this.handle.itemBehaviour;
++    }
++
++    @Override
++    public void setItemBehaviour(@org.jetbrains.annotations.Nullable de.verdox.mccreativelab.behavior.ItemBehaviour itemBehaviour) {
++        if(this.handle == null){
++            if(itemBehaviour == null)
++                return;
++            throw new IllegalArgumentException("Cannot set itemBehaviour for empty item "+this);
++        }
++        this.handle.itemBehaviour = itemBehaviour;
++    }
++
++    @Override
++    public boolean hasCustomItemBehaviour() {
++        return this.handle.itemBehaviour != null;
++    }
++    // MCCLab end - Add ItemBehaviour as instance to this specific Item Stack
+ }

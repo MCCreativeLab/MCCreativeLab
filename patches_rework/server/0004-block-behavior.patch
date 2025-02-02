@@ -1,0 +1,435 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Wed, 29 May 2024 22:38:29 +0000
+Subject: [PATCH] Adding behaviours
+
+
+diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
+index 17a158ff6ce6520b69a5a0032ba4c05449dd0cf8..de731d6f85ac1bedc4263cb267941a5ef757bdb4 100644
+--- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -289,6 +289,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         this.server.loadPlugins();
+         this.server.enablePlugins(org.bukkit.plugin.PluginLoadOrder.STARTUP);
+         // CraftBukkit end
++        net.minecraft.world.level.block.Blocks.rebuildCache(); // MCCLab - Add BlockBehaviour
+ 
+         // Paper start - Add Velocity IP Forwarding Support
+         boolean usingProxy = org.spigotmc.SpigotConfig.bungee || io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled;
+diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
+index 585e2b43a0326f0b81597fa1234d3c67c76af550..10da770c9f968aac11e1678996a17d8b99bd170b 100644
+--- a/src/main/java/net/minecraft/server/level/ServerLevel.java
++++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
+@@ -885,6 +885,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+         for (int sectionIndex = 0, sectionsLen = sections.length; sectionIndex < sectionsLen; sectionIndex++) {
+             final int offsetY = (sectionIndex + minSection) << 4;
+             final LevelChunkSection section = sections[sectionIndex];
++            section.init(this, chunk.getPos(), getSectionYFromSectionIndex(sectionIndex)); // MCCreativeLab - Add BlockBehaviour (FAWE support)
+             final net.minecraft.world.level.chunk.PalettedContainer<net.minecraft.world.level.block.state.BlockState> states = section.states;
+             if (!section.isRandomlyTickingBlocks()) {
+                 continue;
+diff --git a/src/main/java/net/minecraft/server/level/ServerPlayerGameMode.java b/src/main/java/net/minecraft/server/level/ServerPlayerGameMode.java
+index a96f859a5d0c6ec692d4627a69f3c9ee49199dbc..2fd7795f24157e39eeb3fc915a4cd59af645c628 100644
+--- a/src/main/java/net/minecraft/server/level/ServerPlayerGameMode.java
++++ b/src/main/java/net/minecraft/server/level/ServerPlayerGameMode.java
+@@ -469,6 +469,7 @@ public class ServerPlayerGameMode {
+                 }
+                 // Paper end - Trigger bee_nest_destroyed trigger in the correct place
+ 
++                de.verdox.mccreativelab.behaviour.BlockBehaviourUtil.getInstance().onPlayerBreakCallback(player, iblockdata, level, pos); // MCCLab - Add BlockBehaviour
+                 return true;
+                 // CraftBukkit end
+             }
+diff --git a/src/main/java/net/minecraft/world/item/BoneMealItem.java b/src/main/java/net/minecraft/world/item/BoneMealItem.java
+index c7d4a09c11f933494ab047921660451c6c1c7280..0573a0c4884b78d21d0860ec4126a15f9b4aeed7 100644
+--- a/src/main/java/net/minecraft/world/item/BoneMealItem.java
++++ b/src/main/java/net/minecraft/world/item/BoneMealItem.java
+@@ -70,6 +70,7 @@ public class BoneMealItem extends Item {
+     }
+ 
+     public static boolean growCrop(ItemStack stack, Level world, BlockPos pos) {
++        return de.verdox.mccreativelab.behaviour.BlockBehaviourUtil.INSTANCE.growCrop(stack, world, pos, () -> { // MCCreativeLab - Add BlockBehaviour
+         BlockState iblockdata = world.getBlockState(pos);
+         Block block = iblockdata.getBlock();
+ 
+@@ -88,6 +89,7 @@ public class BoneMealItem extends Item {
+         }
+ 
+         return false;
++        }); // MCCreativeLab - Add BlockBehaviour
+     }
+ 
+     public static boolean growWaterPlant(ItemStack stack, Level world, BlockPos blockPos, @Nullable Direction facing) {
+diff --git a/src/main/java/net/minecraft/world/level/ExplosionDamageCalculator.java b/src/main/java/net/minecraft/world/level/ExplosionDamageCalculator.java
+index 62a99769b0f96749af5cf1c4767eb54a735a51a9..4cb1e980d7c09385ef4fd7073bf38e846f507e2c 100644
+--- a/src/main/java/net/minecraft/world/level/ExplosionDamageCalculator.java
++++ b/src/main/java/net/minecraft/world/level/ExplosionDamageCalculator.java
+@@ -11,7 +11,7 @@ public class ExplosionDamageCalculator {
+     public Optional<Float> getBlockExplosionResistance(Explosion explosion, BlockGetter world, BlockPos pos, BlockState blockState, FluidState fluidState) {
+         return blockState.isAir() && fluidState.isEmpty()
+             ? Optional.empty()
+-            : Optional.of(Math.max(blockState.getBlock().getExplosionResistance(), fluidState.getExplosionResistance()));
++            : Optional.of(Math.max(blockState.getBlock().getExplosionResistance(world, pos, blockState), fluidState.getExplosionResistance())); // MCCLab - Add BlockBehaviour
+     }
+ 
+     public boolean shouldBlockExplode(Explosion explosion, BlockGetter world, BlockPos pos, BlockState state, float power) {
+diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
+index 0de2b79481352b52438dde284262019b29949ad8..2b203c35953c78fc1d8b3299614459b318246674 100644
+--- a/src/main/java/net/minecraft/world/level/Level.java
++++ b/src/main/java/net/minecraft/world/level/Level.java
+@@ -1281,7 +1281,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+             if (flag1) {
+                 this.gameEvent((Holder) GameEvent.BLOCK_DESTROY, pos, GameEvent.Context.of(breakingEntity, iblockdata));
+             }
+-
++            de.verdox.mccreativelab.behaviour.BlockBehaviourUtil.getInstance().onDestroyCallback(iblockdata, this, pos, drop, breakingEntity, maxUpdateDepth); // MCCLab - Add BlockBehaviour
+             return flag1;
+         }
+     }
+diff --git a/src/main/java/net/minecraft/world/level/block/Block.java b/src/main/java/net/minecraft/world/level/block/Block.java
+index b6d6c2cb9b227a17fb4ce42bc75f92206fbea043..c0e3feefe22410c851de80bad51990610ed3fad6 100644
+--- a/src/main/java/net/minecraft/world/level/block/Block.java
++++ b/src/main/java/net/minecraft/world/level/block/Block.java
+@@ -406,6 +406,12 @@ public class Block extends BlockBehaviour implements ItemLike {
+ 
+     }
+ 
++    // MCCLab start - Add BlockBehaviour
++    public float getExplosionResistance(BlockGetter world, BlockPos pos, BlockState blockState){
++        return blockBehaviour().getExplosionResistance(world, pos, blockState, getExplosionResistance());
++    }
++    // MCCLab end - Add BlockBehaviour
++
+     public float getExplosionResistance() {
+         return this.explosionResistance;
+     }
+diff --git a/src/main/java/net/minecraft/world/level/block/piston/PistonBaseBlock.java b/src/main/java/net/minecraft/world/level/block/piston/PistonBaseBlock.java
+index 4b51472502d08ea357da437afeb4b581979e9cff..ceb1e41db53e7f0ab8c52961a2a3860600f9f169 100644
+--- a/src/main/java/net/minecraft/world/level/block/piston/PistonBaseBlock.java
++++ b/src/main/java/net/minecraft/world/level/block/piston/PistonBaseBlock.java
+@@ -454,6 +454,7 @@ public class PistonBaseBlock extends DirectionalBlock {
+                 blockposition3 = blockposition3.relative(enumdirection1);
+                 map.remove(blockposition3);
+                 iblockdata2 = (BlockState) Blocks.MOVING_PISTON.defaultBlockState().setValue(PistonBaseBlock.FACING, dir);
++                BlockState beforeUpdate = world.getBlockState(oldPos); // MCCLab - Add BlockBehaviour
+                 world.setBlock(blockposition3, iblockdata2, 68);
+                 // Paper start - fix a variety of piston desync dupes
+                 if (!allowDesync) {
+@@ -466,6 +467,7 @@ public class PistonBaseBlock extends DirectionalBlock {
+                 }
+                 // Paper end - fix a variety of piston desync dupes
+                 aiblockdata[i++] = iblockdata1;
++                de.verdox.mccreativelab.behaviour.BlockBehaviourUtil.getInstance().onPistonMove(beforeUpdate, world, oldPos, blockposition3, pos, enumdirection1); // MCCLab - Add BlockBehaviour
+             }
+ 
+             if (extend) {
+diff --git a/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java b/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
+index 5b6fbfd1a7a2d87fb2b87d5d1e674206cdf9b280..0818deaf15bae78b2fe0a5d49bf7a471a460d926 100644
+--- a/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
++++ b/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
+@@ -397,6 +397,11 @@ public abstract class BlockBehaviour implements FeatureElement {
+         return this.properties.destroyTime;
+     }
+ 
++    // MCCLab start - Add BlockBehaviour
++    public static de.verdox.mccreativelab.behaviour.BlockBehaviourUtil blockBehaviour(){
++        return de.verdox.mccreativelab.behaviour.BlockBehaviourUtil.getInstance();
++    }
++    // MCCLab end - Add BlockBehaviour
+     public static class Properties {
+ 
+         public static final Codec<BlockBehaviour.Properties> CODEC = Codec.unit(() -> {
+@@ -964,7 +969,7 @@ public abstract class BlockBehaviour implements FeatureElement {
+         protected boolean shapeExceedsCube = true; // Paper - moved from actual method to here
+         public void initCache() {
+             this.fluidState = ((Block) this.owner).getFluidState(this.asState());
+-            this.isRandomlyTicking = ((Block) this.owner).isRandomlyTicking(this.asState());
++            this.isRandomlyTicking = blockBehaviour().isRandomlyTicking(this.asState(), ((Block) this.owner).isRandomlyTicking(this.asState())); // MCCLab - Add BlockBehaviour
+             if (!this.getBlock().hasDynamicShape()) {
+                 this.cache = new BlockBehaviour.BlockStateBase.Cache(this.asState());
+             }
+@@ -1227,6 +1232,7 @@ public abstract class BlockBehaviour implements FeatureElement {
+         public void handleNeighborChanged(Level world, BlockPos pos, Block sourceBlock, @Nullable Orientation wireOrientation, boolean notify) {
+             DebugPackets.sendNeighborsUpdatePacket(world, pos);
+             this.getBlock().neighborChanged(this.asState(), world, pos, sourceBlock, wireOrientation, notify);
++            if(blockBehaviour().isVanillaNeighbourBlockUpdateReplaced(asState(), world, pos, sourceBlock, sourcePos, wireOrientation, notify)) return;  // MCCLab - Add BlockBehaviour
+         }
+ 
+         public final void updateNeighbourShapes(LevelAccessor world, BlockPos pos, int flags) {
+@@ -1267,6 +1273,8 @@ public abstract class BlockBehaviour implements FeatureElement {
+ 
+         public void onRemove(Level world, BlockPos pos, BlockState state, boolean moved) {
+             this.getBlock().onRemove(this.asState(), world, pos, state, moved);
++            if(!this.asState().equals(state))
++               blockBehaviour().onRemoveCallback(state, world, pos, state, moved); // MCCLab - Add BlockBehaviour
+         }
+ 
+         public void onExplosionHit(ServerLevel world, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> stackMerger) {
+@@ -1274,10 +1282,12 @@ public abstract class BlockBehaviour implements FeatureElement {
+         }
+ 
+         public void tick(ServerLevel world, BlockPos pos, RandomSource random) {
++            if(blockBehaviour().isVanillaTickReplaced(asState(), world, pos, random)) return; // MCCLab - Add BlockBehaviour
+             this.getBlock().tick(this.asState(), world, pos, random);
+         }
+ 
+         public void randomTick(ServerLevel world, BlockPos pos, RandomSource random) {
++            if(blockBehaviour().isVanillaRandomTickReplaced(asState(), world, pos, random)) return; // MCCLab - Add BlockBehaviour
+             this.getBlock().randomTick(this.asState(), world, pos, random);
+         }
+ 
+@@ -1307,6 +1317,7 @@ public abstract class BlockBehaviour implements FeatureElement {
+         }
+ 
+         public void attack(Level world, BlockPos pos, Player player) {
++            if(blockBehaviour().isVanillaBlockAttackReplaced(asState(), world, pos, player)) return;  // MCCLab - Add custom Block behaviour
+             this.getBlock().attack(this.asState(), world, pos, player);
+         }
+ 
+@@ -1319,7 +1330,9 @@ public abstract class BlockBehaviour implements FeatureElement {
+         }
+ 
+         public BlockState updateShape(LevelReader world, ScheduledTickAccess tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
++            return blockBehaviour().updateShape(asState(), direction, neighborState, world, pos, neighborPos, () -> { // MCCLab - Add BlockBehaviour
+             return this.getBlock().updateShape(this.asState(), world, tickView, pos, direction, neighborPos, neighborState, random);
++            }); // MCCLab - Add BlockBehaviour
+         }
+ 
+         public boolean isPathfindable(PathComputationType type) {
+@@ -1339,7 +1352,9 @@ public abstract class BlockBehaviour implements FeatureElement {
+         }
+ 
+         public boolean canSurvive(LevelReader world, BlockPos pos) {
++            return blockBehaviour().canSurvive(asState(), world, pos, () -> { // MCCLab - Add BlockBehaviour
+             return this.getBlock().canSurvive(this.asState(), world, pos);
++            }); // MCCLab - Add BlockBehaviour
+         }
+ 
+         public boolean hasPostProcess(BlockGetter world, BlockPos pos) {
+@@ -1377,6 +1392,7 @@ public abstract class BlockBehaviour implements FeatureElement {
+ 
+         @Nullable
+         public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockEntityType<T> blockEntityType) {
++            //TODO: Enable / disable block entity ticking in BlockBehaviour
+             return this.getBlock() instanceof EntityBlock ? ((EntityBlock) this.getBlock()).getTicker(world, this.asState(), blockEntityType) : null;
+         }
+ 
+@@ -1396,6 +1412,13 @@ public abstract class BlockBehaviour implements FeatureElement {
+             return this.isRandomlyTicking;
+         }
+ 
++        // MCCLab start - Add BlockBehaviour
++        public final boolean isRandomlyTicking(Level world, int x, int y, int z, BlockState blockState){
++            return blockBehaviour().isRandomlyTicking(world, x, y, z,blockState, this.isRandomlyTicking());
++        }
++
++        // MCCLab end - Add BlockBehaviour
++
+         public long getSeed(BlockPos pos) {
+             return this.getBlock().getSeed(this.asState(), pos);
+         }
+diff --git a/src/main/java/net/minecraft/world/level/chunk/BulkSectionAccess.java b/src/main/java/net/minecraft/world/level/chunk/BulkSectionAccess.java
+index aadd0650a9d1a580e1b4f5ef360d5d42edf37eca..30efd2c35b8764acca7188ba707c5d339324da0c 100644
+--- a/src/main/java/net/minecraft/world/level/chunk/BulkSectionAccess.java
++++ b/src/main/java/net/minecraft/world/level/chunk/BulkSectionAccess.java
+@@ -59,4 +59,29 @@ public class BulkSectionAccess implements AutoCloseable {
+             levelChunkSection.release();
+         }
+     }
++
++
++    // MCCLab start - Add BlockBehaviour
++    @Nullable private ChunkAccess lastChunkAccess;
++    @Nullable
++    public com.mojang.datafixers.util.Pair<LevelChunkSection, ChunkAccess> getSectionAndChunkAccess(BlockPos pos) {
++        int i = this.level.getSectionIndex(pos.getY());
++        if (i >= 0 && i < this.level.getSectionsCount()) {
++            long l = SectionPos.asLong(pos);
++            if (this.lastSection == null || this.lastSectionKey != l) {
++                this.lastSection = this.acquiredSections.computeIfAbsent(l, (lx) -> {
++                    ChunkAccess chunkAccess = this.level.getChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()));
++                    LevelChunkSection levelChunkSection = chunkAccess.getSection(i);
++                    levelChunkSection.acquire();
++                    this.lastChunkAccess = chunkAccess;
++                    return levelChunkSection;
++                });
++                this.lastSectionKey = l;
++            }
++            return com.mojang.datafixers.util.Pair.of(this.lastSection, this.lastChunkAccess);
++        } else {
++            return null;
++        }
++    }
++    // MCCLab end - Add BlockBehaviour
+ }
+diff --git a/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java b/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
+index 4640baec5bed6c2d53cc0f8ca1d273cc115abe9b..4009f84fb309846fd359a96f653a714bdcf847b8 100644
+--- a/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
++++ b/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
+@@ -428,6 +428,7 @@ public class LevelChunk extends ChunkAccess implements ca.spottedleaf.moonrise.p
+                     // CraftBukkit - Don't place while processing the BlockPlaceEvent, unless it's a BlockContainer. Prevents blocks such as TNT from activating when cancelled.
+                     if (!this.level.isClientSide && doPlace && (!this.level.captureBlockStates || block instanceof net.minecraft.world.level.block.BaseEntityBlock)) {
+                         iblockdata.onPlace(this.level, blockposition, iblockdata1, flag);
++                        de.verdox.mccreativelab.behaviour.BlockBehaviourUtil.getInstance().onPlaceCallback(iblockdata, this.level, blockposition, iblockdata1, flag, this.level.captureBlockStates); // MCCLab - Add BlockBehaviour
+                     }
+ 
+                     if (iblockdata.hasBlockEntity()) {
+diff --git a/src/main/java/net/minecraft/world/level/chunk/LevelChunkSection.java b/src/main/java/net/minecraft/world/level/chunk/LevelChunkSection.java
+index e4ae25c83ab9dd1aaa530a5456275ef63cdb8511..d49d9a298dd6f553eec12294aab9dcbab1af2f7d 100644
+--- a/src/main/java/net/minecraft/world/level/chunk/LevelChunkSection.java
++++ b/src/main/java/net/minecraft/world/level/chunk/LevelChunkSection.java
+@@ -38,6 +38,28 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+     private short specialCollidingBlocks;
+     private final ca.spottedleaf.moonrise.common.list.ShortList tickingBlocks = new ca.spottedleaf.moonrise.common.list.ShortList();
+ 
++    // MCCLab start - Add BlockBehaviour
++    @org.jetbrains.annotations.NotNull private net.minecraft.world.level.Level level;
++    @org.jetbrains.annotations.NotNull private net.minecraft.world.level.ChunkPos chunkPos;
++    private int chunkSectionY;
++
++    public LevelChunkSection(PalettedContainer<BlockState> datapaletteblock, PalettedContainer<Holder<Biome>> palettedcontainerro) { // FAWE support -> keep old constructor
++        // CraftBukkit end
++        this.states = datapaletteblock;
++        this.biomes = palettedcontainerro;
++        this.recalcBlockCounts();
++    }
++
++    public void init(net.minecraft.world.level.Level level, net.minecraft.world.level.ChunkPos chunkPos, int chunkSectionY){ // FAWE support -> keep old constructor
++        if(this.level != null && this.chunkPos != null)
++            return;
++        this.level = level;
++        this.chunkPos = chunkPos;
++        this.chunkSectionY = chunkSectionY;
++        this.recalcBlockCounts();
++    }
++    // MCCLab end - Add BlockBehaviour
++
+     @Override
+     public final boolean moonrise$hasSpecialCollidingBlocks() {
+         return this.specialCollidingBlocks != 0;
+@@ -57,7 +79,11 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+         this.biomes = section.biomes.copy();
+     }
+ 
+-    public LevelChunkSection(PalettedContainer<BlockState> datapaletteblock, PalettedContainer<Holder<Biome>> palettedcontainerro) { // CraftBukkit - read/write
++    public LevelChunkSection(PalettedContainer<BlockState> datapaletteblock, PalettedContainer<Holder<Biome>> palettedcontainerro, int chunkSectionY) { // CraftBukkit - read/write // MCCLab - Add BlockBehaviour
++        this.level = level;
++        this.chunkPos = chunkPos;
++        this.chunkSectionY = chunkSectionY;
++        // MCCLab end - Add BlockBehaviour
+         this.states = datapaletteblock;
+         this.biomes = palettedcontainerro;
+         this.recalcBlockCounts();
+@@ -69,6 +95,11 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+     // Paper end
+         this.states = new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(), PalettedContainer.Strategy.SECTION_STATES, level == null || level.chunkPacketBlockController == null ? null : level.chunkPacketBlockController.getPresetBlockStates(level, chunkPos, chunkSectionY)); // Paper - Anti-Xray - Add preset block states
+         this.biomes = new PalettedContainer<>(biomeRegistry.asHolderIdMap(), biomeRegistry.getOrThrow(Biomes.PLAINS), PalettedContainer.Strategy.SECTION_BIOMES, null); // Paper - Anti-Xray - Add preset biomes
++        // MCCLab start - Add BlockBehaviour
++        this.level = level;
++        this.chunkPos = chunkPos;
++        this.chunkSectionY = chunkSectionY;
++        // MCCLab end - Add BlockBehaviour
+     }
+ 
+     public BlockState getBlockState(int x, int y, int z) {
+@@ -139,12 +170,18 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+             iblockdata1 = (BlockState) this.states.getAndSetUnchecked(x, y, z, state);
+         }
+ 
++        // MCCLab start - Add BlockBehaviour
++        int globalX = chunkPos != null ? chunkPos.x * 16 + x : -1;
++        int globalY = (((chunkSectionY) << 4) + y);
++        int globalZ = chunkPos != null ? chunkPos.z * 16 + z : -1;
++        // MCCLab end - Add BlockBehaviour
++
+         FluidState fluid = iblockdata1.getFluidState();
+         FluidState fluid1 = state.getFluidState();
+ 
+         if (!iblockdata1.isAir()) {
+             --this.nonEmptyBlockCount;
+-            if (iblockdata1.isRandomlyTicking()) {
++            if (this.level != null ? iblockdata1.isRandomlyTicking(level, globalX, globalY, globalZ, state) : iblockdata1.isRandomlyTicking()) { // MCCLab start - Add BlockBehaviour
+                 --this.tickingBlockCount;
+             }
+         }
+@@ -155,7 +192,7 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+ 
+         if (!state.isAir()) {
+             ++this.nonEmptyBlockCount;
+-            if (state.isRandomlyTicking()) {
++            if (this.level != null ? state.isRandomlyTicking(level, globalX, globalY, globalZ, state) : state.isRandomlyTicking()) { // MCCLab start - Add BlockBehaviour
+                 ++this.tickingBlockCount;
+             }
+         }
+@@ -220,11 +257,22 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+                     continue;
+                 }
+ 
++                // MCCLab start - Add BlockBehaviour
++                int sizedBitsOfBlockStatePalette = 4;
++                int x = paletteIdx & ((1 << sizedBitsOfBlockStatePalette) - 1);
++                int z = (paletteIdx >> sizedBitsOfBlockStatePalette) & ((1 << sizedBitsOfBlockStatePalette) - 1);
++                int y = (paletteIdx >> (sizedBitsOfBlockStatePalette * 2)) & ((1 << sizedBitsOfBlockStatePalette) - 1);
++
++                int globalX = chunkPos != null ? chunkPos.x * 16 + x : -1;
++                int globalY = (((chunkSectionY) << 4) + y);
++                int globalZ = chunkPos != null ? chunkPos.z * 16 + z : -1;
++                // MCCLab end - Add BlockBehaviour
++
+                 if (ca.spottedleaf.moonrise.patches.collisions.CollisionUtil.isSpecialCollidingBlock(state)) {
+                     this.specialCollidingBlocks += (short)paletteCount;
+                 }
+                 this.nonEmptyBlockCount += (short)paletteCount;
+-                if (state.isRandomlyTicking()) {
++                if (level != null ? state.isRandomlyTicking(level, globalX, globalY, globalZ, state) : state.isRandomlyTicking()) {
+                     this.tickingBlockCount += (short)paletteCount;
+                     final short[] raw = coordinates.elements();
+                     final int rawLen = raw.length;
+diff --git a/src/main/java/net/minecraft/world/level/levelgen/feature/OreFeature.java b/src/main/java/net/minecraft/world/level/levelgen/feature/OreFeature.java
+index 506b2afd099c9b7e9ac3f6f2fcea8e523fae396b..d5227d8ace38ee06716f65d3be101110d06b06b6 100644
+--- a/src/main/java/net/minecraft/world/level/levelgen/feature/OreFeature.java
++++ b/src/main/java/net/minecraft/world/level/levelgen/feature/OreFeature.java
+@@ -135,7 +135,18 @@ public class OreFeature extends Feature<OreConfiguration> {
+                                                 bitSet.set(am);
+                                                 mutableBlockPos.set(ag, ai, ak);
+                                                 if (world.ensureCanWrite(mutableBlockPos)) {
+-                                                    LevelChunkSection levelChunkSection = bulkSectionAccess.getSection(mutableBlockPos);
++                                                    // MCCLab start - Add BlockBehaviour
++                                                    var pair = bulkSectionAccess.getSectionAndChunkAccess(mutableBlockPos);
++                                                    LevelChunkSection levelChunkSection;
++                                                    net.minecraft.world.level.chunk.ChunkAccess chunkAccess = null;
++                                                    if (pair != null) {
++                                                        levelChunkSection = pair.getFirst();
++                                                        chunkAccess = pair.getSecond();
++                                                    }
++                                                    else
++                                                        levelChunkSection = bulkSectionAccess.getSection(mutableBlockPos);
++                                                    //LevelChunkSection levelChunkSection = bulkSectionAccess.getSection(mutableBlockPos);
++                                                    // MCCLab end - Add BlockBehaviour
+                                                     if (levelChunkSection != null) {
+                                                         int an = SectionPos.sectionRelative(ag);
+                                                         int ao = SectionPos.sectionRelative(ai);
+@@ -147,6 +158,10 @@ public class OreFeature extends Feature<OreConfiguration> {
+                                                                 blockState, bulkSectionAccess::getBlockState, random, config, targetBlockState, mutableBlockPos
+                                                             )) {
+                                                                 levelChunkSection.setBlockState(an, ao, ap, targetBlockState.state, false);
++                                                                // MCCLab start - Add BlockBehaviour
++                                                                if(chunkAccess != null)
++                                                                    de.verdox.mccreativelab.worldgen.WorldGenerationCallbackUtil.executeWorldGenCallbacks(de.verdox.mccreativelab.behaviour.WorldGenerationBehaviour.FeatureType.ORE_FEATURE, world, new BlockPos(an, ao, ap), targetBlockState.state, chunkAccess);
++                                                                // MCCLab end - Add BlockBehaviour
+                                                                 i++;
+                                                                 break;
+                                                             }
+diff --git a/src/main/java/org/bukkit/craftbukkit/generator/OldCraftChunkData.java b/src/main/java/org/bukkit/craftbukkit/generator/OldCraftChunkData.java
+index 03eb35d5c67f125c44cf46595c93d124ac7892b8..8157e1340aa5c01b01064b33d33b6afc973c46ac 100644
+--- a/src/main/java/org/bukkit/craftbukkit/generator/OldCraftChunkData.java
++++ b/src/main/java/org/bukkit/craftbukkit/generator/OldCraftChunkData.java
+@@ -181,7 +181,7 @@ public final class OldCraftChunkData implements ChunkGenerator.ChunkData {
+         int offset = (y - this.minHeight) >> 4;
+         LevelChunkSection section = this.sections[offset];
+         if (create && section == null) {
+-            this.sections[offset] = section = new LevelChunkSection(this.biomes, this.world instanceof org.bukkit.craftbukkit.CraftWorld ? ((org.bukkit.craftbukkit.CraftWorld) this.world).getHandle() : null, null, offset + (this.minHeight >> 4)); // Paper - Anti-Xray - Add parameters
++            this.sections[offset] = section = new LevelChunkSection(this.biomes, this.world instanceof org.bukkit.craftbukkit.CraftWorld ? ((org.bukkit.craftbukkit.CraftWorld) this.world).getHandle() : null, null, this.world instanceof org.bukkit.craftbukkit.CraftWorld ?((org.bukkit.craftbukkit.CraftWorld) world).getHandle().getSectionYFromSectionIndex(offset) : offset + (this.minHeight >> 4)); // MCCLab - Add BlockBehaviour // Paper - Anti-Xray - Add parameters
+         }
+         return section;
+     }

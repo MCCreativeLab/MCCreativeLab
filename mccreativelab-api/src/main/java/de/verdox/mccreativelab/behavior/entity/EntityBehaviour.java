@@ -4,6 +4,8 @@ import de.verdox.mccreativelab.behavior.Behaviour;
 import de.verdox.mccreativelab.behavior.BehaviourResult;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.util.Vector;
@@ -25,33 +27,13 @@ public interface EntityBehaviour<T extends Entity> extends Behaviour {
     }
 
     /**
-     * Gets if an {@link Entity} ignores a particular explosion
-     * @param entity - The entity
-     * @return - true if it ignores the explosion
-     */
-    @NotNull
-    default BehaviourResult.Bool ignoreExplosion(@NotNull T entity, @NotNull Location explosionLocation, float radius, @Nullable Entity source, boolean explosionHasFire, @NotNull Map<Player, Vector> hitPlayers, @NotNull List<Location> hitBlocks) {
-        return BehaviourResult.Bool.DEFAULT_INSTANCE;
-    }
-
-    /**
      * Called on every tick of an {@link Entity}
      * @param entity - The entity
      * @return - nothing
      */
     @NotNull
-    default BehaviourResult.Callback onTick(@NotNull T entity){
+    default BehaviourResult.Callback onTick(@NotNull T entity) {
         return BehaviourResult.Callback.DEFAULT_INSTANCE;
-    }
-
-    /**
-     * Gets if an {@link Entity} can change dimensions
-     * @param entity - The entity
-     * @return - true if it can change dimensions
-     */
-    @NotNull
-    default BehaviourResult.Bool canChangeDimensions(@NotNull T entity) {
-        return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
     /**
@@ -60,7 +42,7 @@ public interface EntityBehaviour<T extends Entity> extends Behaviour {
      * @return - nothing
      */
     @NotNull
-    default BehaviourResult.Callback readAdditionalSaveData(@NotNull T entity, @NotNull PersistentDataContainer persistentDataContainer){
+    default BehaviourResult.Callback readAdditionalSaveData(@NotNull T entity, @NotNull PersistentDataContainer persistentDataContainer) {
         return done();
     }
 
@@ -70,7 +52,64 @@ public interface EntityBehaviour<T extends Entity> extends Behaviour {
      * @return - nothing
      */
     @NotNull
-    default BehaviourResult.Callback addAdditionalSaveData(@NotNull T entity, @NotNull PersistentDataContainer persistentDataContainer){
+    default BehaviourResult.Callback addAdditionalSaveData(@NotNull T entity, @NotNull PersistentDataContainer persistentDataContainer) {
         return done();
+    }
+
+    /**
+     * Is called to check if a given entity collides another entity
+     * @param entity the entity
+     * @param other the other entity
+     * @return if it can collide
+     */
+    default BehaviourResult.Bool canCollideWith(T entity, T other) {
+        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * Is called to check if a given entity accepts passengers
+     * @param entity the entity
+     * @return if it accepts passengers
+     */
+    default BehaviourResult.Bool couldAcceptPassenger(T entity) {
+        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * Is called to check if a given entity is attackable
+     * @param entity the entity
+     * @return if it is attackable
+     */
+    default BehaviourResult.Bool isAttackable(T entity) {
+        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * Returns the max fall distance of the given entity
+     * @param entity the entity
+     * @return the max fall distance
+     */
+    default BehaviourResult.Object<Integer> getMaxFallDistance(T entity) {
+        return BehaviourResult.Object.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * Is called when the entity is under the world
+     * @param entity the entity
+     * @return void
+     */
+    @NotNull
+    default BehaviourResult.Void onBelowWorld(Entity entity) {
+        return BehaviourResult.Void.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * Gets if an {@link Entity} can be leashed
+     * @param entity - The entity
+     * @return - if it can be leashed
+     */
+    @NotNull
+    default BehaviourResult.Bool canBeLeashed(@NotNull T entity) {
+        return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 }

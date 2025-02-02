@@ -1,6 +1,7 @@
 package de.verdox.mccreativelab.behaviour;
 
 import com.google.gson.JsonElement;
+import de.verdox.mccreativelab.behavior.StorageBehaviour;
 import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public class StorageBehaviourUtil extends BehaviourUtil {
+public class StorageBehaviourUtil implements BehaviourUtil {
     public static JsonElement loadPlayerAdvancements(ServerPlayer serverPlayer, Supplier<JsonElement> vanillaLogic) {
         return evaluate(StorageBehaviour.STORAGE_BEHAVIOUR, storageBehaviourCustomBehaviour -> storageBehaviourCustomBehaviour.getBehaviour().loadPlayerAdvancements(serverPlayer.getBukkitEntity()), vanillaLogic, Converter.DummyConverter.getInstance(JsonElement.class));
     }

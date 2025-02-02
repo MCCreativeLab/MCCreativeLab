@@ -3,6 +3,7 @@ package de.verdox.mccreativelab.behavior.entity;
 import de.verdox.mccreativelab.InteractionResult;
 import de.verdox.mccreativelab.behavior.BehaviourResult;
 import org.bukkit.Material;
+import org.bukkit.entity.Animals;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
@@ -77,13 +78,21 @@ public interface MobBehaviour <T extends Mob> extends LivingEntityBehaviour<T> {
     }
 
     /**
-     * Gets if a {@link Mob} can be leashed by a {@link Player}
-     * @param entity - The entity
-     * @param player - The Player
-     * @return - true if it can
+     * Gets if an entity should despawn in peaceful
+     * @param entity the entity
+     * @return if it should despawn
      */
     @NotNull
-    default BehaviourResult.Bool canBeLeashed(@NotNull T entity, @NotNull Player player) {
+    default BehaviourResult.Bool shouldDespawnInPeaceful(Mob entity){
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * Called to get the ambient sound interval of a given entity
+     * @param entity the entity
+     * @return the ambient sound interval
+     */
+    default BehaviourResult.Object<Integer> getAmbientSoundInterval(Mob entity) {
+        return BehaviourResult.Object.DEFAULT_INSTANCE;
     }
 }

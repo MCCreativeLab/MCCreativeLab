@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Mon, 27 Jan 2025 15:20:46 +0000
+Subject: [PATCH] Add MCCWorldHook
+
+
+diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
+index 2bbebb4335d927f240abcac67a5b423e38dc33d7..c5ae6831e37b53a390bfb8aef1a458ea2d912298 100644
+--- a/net/minecraft/world/level/Level.java
++++ b/net/minecraft/world/level/Level.java
+@@ -160,6 +160,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+     public int wakeupInactiveRemainingMonsters;
+     public int wakeupInactiveRemainingVillagers;
+     // Paper end
++    public de.verdox.mccreativelab.behavior.MCCWorldHook mccWorldHook = new de.verdox.mccreativelab.behavior.MCCWorldHook() {}; // MCCLab - Add MCCWorldHook
+     public boolean populating;
+     public final org.spigotmc.SpigotWorldConfig spigotConfig; // Spigot
+     // Paper start - add paper world config
+@@ -1236,6 +1237,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+             if (!this.preventPoiUpdated) {
+                 this.onBlockStateChange(blockposition, iblockdata1, iblockdata2);
+             }
++            mccWorldHook.onBlockChange(org.bukkit.craftbukkit.block.CraftBlock.at(this, blockposition), CraftBlockData.createData(oldBlock), CraftBlockData.createData(newBlock));
+             // CraftBukkit end
+         }
+     }
+diff --git a/net/minecraft/world/level/block/Block.java b/net/minecraft/world/level/block/Block.java
+index 976de81d65b6494cdad20f4ec5125fceec86f951..806297535193b33162b7a5e49303eb7815ab1093 100644
+--- a/net/minecraft/world/level/block/Block.java
++++ b/net/minecraft/world/level/block/Block.java
+@@ -329,7 +329,14 @@ public class Block extends BlockBehaviour implements ItemLike {
+     public static void dropResources(BlockState state, Level level, BlockPos pos, @Nullable BlockEntity blockEntity, @Nullable Entity entity, ItemStack tool, boolean dropExperience) {
+     // Paper end - Properly handle xp dropping
+         if (level instanceof ServerLevel) {
+-            getDrops(state, (ServerLevel)level, pos, blockEntity, entity, tool).forEach(itemStack -> popResource(level, pos, itemStack));
++            // MCCLab start - Add MCCWorldHook
++            List<org.bukkit.inventory.ItemStack> bukkitLoot = new java.util.LinkedList<>();
++            for (ItemStack drop : Block.getDrops(state, (ServerLevel) level, pos, blockEntity, entity, tool)) {
++                bukkitLoot.add(drop.asBukkitCopy());
++            }
++            level.mccWorldHook.onBlockDrawLoot(org.bukkit.craftbukkit.block.CraftBlock.at(level, pos), entity != null ? entity.getBukkitEntity() : null, tool.asBukkitMirror(), dropExperience,bukkitLoot);
++            bukkitLoot.stream().map(org.bukkit.craftbukkit.inventory.CraftItemStack::asNMSCopy).forEach(itemStack -> popResource(level, pos, itemStack));
++            // MCCLab end - Add MCCWorldHook
+             state.spawnAfterBreak((ServerLevel) level, pos, tool, dropExperience); // Paper - Properly handle xp dropping
+         }
+     }

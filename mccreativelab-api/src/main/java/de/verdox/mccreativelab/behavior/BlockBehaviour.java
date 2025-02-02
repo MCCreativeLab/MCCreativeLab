@@ -1,67 +1,24 @@
 package de.verdox.mccreativelab.behavior;
 
-import de.verdox.mccreativelab.InteractionResult;
-import de.verdox.mccreativelab.ItemInteractionResult;
 import de.verdox.mccreativelab.MultiCustomBehaviour;
 import de.verdox.mccreativelab.random.VanillaRandomSource;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockType;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.EquipmentSlot;
+
+import org.bukkit.entity.Projectile;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.RayTraceResult;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+
+import java.util.function.BiConsumer;
 
 public interface BlockBehaviour extends Behaviour {
-    MultiCustomBehaviour<Material, BlockBehaviour> BLOCK_BEHAVIOUR = new MultiCustomBehaviour<>(BlockBehaviour.class, new BlockBehaviour() {}, "MCCLab - BlockBehaviour");
-
-    /**
-     * This method is called to get the explosion resistance of a block
-     *
-     * @param block     The block
-     * @param blockData The blockData of the block
-     * @return float result
-     */
-    @NotNull
-    default BehaviourResult.Object<Float> getExplosionResistance(@NotNull Block block, @NotNull BlockData blockData) {
-        return BehaviourResult.Object.DEFAULT_INSTANCE;
-    }
-
-    /**
-     * This method is called everytime the block receives a block update due to any reason.
-     * Normally this happens when a block next to this block was changed. If you want to implement any custom behaviour on environmental changes use this method.
-     *
-     * @param location           The location of the block
-     * @param blockData          The blockData of the block
-     * @param direction          The direction of the Blockupdate
-     * @param neighbourBlockData The neighbour blockdata that issued the block update
-     * @param neighbourLocation  The neighbour location
-     * @return The blockdata that results from this update.
-     */
-    @NotNull
-    default BehaviourResult.Object<BlockData> blockUpdate(@NotNull Location location, @NotNull BlockData blockData, @NotNull BlockFace direction, @NotNull BlockData neighbourBlockData, @NotNull Location neighbourLocation) {
-        return result(blockData, BehaviourResult.Object.Type.USE_VANILLA);
-    }
-
-    /**
-     * This method is called everytime the block recognizes a neighbour block update
-     * Normally this happens when a block next to this block was changed. If you want to implement any custom behaviour on environmental changes use this method.
-     *
-     * @param block           The block recognizing the neighbour update
-     * @param sourceBlock     The neighbour block receiving the block update
-     * @param notify          The Notify flag
-     */
-    @NotNull
-    default BehaviourResult.Void onNeighbourBlockUpdate(@NotNull Block block, @NotNull Block sourceBlock, boolean notify) {
-        return BehaviourResult.Void.DEFAULT_INSTANCE;
-    }
+    MultiCustomBehaviour<BlockType, BlockBehaviour> BLOCK_BEHAVIOUR = new MultiCustomBehaviour<>(BlockBehaviour.class, new BlockBehaviour() {}, "MCCLab - BlockBehaviour");
+    MultiCustomBehaviour<BlockData, BlockBehaviour> BLOCK_BEHAVIOUR_SPECIFIC = new MultiCustomBehaviour<>(BlockBehaviour.class, new BlockBehaviour() {}, "MCCLab - BlockBehaviour");
 
     /**
      * This method is called whenever an entity steps on a block
@@ -88,17 +45,6 @@ public interface BlockBehaviour extends Behaviour {
     }
 
     /**
-     * This method is called to check if a blockdata is randomly ticking regardless of it being placed in a world right now.
-     *
-     * @param blockData The block data of the block
-     * @return A boolean result
-     */
-    @NotNull
-    default BehaviourResult.Bool isBlockDataRandomlyTicking(@NotNull BlockData blockData) {
-        return BehaviourResult.Bool.DEFAULT_INSTANCE;
-    }
-
-    /**
      * This method is called to check if a block in a world is randomly ticking
      *
      * @param block     The block
@@ -116,37 +62,12 @@ public interface BlockBehaviour extends Behaviour {
      * @param location     The location
      * @param newBlockData The new block data
      * @param oldBlockData The old block data
-     * @param notify       Whether this notifies the world
+     * @param movedByPiston       Whether this notifies the world
      * @return callback
      */
     @NotNull
-    default BehaviourResult.Callback onPlace(@NotNull Location location, @NotNull BlockData newBlockData, @NotNull BlockData oldBlockData, boolean notify, boolean isProcessingBlockPlaceEvent) {
-        return BehaviourResult.Callback.DEFAULT_INSTANCE;
-    }
-
-    /**
-     * This callback is run after a player successfully placed a block. If the Block Place Action was cancelled by an event this function is not called.
-     *
-     * @param player   The player
-     * @param location The location
-     * @return callback
-     */
-    @NotNull
-    default BehaviourResult.Callback onPlayerPlace(@NotNull Player player, @NotNull ItemStack stackUsedToPlaceBlock, @NotNull Location location, @NotNull BlockData thePlacedState) {
-        return BehaviourResult.Callback.DEFAULT_INSTANCE;
-    }
-
-    /**
-     * This callback is run after a player breaks a block
-     *
-     * @param player      The player
-     * @param location    The location
-     * @param brokenState The broken block state
-     * @return callback
-     */
-    @NotNull
-    default BehaviourResult.Callback onPlayerBreak(@NotNull Player player, @NotNull Location location, @NotNull BlockData brokenState) {
-        return BehaviourResult.Callback.DEFAULT_INSTANCE;
+    default BehaviourResult.Void onPlace(@NotNull Location location, @NotNull BlockData newBlockData, @NotNull BlockData oldBlockData, boolean movedByPiston) {
+        return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
 
@@ -156,63 +77,12 @@ public interface BlockBehaviour extends Behaviour {
      * @param location     The location
      * @param newBlockData The new block data
      * @param oldBlockData The old block data
-     * @param moved        Whether the block was moved
+     * @param movedByPiston        Whether the block was moved
      * @return callback
      */
     @NotNull
-    default BehaviourResult.Callback onRemove(@NotNull Location location, @NotNull BlockData newBlockData, @NotNull BlockData oldBlockData, boolean moved) {
-        return BehaviourResult.Callback.DEFAULT_INSTANCE;
-    }
-
-    /**
-     *
-     * @param location - The block location
-     * @param drop - True if the block dropped items
-     * @param destroyingEntity - The Entity that destroyed the block
-     * @param maxUpdateDepth - The chunk update depth
-     * @return a callback object
-     */
-    @NotNull
-    default BehaviourResult.Callback onDestroy(@NotNull Location location, boolean drop, @Nullable Entity destroyingEntity, int maxUpdateDepth) {
-        return BehaviourResult.Callback.DEFAULT_INSTANCE;
-    }
-
-    /**
-     * This method is run when a player interacts with a block in any way. By overriding this method, various bukkit events, paper code, and fixed won't be called.
-     *
-     * @param block          The block
-     * @param player         The player
-     * @param hand           The Hand used to interact
-     * @param rayTraceResult The interaction info
-     * @return The result of this interaction
-     */
-    @NotNull
-    default BehaviourResult.Object<ItemInteractionResult> use(@NotNull Block block, @NotNull Player player, @NotNull EquipmentSlot hand, @NotNull RayTraceResult rayTraceResult) {
-        return BehaviourResult.Object.DEFAULT_INSTANCE;
-    }
-
-    /**
-     * This callback is run after a player interacted with this block. This method is not run on blocks that call bukkit events! Only on those that do not define any specific onUse Behaviour
-     *
-     * @param block          The block
-     * @param player         The player
-     * @param hand           The Hand used to interact
-     * @param rayTraceResult The interaction info
-     * @return callback
-     */
-    @NotNull
-    default BehaviourResult.Callback onUseCallback(@NotNull Block block, @NotNull Player player, @NotNull EquipmentSlot hand, @NotNull RayTraceResult rayTraceResult, @NotNull InteractionResult interactionResult) {
-        return BehaviourResult.Callback.DEFAULT_INSTANCE;
-    }
-
-    /**
-     * This callback is run after a block was successfully moved by a piston
-     *
-     * @return callback
-     */
-    @NotNull
-    default BehaviourResult.Callback onPistonMoveBlock(@NotNull BlockData blockDataMoved, @NotNull Location positionBeforeMove, @NotNull Location positionAfterMove, @NotNull Block piston, @NotNull Vector moveDirection) {
-        return BehaviourResult.Callback.DEFAULT_INSTANCE;
+    default BehaviourResult.Void onRemove(@NotNull Location location, @NotNull BlockData newBlockData, @NotNull BlockData oldBlockData, boolean movedByPiston) {
+        return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
     /**
@@ -236,11 +106,10 @@ public interface BlockBehaviour extends Behaviour {
      * Please use the blockUpdate method to implement any custom logic or to call this method.
      *
      * @param block The block
-     * @param world The world
      * @return A boolean result
      */
     @NotNull
-    default BehaviourResult.Bool canSurvive(@NotNull Block block, @NotNull World world) {
+    default BehaviourResult.Bool canSurvive(@NotNull Block block) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
@@ -257,14 +126,68 @@ public interface BlockBehaviour extends Behaviour {
     }
 
     /**
-     * Called when a player uses bonemeal on a block.
-     * @param block The block that is fertilized
-     * @param stack The item used to fertilize. The Minecraft server will call this only for bonemeal.
-     * @return True if the action was a success
+     * This function is run when a block is hit by an explosion
+     * @param block the block
+     * @param explosionResult the result of the explosion
+     * @param dropConsumer the code that is run on the loot that is dropped because of the explosion
+     * @return void
      */
-    @NotNull
-    default BehaviourResult.Bool fertilizeAction(@NotNull Block block, @NotNull ItemStack stack){
-        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+    default BehaviourResult.Void onExplosionHit(Block block, ExplosionResult explosionResult, BiConsumer<ItemStack, Location> dropConsumer) {
+        return BehaviourResult.Void.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * This function is run when a block was destroyed by an explosion
+     * @param block the block
+     * @param explosionResult the result of the explosion
+     * @return void
+     */
+    default BehaviourResult.Void wasExploded(Block block, ExplosionResult explosionResult) {
+        return BehaviourResult.Void.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * This function is run when an entity falls on a block from a certain distance
+     * @param block the block
+     * @param blockData the data of the block
+     * @param fallingEntity  the entity falling
+     * @param fallDistance the falling distance
+     * @return void
+     */
+    default BehaviourResult.Void fallOn(Block block, BlockData blockData, Entity fallingEntity, float fallDistance) {
+        return BehaviourResult.Void.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * This function is called when a block gets in contact with precipitation.
+     * @param block the block
+     * @param blockData the data of the block
+     * @param precipitation the precipitation
+     * @return void
+     */
+    default BehaviourResult.Void handlePrecipitation(Block block, BlockData blockData, Precipitation precipitation) {
+        return BehaviourResult.Void.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * This function is called after a block was broken and the server predicts that something should be spawned from that
+     * @param block the block
+     * @param toolUsedToBreakBlock the item stack used to break the block
+     * @param dropExperience whether to drop experience
+     * @return void
+     */
+    default BehaviourResult.Void spawnAfterBreak(Block block, ItemStack toolUsedToBreakBlock, boolean dropExperience) {
+        return BehaviourResult.Void.DEFAULT_INSTANCE;
+    }
+
+    /**
+     * This function is called when a block with a specific data is called by a projectile
+     * @param block the block
+     * @param projectile the projectile
+     * @return void
+     */
+    default BehaviourResult.Void onProjectileHit(Block block, Projectile projectile) {
+        return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 }
 

@@ -1,0 +1,350 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Wed, 29 May 2024 22:38:29 +0000
+Subject: [PATCH] Adding behaviours
+
+
+diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
+index 5a8f396d47577f087abb415c972fd4f51e50faba..386a096dea1bb43fb138f3e1d4a0d21d6d6ab960 100644
+--- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
++++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
+@@ -1277,7 +1277,7 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+ 
+         if (!keepInventory) {
+             for (ItemStack item : this.getInventory().getContents()) {
+-                if (!item.isEmpty() && !EnchantmentHelper.has(item, EnchantmentEffectComponents.PREVENT_EQUIPMENT_DROP)) {
++                if (!item.isEmpty() && !EnchantmentHelper.has(item, EnchantmentEffectComponents.PREVENT_EQUIPMENT_DROP) && de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.canDrop(item)) { // MCCreativeLab - Add ItemBehaviour
+                     loot.add(new DefaultDrop(item, stack -> this.drop(stack, true, false, false))); // Paper - Restore vanilla drops behavior; drop function taken from Inventory#dropAll (don't fire drop event)
+                 }
+             }
+diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
+index a15546e433ebba6c0de01bdaaef201a3d99a87b5..2d96490e7cae46db028487c81cc15caf4873b906 100644
+--- a/src/main/java/net/minecraft/world/entity/Entity.java
++++ b/src/main/java/net/minecraft/world/entity/Entity.java
+@@ -2933,6 +2939,8 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+     }
+     @Nullable
+     public ItemEntity spawnAtLocation(ServerLevel world, ItemStack stack, float yOffset, @Nullable java.util.function.Consumer<? super ItemEntity> delayedAddConsumer) {
++        if(!de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.canDrop(stack)) // MCCreativeLab start - Add ItemBehaviour
++            return null; // MCCreativeLab end - Add ItemBehaviour
+         // Paper end - Restore vanilla drops behavior
+         if (stack.isEmpty()) {
+             return null;
+diff --git a/src/main/java/net/minecraft/world/entity/LivingEntity.java b/src/main/java/net/minecraft/world/entity/LivingEntity.java
+index f36a075dbee2b96d01899e02460b1d8443e91749..9c75420eb7915244fa68e4d967ff42c8c1fc197b 100644
+--- a/src/main/java/net/minecraft/world/entity/LivingEntity.java
++++ b/src/main/java/net/minecraft/world/entity/LivingEntity.java
+@@ -3940,12 +3944,13 @@ public abstract class LivingEntity extends Entity implements Attackable {
+     }
+ 
+     public void onItemPickup(ItemEntity item) {
+-        Entity entity = item.thrower != null ? this.level().getGlobalPlayerByUUID(item.thrower) : null; // Paper - check global player list where appropriate
+-
+-        if (entity instanceof ServerPlayer) {
+-            CriteriaTriggers.THROWN_ITEM_PICKED_UP_BY_ENTITY.trigger((ServerPlayer) entity, item.getItem(), this);
+-        }
++        de.verdox.mccreativelab.behaviour.EntityBehaviourUtil.Living.onItemPickup(this, item, () -> { // MCCLab - Add ItemBehaviour
++            Entity entity = item.thrower != null ? this.level().getGlobalPlayerByUUID(item.thrower) : null; // Paper - check global player list where appropriate
+ 
++            if (entity instanceof ServerPlayer) {
++                CriteriaTriggers.THROWN_ITEM_PICKED_UP_BY_ENTITY.trigger((ServerPlayer) entity, item.getItem(), this);
++            }
++        }); // MCCLab - Add ItemBehaviour
+     }
+ 
+     public void take(Entity item, int count) {
+diff --git a/src/main/java/net/minecraft/world/entity/item/ItemEntity.java b/src/main/java/net/minecraft/world/entity/item/ItemEntity.java
+index 0f086af57a5ff08c264dcbf89a8c3931ec73a609..8b1db8e860095e93cc4d2c82cf6c722fc1349dff 100644
+--- a/src/main/java/net/minecraft/world/entity/item/ItemEntity.java
++++ b/src/main/java/net/minecraft/world/entity/item/ItemEntity.java
+@@ -388,7 +388,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+             return false;
+         } else if (!world.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) && source.getEntity() instanceof Mob) {
+             return false;
+-        } else if (!this.getItem().canBeHurtBy(source)) {
++        } else if (!this.getItem().canBeHurtBy(source)) { //MCCLab - Adding ItemBehaviour
+             return false;
+         } else {
+             // CraftBukkit start
+diff --git a/src/main/java/net/minecraft/world/entity/projectile/ThrownPotion.java b/src/main/java/net/minecraft/world/entity/projectile/ThrownPotion.java
+index 9d79b193fe2a737a20d1709548b2cd6c454ff27b..281622f6261367bf2a2cff377ce549b960bf53c9 100644
+--- a/src/main/java/net/minecraft/world/entity/projectile/ThrownPotion.java
++++ b/src/main/java/net/minecraft/world/entity/projectile/ThrownPotion.java
+@@ -50,7 +50,7 @@ public class ThrownPotion extends ThrowableItemProjectile {
+     public static final double SPLASH_RANGE = 4.0D;
+     private static final double SPLASH_RANGE_SQ = 16.0D;
+     public static final Predicate<net.minecraft.world.entity.LivingEntity> WATER_SENSITIVE_OR_ON_FIRE = (entityliving) -> {
+-        return entityliving.isSensitiveToWater() || entityliving.isOnFire();
++        return entityliving.isSensitiveToWaterCustom() || entityliving.isOnFire(); // MCCLab - Add EntityBehaviour
+     };
+ 
+     public ThrownPotion(EntityType<? extends ThrownPotion> type, Level world) {
+@@ -151,7 +151,7 @@ public class ThrownPotion extends ThrowableItemProjectile {
+             double d0 = this.distanceToSqr((Entity) entityliving);
+ 
+             if (d0 < 16.0D) {
+-                if (entityliving.isSensitiveToWater()) {
++                if (entityliving.isSensitiveToWaterCustom()) { // MCCLab - Add EntityBehaviour
+                     affected.put(entityliving.getBukkitLivingEntity(), 1.0);
+                 }
+ 
+diff --git a/src/main/java/net/minecraft/world/inventory/CartographyTableMenu.java b/src/main/java/net/minecraft/world/inventory/CartographyTableMenu.java
+index dc42d42ef91bc3e49f967c0a30a0d1b56e09cf21..9781319ef777963224b83f5938cc17bbcb8451a7 100644
+--- a/src/main/java/net/minecraft/world/inventory/CartographyTableMenu.java
++++ b/src/main/java/net/minecraft/world/inventory/CartographyTableMenu.java
+@@ -105,7 +105,7 @@ public class CartographyTableMenu extends AbstractContainerMenu {
+             public void onTake(net.minecraft.world.entity.player.Player player, ItemStack stack) {
+                 ((Slot) CartographyTableMenu.this.slots.get(0)).remove(1);
+                 ((Slot) CartographyTableMenu.this.slots.get(1)).remove(1);
+-                stack.getItem().onCraftedBy(stack, player.level(), player);
++                stack.onCraftedBy(player.level(), player); // MCCLab - Adding ItemBehaviour
+                 context.execute((world, blockposition) -> {
+                     long j = world.getGameTime();
+ 
+@@ -193,7 +193,7 @@ public class CartographyTableMenu extends AbstractContainerMenu {
+ 
+             itemstack = itemstack1.copy();
+             if (slot == 2) {
+-                itemstack1.getItem().onCraftedBy(itemstack1, player.level(), player);
++                itemstack1.onCraftedBy(player.level(), player); // MCCLab - Adding ItemBehaviour
+                 if (!this.moveItemStackTo(itemstack1, 3, 39, true)) {
+                     return ItemStack.EMPTY;
+                 }
+diff --git a/src/main/java/net/minecraft/world/inventory/CraftingMenu.java b/src/main/java/net/minecraft/world/inventory/CraftingMenu.java
+index 2e4043248c3ac7a54d894d76b99adc26518d3866..3fc6e3ea88d2119356b29b2ff466b407d3f4d47b 100644
+--- a/src/main/java/net/minecraft/world/inventory/CraftingMenu.java
++++ b/src/main/java/net/minecraft/world/inventory/CraftingMenu.java
+@@ -128,7 +128,7 @@ public class CraftingMenu extends AbstractCraftingMenu {
+             itemstack = itemstack1.copy();
+             if (slot == 0) {
+                 this.access.execute((world, blockposition) -> {
+-                    itemstack1.getItem().onCraftedBy(itemstack1, world, player);
++                    itemstack1.onCraftedBy(world, player); // MCCLab - Adding ItemBehaviour
+                 });
+                 if (!this.moveItemStackTo(itemstack1, 10, 46, true)) {
+                     return ItemStack.EMPTY;
+diff --git a/src/main/java/net/minecraft/world/inventory/ShulkerBoxSlot.java b/src/main/java/net/minecraft/world/inventory/ShulkerBoxSlot.java
+index 171de2984f94bdb32de5df3b7f98170545a2563d..fe5d8a4d6af40082e905bead69c4e32364314dbc 100644
+--- a/src/main/java/net/minecraft/world/inventory/ShulkerBoxSlot.java
++++ b/src/main/java/net/minecraft/world/inventory/ShulkerBoxSlot.java
+@@ -10,6 +10,6 @@ public class ShulkerBoxSlot extends Slot {
+ 
+     @Override
+     public boolean mayPlace(ItemStack stack) {
+-        return stack.getItem().canFitInsideContainerItems();
++        return stack.canFitInsideContainerItems(); // MCCLab - Adding ItemBehaviour
+     }
+ }
+diff --git a/src/main/java/net/minecraft/world/inventory/StonecutterMenu.java b/src/main/java/net/minecraft/world/inventory/StonecutterMenu.java
+index ca65965757e6f12abc972250a04817c7547bb0bd..0729b5a32504728b2c3885af8d9fbdc1dfa01aac 100644
+--- a/src/main/java/net/minecraft/world/inventory/StonecutterMenu.java
++++ b/src/main/java/net/minecraft/world/inventory/StonecutterMenu.java
+@@ -256,7 +256,7 @@ public class StonecutterMenu extends AbstractContainerMenu {
+ 
+             itemstack = itemstack1.copy();
+             if (slot == 1) {
+-                item.onCraftedBy(itemstack1, player.level(), player);
++                itemstack1.onCraftedBy(player.level(), player); // MCCLab - Adding ItemBehaviour
+                 if (!this.moveItemStackTo(itemstack1, 2, 38, true)) {
+                     return ItemStack.EMPTY;
+                 }
+diff --git a/src/main/java/net/minecraft/world/item/BlockItem.java b/src/main/java/net/minecraft/world/item/BlockItem.java
+index c816c935ecc74a811ffdffbe6ded73c06e92324a..bdb1016f4c9eb5cfca4a38436d0dd0c8615436ea 100644
+--- a/src/main/java/net/minecraft/world/item/BlockItem.java
++++ b/src/main/java/net/minecraft/world/item/BlockItem.java
+@@ -66,6 +66,13 @@ public class BlockItem extends Item {
+                 return InteractionResult.FAIL;
+             } else {
+                 BlockState iblockdata = this.getPlacementState(blockactioncontext1);
++                // MCCLab start - Adding ItemBehaviour
++                BlockState finalState = de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.placeBlockAction(context.getPlayer(), context.getClickedPos(), context.getLevel(), context.getItemInHand(), context.getLevel().getBlockState(context.getClickedPos()), () -> {
++                    return this.getPlacementState(blockactioncontext1);
++                });
++
++                iblockdata = finalState;
++                // MCCLab start - Adding ItemBehaviour
+                 // CraftBukkit start - special case for handling block placement with water lilies and snow buckets
+                 org.bukkit.block.BlockState blockstate = null;
+                 if (this instanceof PlaceOnWaterBlockItem || this instanceof SolidBucketItem) {
+diff --git a/src/main/java/net/minecraft/world/item/Item.java b/src/main/java/net/minecraft/world/item/Item.java
+index 3d948c8d325bcef7f4cfc0045f9991acb3aa2f7c..d846712219a33f0bf80557cad9a705240a75db77 100644
+--- a/src/main/java/net/minecraft/world/item/Item.java
++++ b/src/main/java/net/minecraft/world/item/Item.java
+@@ -226,8 +226,7 @@ public class Item implements FeatureElement, ItemLike {
+     }
+ 
+     public boolean isCorrectToolForDrops(ItemStack stack, BlockState state) {
+-        Tool tool = stack.get(DataComponents.TOOL);
+-        return tool != null && tool.isCorrectForDrops(state);
++        return de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.isCorrectToolForDrops(stack, state); // MCCLab - Add ItemBehaviour
+     }
+ 
+     public InteractionResult interactLivingEntity(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand) {
+diff --git a/src/main/java/net/minecraft/world/item/ItemStack.java b/src/main/java/net/minecraft/world/item/ItemStack.java
+index 33e7d2884195677c4d6340d8b84c1dd85c636ec1..54c8f5bf99e11ab325c27ab74e2c4cfffd4ae86c 100644
+--- a/src/main/java/net/minecraft/world/item/ItemStack.java
++++ b/src/main/java/net/minecraft/world/item/ItemStack.java
+@@ -263,6 +263,7 @@ public final class ItemStack implements DataComponentHolder {
+     public Optional<TooltipComponent> getTooltipImage() {
+         return this.getItem().getTooltipImage(this);
+     }
++    @org.jetbrains.annotations.Nullable public de.verdox.mccreativelab.behaviour.ItemBehaviour itemBehaviour; // MCCLab - Add ItemBehaviour
+ 
+     @Override
+     public DataComponentMap getComponents() {
+@@ -416,6 +417,8 @@ public final class ItemStack implements DataComponentHolder {
+         net.minecraft.world.entity.player.Player entityhuman = context.getPlayer();
+         BlockPos blockposition = context.getClickedPos();
+ 
++        ItemStack blockUsedToPlaceBlock = copy(); // MCCLab - Add ItemBehaviour
++
+         if (entityhuman != null && !entityhuman.getAbilities().mayBuild && !this.canPlaceOnBlockInAdventureMode(new BlockInWorld(context.getLevel(), blockposition, false))) {
+             return InteractionResult.PASS;
+         } else {
+@@ -434,7 +437,7 @@ public final class ItemStack implements DataComponentHolder {
+             }
+             InteractionResult enuminteractionresult;
+             try {
+-                enuminteractionresult = item.useOn(context);
++                 enuminteractionresult = de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.useOn(this, context); // MCCLab - Add ItemBehaviour
+             } finally {
+                 world.captureBlockStates = false;
+             }
+@@ -591,6 +594,14 @@ public final class ItemStack implements DataComponentHolder {
+                         }
+ 
+                         entityhuman.awardStat(Stats.ITEM_USED.get(item));
++                        // MCCLab start - Add ItemBehaviour
++                        if(placeEvent != null && !placeEvent.isCancelled() && placeEvent.canBuild()){
++                            for (BlockState block : blocks) {
++                                BlockPos blockPos = CraftLocation.toBlockPosition(block.getLocation());
++                                de.verdox.mccreativelab.behaviour.BlockBehaviourUtil.getInstance().onPlayerPlaceCallback(entityhuman, blockUsedToPlaceBlock, world.getBlockState(blockPos), world, blockPos);
++                            }
++
++                        } // MCCLab end - Add ItemBehaviour
+                     }
+                 }
+             }
+@@ -864,12 +875,7 @@ public final class ItemStack implements DataComponentHolder {
+     }
+ 
+     public void mineBlock(Level world, net.minecraft.world.level.block.state.BlockState state, BlockPos pos, net.minecraft.world.entity.player.Player miner) {
+-        Item item = this.getItem();
+-
+-        if (item.mineBlock(this, world, state, pos, miner)) {
+-            miner.awardStat(Stats.ITEM_USED.get(item));
+-        }
+-
++        de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.mineBlock(this, world, state, pos, miner); // MCCLab - Add ItemBehaviour
+     }
+ 
+     public boolean isCorrectToolForDrops(net.minecraft.world.level.block.state.BlockState state) {
+@@ -877,7 +883,7 @@ public final class ItemStack implements DataComponentHolder {
+     }
+ 
+     public InteractionResult interactLivingEntity(net.minecraft.world.entity.player.Player user, LivingEntity entity, InteractionHand hand) {
+-        return this.getItem().interactLivingEntity(this, user, entity, hand);
++        return de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.interactLivingEntity(this, user, entity, hand); // MCCLab - Add ItemBehaviour
+     }
+ 
+     public ItemStack copy() {
+@@ -891,7 +897,7 @@ public final class ItemStack implements DataComponentHolder {
+             return ItemStack.EMPTY;
+         } else {
+             ItemStack itemstack = new ItemStack(originalItem ? this.item : this.getItem(), this.count, this.components.copy()); // Paper - Perf: Optimize Hoppers
+-
++            itemstack.itemBehaviour = this.itemBehaviour; // MCCLab - Add ItemBehaviour
+             itemstack.setPopTime(this.getPopTime());
+             return itemstack;
+         }
+@@ -998,8 +1004,11 @@ public final class ItemStack implements DataComponentHolder {
+     }
+ 
+     public void onCraftedBy(Level world, net.minecraft.world.entity.player.Player player, int amount) {
+-        player.awardStat(Stats.ITEM_CRAFTED.get(this.getItem()), amount);
+-        this.getItem().onCraftedBy(this, world, player);
++        de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.onCraftedBy(this, world, player, amount); // MCCLab start - Add ItemBehaviour
++    }
++
++    public void onCraftedBy(Level world, net.minecraft.world.entity.player.Player player) {
++        onCraftedBy(world, player, 1); // MCCLab end - Add ItemBehaviour
+     }
+ 
+     public void onCraftedBySystem(Level world) {
+@@ -1464,6 +1473,7 @@ public final class ItemStack implements DataComponentHolder {
+ 
+     public void onDestroyed(ItemEntity entity) {
+         this.getItem().onDestroyed(entity);
++        de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.onDestroyed(this, entity); // MCCLab - Add ItemBehaviour
+     }
+ 
+     public SoundEvent getBreakingSound() {
+diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
+index 78975412da0f0c2b802bfce6d30d56b26d8023e2..cee6520b775fb5dcd56f00ec3194a884ee16429b 100644
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
+@@ -98,7 +98,9 @@ public final class CraftItemStack extends ItemStack {
+             return net.minecraft.world.item.ItemStack.EMPTY;
+         }
+         final CraftItemStack stack = getCraftStack(original);
+-        return stack.handle == null ? net.minecraft.world.item.ItemStack.EMPTY : stack.handle.copy();
++        net.minecraft.world.item.ItemStack nms = stack.handle == null ? net.minecraft.world.item.ItemStack.EMPTY : stack.handle.copy();
++        nms.itemBehaviour = original.getDefinedItemBehaviour();
++        return nms;
+         // Paper end - re-implement after delegating all api ItemStack calls to CraftItemStack
+     }
+ 
+@@ -135,7 +137,9 @@ public final class CraftItemStack extends ItemStack {
+     public static CraftItemStack asCraftCopy(ItemStack original) {
+         if (original instanceof CraftItemStack) {
+             CraftItemStack stack = (CraftItemStack) original;
+-            return new CraftItemStack(stack.handle == null ? null : stack.handle.copy());
++            CraftItemStack newStack = new CraftItemStack(stack.handle == null ? null : stack.handle.copy());
++            newStack.setItemBehaviour(stack.getDefinedItemBehaviour());
++            return newStack;
+         }
+         return new CraftItemStack(original);
+     }
+@@ -167,6 +171,7 @@ public final class CraftItemStack extends ItemStack {
+ 
+     private CraftItemStack(ItemStack item) {
+         this(item.getType(), item.getAmount(), item.getDurability(), item.hasItemMeta() ? item.getItemMeta() : null);
++        this.setItemBehaviour(item.getDefinedItemBehaviour()); // MCCLab - Add ItemBehaviour
+     }
+ 
+     private CraftItemStack(Material type, int amount, short durability, ItemMeta itemMeta) {
+@@ -658,4 +663,34 @@ public final class CraftItemStack extends ItemStack {
+     }
+ 
+     // Paper end - data component API
++    // MCCLab start - Add ItemBehaviour as instance to this specific Item Stack
++    @Override
++    public @org.jetbrains.annotations.Nullable de.verdox.mccreativelab.behaviour.ItemBehaviour getItemBehaviour() {
++        if(this.handle != null)
++            return this.handle.itemBehaviour;
++        return de.verdox.mccreativelab.behaviour.ItemBehaviour.ITEM_BEHAVIOUR.getBehaviour(de.verdox.mccreativelab.recipe.CustomItemData.fromItemStack(this));
++    }
++
++    public @org.jetbrains.annotations.Nullable de.verdox.mccreativelab.behaviour.ItemBehaviour getDefinedItemBehaviour() {
++        if(this.handle == null)
++            return null;
++        return this.handle.itemBehaviour;
++   }
++
++    @Override
++    public void setItemBehaviour(@org.jetbrains.annotations.Nullable de.verdox.mccreativelab.behaviour.ItemBehaviour itemBehaviour) {
++        if(this.handle == null){
++            if(itemBehaviour == null)
++                return;
++            throw new IllegalArgumentException("Cannot set itemBehaviour for empty item "+this);
++        }
++       this.handle.itemBehaviour = itemBehaviour;
++    }
++
++    @Override
++    public boolean hasCustomItemBehaviour() {
++        return this.handle.itemBehaviour != null;
++    }
++    // MCCLab end - Add ItemBehaviour as instance to this specific Item Stack
++
+ }

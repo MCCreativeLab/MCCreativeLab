@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox <mail.ysp@web.de>
+Date: Mon, 27 Jan 2025 16:04:53 +0000
+Subject: [PATCH] Add RepairItemBehavior
+
+
+diff --git a/net/minecraft/world/item/crafting/RepairItemRecipe.java b/net/minecraft/world/item/crafting/RepairItemRecipe.java
+index bcb57ea8aa1ecd6bd79851fff054062ba119ceeb..74d5f877fb6d129f894d839c17caeaba719d2ffe 100644
+--- a/net/minecraft/world/item/crafting/RepairItemRecipe.java
++++ b/net/minecraft/world/item/crafting/RepairItemRecipe.java
+@@ -39,7 +39,7 @@ public class RepairItemRecipe extends CustomRecipe {
+     }
+ 
+     private static boolean canCombine(ItemStack stack1, ItemStack stack2) {
+-        return stack2.is(stack1.getItem())
++        return de.verdox.mccreativelab.behavior.RepairItemBehaviour.REPAIR_ITEM_BEHAVIOUR.getBehaviour().canCombine(stack1.asBukkitMirror(), stack2.asBukkitMirror()) // MCCreativeLab - Add RepairItemBehavior
+             && stack1.getCount() == 1
+             && stack2.getCount() == 1
+             && stack1.has(DataComponents.MAX_DAMAGE)
+@@ -65,7 +65,7 @@ public class RepairItemRecipe extends CustomRecipe {
+             int i = itemStack.getMaxDamage() - itemStack.getDamageValue();
+             int i1 = itemStack1.getMaxDamage() - itemStack1.getDamageValue();
+             int i2 = i + i1 + max * 5 / 100;
+-            ItemStack itemStack2 = new ItemStack(itemStack.getItem());
++            ItemStack itemStack2 = org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(de.verdox.mccreativelab.behavior.RepairItemBehaviour.REPAIR_ITEM_BEHAVIOUR.getBehaviour().assemble(itemStack.asBukkitMirror(), itemStack1.asBukkitMirror())); // MCCreativeLab - Add RepairItemBehavior
+             itemStack2.set(DataComponents.MAX_DAMAGE, max);
+             itemStack2.setDamageValue(Math.max(max - i2, 0));
+             ItemEnchantments enchantmentsForCrafting = EnchantmentHelper.getEnchantmentsForCrafting(itemStack);
