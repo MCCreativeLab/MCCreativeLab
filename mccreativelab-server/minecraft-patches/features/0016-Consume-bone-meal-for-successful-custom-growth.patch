@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox-w <verdox@solarminer.app>
+Date: Tue, 27 Oct 2026 20:08:24 +0000
+Subject: [PATCH] Consume bone meal for successful custom growth
+
+
+diff --git a/net/minecraft/world/item/BoneMealItem.java b/net/minecraft/world/item/BoneMealItem.java
+index e0ef1917bb74164b2a2c74d8ee2d2161c2539678..9ffd8a1bc7d5fa46859327d7cbcc0771f9acf2ae 100644
+--- a/net/minecraft/world/item/BoneMealItem.java
++++ b/net/minecraft/world/item/BoneMealItem.java
+@@ -70,9 +70,12 @@ public class BoneMealItem extends Item {
+ 
+     public static boolean growCrop(final ItemStack itemStack, final Level level, final BlockPos pos) {
+         var behaviour = de.verdox.mccreativelab.behaviour.block.BehaviorBlockState.getBehaviour(level.getBlockState(pos));
+-        return de.verdox.mccreativelab.behaviour.BehaviourUtil.evaluateBoolean(behaviour,
++        int countBefore = itemStack.getCount();
++        boolean grew = de.verdox.mccreativelab.behaviour.BehaviourUtil.evaluateBoolean(behaviour,
+             value -> value.fertilizeAction(org.bukkit.craftbukkit.block.CraftBlock.at(level, pos), itemStack.asBukkitMirror()),
+             () -> mcc$growCropVanilla(itemStack, level, pos));
++        if (grew && level instanceof ServerLevel && itemStack.getCount() == countBefore) itemStack.shrink(1);
++        return grew;
+     }
+ 
+     private static boolean mcc$growCropVanilla(final ItemStack itemStack, final Level level, final BlockPos pos) {

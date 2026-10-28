@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox-w <verdox@solarminer.app>
+Date: Tue, 27 Oct 2026 14:38:30 +0000
+Subject: [PATCH] Initialize CreativeLab before plugin bootstrap
+
+
+diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
+index a6d9b95c42926754acd2e54e7af7ade3f7d2c322..8f10c24b4b4751f200df11dac12a24c2d1bd060a 100644
+--- a/net/minecraft/server/Main.java
++++ b/net/minecraft/server/Main.java
+@@ -110,6 +110,9 @@ public class Main {
+                 JvmProfiler.INSTANCE.start(Environment.SERVER);
+             }
+ 
++            if (!de.verdox.mccreativelab.MCCreativeLab.isInitialized()) {
++                de.verdox.mccreativelab.MCCreativeLab.setCreativeLab(new de.verdox.mccreativelab.CreativeLabImpl());
++            }
+             io.papermc.paper.plugin.PluginInitializerManager.load(options); // Paper
+             Bootstrap.bootStrap();
+             Bootstrap.validate();

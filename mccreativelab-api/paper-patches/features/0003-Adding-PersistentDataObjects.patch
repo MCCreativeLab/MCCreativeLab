@@ -5,10 +5,10 @@ Subject: [PATCH] Adding PersistentDataObjects
 
 
 diff --git a/src/main/java/org/bukkit/persistence/PersistentDataContainer.java b/src/main/java/org/bukkit/persistence/PersistentDataContainer.java
-index 0f40eb52f6e2a5b6932cf9f223c1bbe9ab9eab1b..02bb151c43df3dcfd9a9a05275e24b706211aa01 100644
+index 73b675f0474f9b02a1f2ac9b563cc3112213eafe..5cdb345aa1ba7b70321c04a8c3334cf808d6578f 100644
 --- a/src/main/java/org/bukkit/persistence/PersistentDataContainer.java
 +++ b/src/main/java/org/bukkit/persistence/PersistentDataContainer.java
-@@ -71,4 +71,10 @@ public interface PersistentDataContainer extends io.papermc.paper.persistence.Pe
+@@ -105,4 +105,10 @@ public interface PersistentDataContainer extends io.papermc.paper.persistence.Pe
          this.readFromBytes(bytes, true);
      }
      // Paper end - byte array serialization

@@ -13,7 +13,7 @@ public interface BehaviorMob extends BehaviorLivingEntity {
     default boolean mcc$canFireProjectileWeapon(ProjectileWeaponItem weapon) {
         var behaviour = BehaviorEntity.getBehaviour(asMob(), org.bukkit.entity.Mob.class, MobBehaviour.class);
         var craftProjectileWeapon = CraftMagicNumbers.getMaterial(weapon);
-        return BehaviourUtil.evaluateBoolean(behaviour, entityBehavior -> entityBehavior.canFireProjectileWeapon((org.bukkit.entity.Mob) asMob().getBukkitLivingEntity(), craftProjectileWeapon), () -> asMob().canFireProjectileWeapon(weapon));
+        return BehaviourUtil.evaluateBoolean(behaviour, entityBehavior -> entityBehavior.canFireProjectileWeapon((org.bukkit.entity.Mob) asMob().getBukkitLivingEntity(), craftProjectileWeapon), () -> asMob().canUseNonMeleeWeapon(new ItemStack(weapon)));
     }
 
     default void mcc$ate() {
@@ -38,7 +38,7 @@ public interface BehaviorMob extends BehaviorLivingEntity {
 
     default boolean mcc$shouldDespawnInPeaceful() {
         var behaviour = BehaviorEntity.getBehaviour(asMob(), org.bukkit.entity.Mob.class, MobBehaviour.class);
-        return BehaviourUtil.evaluateBoolean(behaviour, entityBehavior -> entityBehavior.shouldDespawnInPeaceful((org.bukkit.entity.Mob) asMob().getBukkitLivingEntity()), () -> asMob().shouldDespawnInPeaceful());
+        return BehaviourUtil.evaluateBoolean(behaviour, entityBehavior -> entityBehavior.shouldDespawnInPeaceful((org.bukkit.entity.Mob) asMob().getBukkitLivingEntity()), () -> asMob().despawnInPeacefulOverride.toBooleanOrElse(!asMob().getType().isAllowedInPeaceful()));
     }
 
     default int mcc$getAmbientSoundInterval() {

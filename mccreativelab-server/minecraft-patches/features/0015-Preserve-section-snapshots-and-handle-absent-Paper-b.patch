@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox-w <verdox@solarminer.app>
+Date: Tue, 27 Oct 2026 19:59:23 +0000
+Subject: [PATCH] Preserve section snapshots and handle absent Paper block
+ coordinates
+
+
+diff --git a/net/minecraft/world/level/chunk/LevelChunkSection.java b/net/minecraft/world/level/chunk/LevelChunkSection.java
+index fc3e6a8bb27e420271412f07832cc0696a2eb73a..07b5e6059e18fb977798b435311395ef648bc7df 100644
+--- a/net/minecraft/world/level/chunk/LevelChunkSection.java
++++ b/net/minecraft/world/level/chunk/LevelChunkSection.java
+@@ -54,7 +54,10 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+         this.level = source.level;
+         this.chunkPos = source.chunkPos;
+         this.chunkSectionY = source.chunkSectionY;
+-        this.recalcBlockCounts();
++        this.specialCollidingBlocks = source.specialCollidingBlocks;
++        for (int i = 0; i < source.tickingBlocks.size(); i++) {
++            this.tickingBlocks.add(source.tickingBlocks.getRaw(i));
++        }
+     }
+ 
+     public LevelChunkSection(final PalettedContainer<BlockState> states, final PalettedContainer<Holder<Biome>> biomes) { // CraftBukkit - read/write
+@@ -238,12 +241,19 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+                 }
+                 this.nonEmptyBlockCount += (short)paletteCount;
+                 if (this.level != null && this.chunkPos != null) {
+-                    final short[] coordinates = blockCountingEntry.coords.elements();
+-                    for (int index = 0; index < paletteCount; index++) {
+-                        short packed = coordinates[index];
+-                        if (this.mcc$isRandomlyTicking(state, packed & 15, (packed >>> 8) & 15, (packed >>> 4) & 15)) {
+-                            this.tickingBlockCount++;
+-                            this.tickingBlocks.add(packed);
++                    // Paper retains positions only for native random-ticking states. Custom
++                    // behavior can enable ticking for other states, so recover those positions
++                    // from the palette only when a handler actually exists.
++                    if (blockCountingEntry.coords != null) {
++                        final short[] coordinates = blockCountingEntry.coords.elements();
++                        for (int index = 0; index < paletteCount; index++) {
++                            this.mcc$addTickingBlock(state, coordinates[index]);
++                        }
++                    } else if (de.verdox.mccreativelab.behaviour.block.BehaviorBlockState.getBehaviour(state) != null) {
++                        for (int packed = 0; packed < 4096; packed++) {
++                            if (this.states.get(packed & 15, (packed >>> 8) & 15, (packed >>> 4) & 15) == state) {
++                                this.mcc$addTickingBlock(state, (short) packed);
++                            }
+                         }
+                     }
+                 } else if (state.isRandomlyTicking()) {
+@@ -364,6 +374,13 @@ public class LevelChunkSection implements ca.spottedleaf.moonrise.patches.block_
+     public LevelChunkSection copy() {
+         return new LevelChunkSection(this);
+     }
++    private void mcc$addTickingBlock(BlockState state, short packed) {
++        if (this.mcc$isRandomlyTicking(state, packed & 15, (packed >>> 8) & 15, (packed >>> 4) & 15)) {
++            this.tickingBlockCount++;
++            this.tickingBlocks.add(packed);
++        }
++    }
++
+     private boolean mcc$isRandomlyTicking(BlockState state, int x, int y, int z) {
+         return this.level == null || this.chunkPos == null ? state.isRandomlyTicking()
+             : state.mcc$isRandomlyTicking(this.level, this.chunkPos.getMinBlockX() + x, (this.chunkSectionY << 4) + y, this.chunkPos.getMinBlockZ() + z, state);

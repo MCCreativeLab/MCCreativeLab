@@ -1,9 +1,9 @@
 package de.verdox.mccreativelab.advancement;
 
 import net.minecraft.advancements.AdvancementRequirements;
-import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.advancements.Criterion;
-import net.minecraft.advancements.critereon.ImpossibleTrigger;
+import net.minecraft.advancements.triggers.CriteriaTriggers;
+import net.minecraft.advancements.triggers.Criterion;
+import net.minecraft.advancements.triggers.ImpossibleTrigger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;

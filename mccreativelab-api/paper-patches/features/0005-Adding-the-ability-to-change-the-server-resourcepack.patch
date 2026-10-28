@@ -5,10 +5,10 @@ Subject: [PATCH] Adding the ability to change the server resourcepack
 
 
 diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
-index 80992a04af7155e271798b71806e3b2991f35a01..269ae4bb328aff63bf384f59ebb97215e7301ed8 100644
+index 70341319ef4727fffd598d2792cb8aa73c3aafea..a9771cee72b4d615013347710e437ae58e095332 100644
 --- a/src/main/java/org/bukkit/Bukkit.java
 +++ b/src/main/java/org/bukkit/Bukkit.java
-@@ -349,6 +349,16 @@ public final class Bukkit {
+@@ -337,6 +337,16 @@ public final class Bukkit {
          return server.getServerResourcePack();
      }
  
@@ -26,10 +26,10 @@ index 80992a04af7155e271798b71806e3b2991f35a01..269ae4bb328aff63bf384f59ebb97215
       * Get the ServerTick Manager.
       *
 diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
-index f131798823b8f724cb6d010768d22522dbccb073..58850e3622aac11d245606874534b7d60be92f48 100644
+index d30cccedeb467567d95849ca945689e4b9cbba4f..cbd33bc956054fcdb67f0e180a092f3cda3fbd5d 100644
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
-@@ -292,6 +292,14 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+@@ -289,6 +289,14 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
      @Nullable
      public ResourcePack getServerResourcePack();
  

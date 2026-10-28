@@ -1,10 +1,10 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
-@@ -1755,6 +_,7 @@
-             final CallbackCompletable<CompoundTag> completable = new CallbackCompletable<>();
- 
+@@ -1729,6 +_,7 @@
              final Runnable run = () -> {
-+                org.bukkit.Bukkit.getPluginManager().callEvent(new de.verdox.mccreativelab.events.ChunkDataSaveEvent(world.getWorld(), new org.bukkit.craftbukkit.CraftChunk(world, chunk.locX, chunk.locZ), new de.verdox.mccreativelab.events.ChunkDataEvent.ChunkPos(chunk.locX, chunk.locZ), chunk.persistentDataContainer, unloaded)); // MCCreativeLab - Add Async Chunk Data Events
-                 final CompoundTag data = chunkData.write();
- 
-                 completable.complete(data);
+                 final CompoundTag data;
+                 try {
++                    org.bukkit.Bukkit.getPluginManager().callEvent(new de.verdox.mccreativelab.events.ChunkDataSaveEvent(world.getWorld(), new org.bukkit.craftbukkit.CraftChunk(world, this.chunkX, this.chunkZ), new de.verdox.mccreativelab.events.ChunkDataEvent.ChunkPos(this.chunkX, this.chunkZ), chunk.persistentDataContainer, unloading));
+                     data = chunkData.write();
+                 } catch (final Throwable thr) {
+                     LOGGER.error("Failed to save chunk data (" + NewChunkHolder.this.chunkX + "," + NewChunkHolder.this.chunkZ + ") in world '" + WorldUtil.getWorldName(NewChunkHolder.this.world) + "'", thr);

@@ -45,7 +45,7 @@ public interface LivingEntityBehaviour<T extends LivingEntity> extends EntityBeh
      * @return - true if it can
      */
     @NotNull
-    default BehaviourResult.Bool canAttack(LivingEntity entity, LivingEntity other) {
+    default BehaviourResult.Bool canAttack( @org.jetbrains.annotations.NotNull LivingEntity entity, @org.jetbrains.annotations.NotNull LivingEntity other) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
@@ -55,7 +55,7 @@ public interface LivingEntityBehaviour<T extends LivingEntity> extends EntityBeh
      * @return if it can be name tagged
      */
     @NotNull
-    default BehaviourResult.Bool canBeNameTagged(LivingEntity entity) {
+    default BehaviourResult.Bool canBeNameTagged( @org.jetbrains.annotations.NotNull LivingEntity entity) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
@@ -65,7 +65,13 @@ public interface LivingEntityBehaviour<T extends LivingEntity> extends EntityBeh
      * @return if it can pick up loot
      */
     @NotNull
-    default BehaviourResult.Bool canPickUpLoot(LivingEntity entity) {
+    default BehaviourResult.Bool canPickUpLoot( @org.jetbrains.annotations.NotNull LivingEntity entity) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
+    /** Damage applied each water-sensitive tick. */
+    @NotNull
+    default BehaviourResult.Object<Float> waterDamage(@NotNull T entity) {
+        return BehaviourResult.Object.DEFAULT_INSTANCE;
+    }
+
 }

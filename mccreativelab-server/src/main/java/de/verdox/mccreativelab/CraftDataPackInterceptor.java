@@ -5,7 +5,7 @@ import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
 import de.verdox.mccreativelab.data.DataPackInterceptor;
 import net.kyori.adventure.key.Key;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.IoSupplier;
 import org.apache.commons.io.FilenameUtils;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +69,7 @@ public class CraftDataPackInterceptor implements DataPackInterceptor {
     }
 
     @Nullable
-    public IoSupplier<InputStream> evaluate(ResourceLocation resourceLocation, Path assetPath, IoSupplier<InputStream> ioSupplier) {
+    public IoSupplier<InputStream> evaluate(Identifier resourceLocation, Path assetPath, IoSupplier<InputStream> ioSupplier) {
 
         String assetTypeName = resourceLocation.toString().split("/")[0];
         int indexOfStartKey = assetTypeName.indexOf(":");

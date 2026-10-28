@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox-w <verdox@solarminer.app>
+Date: Tue, 27 Oct 2026 14:18:34 +0000
+Subject: [PATCH] Support MCC material methods in legacy rerouting
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/legacy/MaterialRerouting.java b/src/main/java/org/bukkit/craftbukkit/legacy/MaterialRerouting.java
+index a76e89c12afdf68aadc2742136d008a3f1b2e9aa..e9ca0d8f82894f54a0959e220335f9fd8ef394b2 100644
+--- a/src/main/java/org/bukkit/craftbukkit/legacy/MaterialRerouting.java
++++ b/src/main/java/org/bukkit/craftbukkit/legacy/MaterialRerouting.java
+@@ -702,4 +702,25 @@ public class MaterialRerouting {
+         meta.setCanPlaceOn(materials);
+     }
+     // Paper end
++    public static de.verdox.mccreativelab.ai.behavior.OneShotBehavior<org.bukkit.entity.Frog> tryLaySpawnOnWaterNearLand(
++        de.verdox.mccreativelab.ai.builder.BehaviorFactory factory, Material material
++    ) {
++        return factory.tryLaySpawnOnWaterNearLand(transformToBlockType(material));
++    }
++
++    public static com.destroystokyo.paper.entity.ai.VanillaGoal<org.bukkit.entity.Mob> removeBlock(
++        de.verdox.mccreativelab.ai.builder.GoalFactory factory, org.bukkit.entity.Mob mob, Material material, double speed, int verticalSearchRange
++    ) {
++        return factory.removeBlock(mob, transformToBlockType(material), speed, verticalSearchRange);
++    }
++
++    public static <T extends org.bukkit.entity.Mob> de.verdox.mccreativelab.behavior.BehaviourResult.Bool canFireProjectileWeapon(
++        de.verdox.mccreativelab.behavior.entity.MobBehaviour<T> behaviour, T mob, Material material
++    ) {
++        return behaviour.canFireProjectileWeapon(mob, transformToItemType(material));
++    }
++
++    public static Material material(de.verdox.mccreativelab.recipe.CustomItemData item, @InjectPluginVersion ApiVersion version) {
++        return transformFromItemType(item.material(), version);
++    }
+ }

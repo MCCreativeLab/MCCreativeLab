@@ -1,6 +1,6 @@
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -862,6 +_,13 @@
+@@ -807,6 +_,13 @@
          return this.getServer().getServerResourcePack().map(CraftResourcePack::new).orElse(null);
      }
  

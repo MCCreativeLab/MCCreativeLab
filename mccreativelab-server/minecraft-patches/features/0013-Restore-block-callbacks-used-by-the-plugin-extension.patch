@@ -1,0 +1,144 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox-w <verdox@solarminer.app>
+Date: Tue, 27 Oct 2026 19:27:14 +0000
+Subject: [PATCH] Restore block callbacks used by the plugin extension on 26.3
+
+
+diff --git a/net/minecraft/server/level/ServerPlayerGameMode.java b/net/minecraft/server/level/ServerPlayerGameMode.java
+index 00e92e54129932d1928469b3a84e1b93d8d8202e..f43394b475ac587670fc07abdba959e0614fec02 100644
+--- a/net/minecraft/server/level/ServerPlayerGameMode.java
++++ b/net/minecraft/server/level/ServerPlayerGameMode.java
+@@ -433,6 +433,11 @@ public class ServerPlayerGameMode {
+         if (changed) {
+             block.destroy(this.level, pos, adjustedState);
+         }
++        if (changed) {
++            de.verdox.mccreativelab.behaviour.BehaviourUtil.evaluateCallback(
++                de.verdox.mccreativelab.behaviour.block.BehaviorBlockState.getBehaviour(adjustedState),
++                behaviour -> behaviour.onPlayerBreak(this.player.getBukkitEntity(), org.bukkit.craftbukkit.util.CraftLocation.toBukkit(pos, this.level), adjustedState.asBlockData()), () -> {});
++        }
+ 
+         ItemStack destroyedWith = null; // Paper - Trigger bee_nest_destroyed trigger in the correct place
+         boolean canDestroy = false; // Paper - Trigger bee_nest_destroyed trigger in the correct place
+diff --git a/net/minecraft/world/item/BoneMealItem.java b/net/minecraft/world/item/BoneMealItem.java
+index 12c63bbe2d25566746a6903e6cf61aac96f10173..e0ef1917bb74164b2a2c74d8ee2d2161c2539678 100644
+--- a/net/minecraft/world/item/BoneMealItem.java
++++ b/net/minecraft/world/item/BoneMealItem.java
+@@ -69,6 +69,13 @@ public class BoneMealItem extends Item {
+     }
+ 
+     public static boolean growCrop(final ItemStack itemStack, final Level level, final BlockPos pos) {
++        var behaviour = de.verdox.mccreativelab.behaviour.block.BehaviorBlockState.getBehaviour(level.getBlockState(pos));
++        return de.verdox.mccreativelab.behaviour.BehaviourUtil.evaluateBoolean(behaviour,
++            value -> value.fertilizeAction(org.bukkit.craftbukkit.block.CraftBlock.at(level, pos), itemStack.asBukkitMirror()),
++            () -> mcc$growCropVanilla(itemStack, level, pos));
++    }
++
++    private static boolean mcc$growCropVanilla(final ItemStack itemStack, final Level level, final BlockPos pos) {
+         BlockState state = level.getBlockState(pos);
+         if (state.getBlock() instanceof BonemealableBlock block && block.isValidBonemealTarget(level, pos, state, BonemealSource.INTERACTION)) {
+             if (level instanceof ServerLevel serverLevel) {
+diff --git a/net/minecraft/world/level/ExplosionDamageCalculator.java b/net/minecraft/world/level/ExplosionDamageCalculator.java
+index fc9f57a850923ce9d0f0dbd1f7e5ad376a89bfca..fd07f1b0fb9b0034428c9fa0e0911fd144100506 100644
+--- a/net/minecraft/world/level/ExplosionDamageCalculator.java
++++ b/net/minecraft/world/level/ExplosionDamageCalculator.java
+@@ -13,7 +13,12 @@ public class ExplosionDamageCalculator {
+     ) {
+         return block.isAir() && fluid.isEmpty()
+             ? Optional.empty()
+-            : Optional.of(Math.max(block.getBlock().getExplosionResistance(), fluid.getExplosionResistance()));
++            : Optional.of(Math.max(level instanceof net.minecraft.world.level.LevelAccessor accessor
++                ? de.verdox.mccreativelab.behaviour.BehaviourUtil.evaluateFloat(
++                    de.verdox.mccreativelab.behaviour.block.BehaviorBlockState.getBehaviour(block),
++                    behaviour -> behaviour.getExplosionResistance(org.bukkit.craftbukkit.block.CraftBlock.at(accessor, pos), block.asBlockData()),
++                    () -> block.getBlock().getExplosionResistance())
++                : block.getBlock().getExplosionResistance(), fluid.getExplosionResistance()));
+     }
+ 
+     public boolean shouldBlockExplode(final Explosion explosion, final BlockGetter level, final BlockPos pos, final BlockState state, final float power) {
+diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
+index 58c49939bf3fe1dfd2e69a1b9b490aaa373e8923..a209056f1416712d9e40edc8a8a6ea319a73a3e9 100644
+--- a/net/minecraft/world/level/Level.java
++++ b/net/minecraft/world/level/Level.java
+@@ -1235,6 +1235,11 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+         // FluidState fluidState = this.getFluidState(pos); // Paper - move up
+         boolean destroyed = this.setBlock(pos, fluidState.createLegacyBlock(), Block.UPDATE_ALL, updateLimit);
+         if (destroyed) {
++            final boolean mccDropResources = dropResources;
++            de.verdox.mccreativelab.behaviour.BehaviourUtil.evaluateCallback(
++                de.verdox.mccreativelab.behaviour.block.BehaviorBlockState.getBehaviour(blockState),
++                behaviour -> behaviour.onDestroy(org.bukkit.craftbukkit.util.CraftLocation.toBukkit(pos, this), mccDropResources,
++                    breaker == null ? null : breaker.getBukkitEntity(), updateLimit), () -> {});
+             this.gameEvent(GameEvent.BLOCK_DESTROY, pos, GameEvent.Context.of(breaker, blockState));
+         }
+ 
+diff --git a/net/minecraft/world/level/block/piston/PistonBaseBlock.java b/net/minecraft/world/level/block/piston/PistonBaseBlock.java
+index 92afbd653c6aaff973110d24357f68140e75d418..0c322230708e216917f28e3edaa50fdda8b44fec 100644
+--- a/net/minecraft/world/level/block/piston/PistonBaseBlock.java
++++ b/net/minecraft/world/level/block/piston/PistonBaseBlock.java
+@@ -378,6 +378,14 @@ public class PistonBaseBlock extends DirectionalBlock {
+             BlockState blockState = allowDesync ? level.getBlockState(oldPos) : null;
+             // Paper end - fix a variety of piston desync dupes
+             pos = pos.relative(pushDirection);
++            final BlockPos mccOldPos = oldPos;
++            final BlockPos mccNewPos = pos;
++            var mccMovedState = level.getBlockState(oldPos);
++            de.verdox.mccreativelab.behaviour.BehaviourUtil.evaluateCallback(
++                de.verdox.mccreativelab.behaviour.block.BehaviorBlockState.getBehaviour(mccMovedState),
++                behaviour -> behaviour.onPistonMoveBlock(mccMovedState.asBlockData(),
++                    org.bukkit.craftbukkit.util.CraftLocation.toBukkit(mccOldPos, level), org.bukkit.craftbukkit.util.CraftLocation.toBukkit(mccNewPos, level),
++                    org.bukkit.craftbukkit.block.CraftBlock.at(level, pistonPos), new org.bukkit.util.Vector(pushDirection.getStepX(), pushDirection.getStepY(), pushDirection.getStepZ())), () -> {});
+             deleteAfterMove.remove(pos);
+             BlockState actualState = Blocks.MOVING_PISTON.defaultBlockState().setValue(FACING, direction);
+             level.setBlock(pos, actualState, Block.UPDATE_NONE | Block.UPDATE_MOVE_BY_PISTON);
+diff --git a/net/minecraft/world/level/block/state/BlockBehaviour.java b/net/minecraft/world/level/block/state/BlockBehaviour.java
+index dccf050a5156b8e2d8fafaec5e316beb19466952..94824c11306e5734db99084048bedfc0b18e790a 100644
+--- a/net/minecraft/world/level/block/state/BlockBehaviour.java
++++ b/net/minecraft/world/level/block/state/BlockBehaviour.java
+@@ -915,7 +915,11 @@ public abstract class BlockBehaviour implements FeatureElement {
+         public void handleNeighborChanged(
+             final Level level, final BlockPos pos, final Block block, final @Nullable Orientation orientation, final boolean movedByPiston
+         ) {
+-            this.getBlock().neighborChanged(this.asState(), level, pos, block, orientation, movedByPiston);
++            de.verdox.mccreativelab.behaviour.BehaviourUtil.evaluateVoid(
++                de.verdox.mccreativelab.behaviour.block.BehaviorBlockState.getBehaviour(this.asState()),
++                behaviour -> behaviour.onNeighbourBlockUpdate(org.bukkit.craftbukkit.block.CraftBlock.at(level, pos),
++                    org.bukkit.craftbukkit.block.CraftBlockType.minecraftToBukkitNew(block), movedByPiston),
++                () -> this.getBlock().neighborChanged(this.asState(), level, pos, block, orientation, movedByPiston));
+         }
+ 
+         public final void updateNeighbourShapes(final LevelAccessor level, final BlockPos pos, final @Block.UpdateFlags int updateFlags) {
+@@ -985,11 +989,13 @@ public abstract class BlockBehaviour implements FeatureElement {
+         public InteractionResult useItemOn(
+             final ItemStack itemStack, final Level level, final Player player, final InteractionHand hand, final BlockHitResult hitResult
+         ) {
+-            return this.getBlock().useItemOn(itemStack, this.asState(), level, hitResult.getBlockPos(), player, hand, hitResult);
++            return de.verdox.mccreativelab.behaviour.block.BlockInteractionHooks.use(this.asState(), level, player, hand, hitResult,
++                () -> this.getBlock().useItemOn(itemStack, this.asState(), level, hitResult.getBlockPos(), player, hand, hitResult));
+         }
+ 
+         public InteractionResult useWithoutItem(final Level level, final Player player, final BlockHitResult hitResult) {
+-            return this.getBlock().useWithoutItem(this.asState(), level, hitResult.getBlockPos(), player, hitResult);
++            return de.verdox.mccreativelab.behaviour.block.BlockInteractionHooks.use(this.asState(), level, player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult,
++                () -> this.getBlock().useWithoutItem(this.asState(), level, hitResult.getBlockPos(), player, hitResult));
+         }
+ 
+         public boolean showAsInteractableInSpectatorMode(final Level level, final BlockPos pos, final BlockHitResult hitResult) {
+@@ -1021,7 +1027,16 @@ public abstract class BlockBehaviour implements FeatureElement {
+             final BlockState neighbourState,
+             final RandomSource random
+         ) {
+-            return this.getBlock().updateShape(this.asState(), level, ticks, pos, directionToNeighbour, neighbourPos, neighbourState, random);
++            if (!(level instanceof net.minecraft.world.level.LevelAccessor accessor)) {
++                return this.getBlock().updateShape(this.asState(), level, ticks, pos, directionToNeighbour, neighbourPos, neighbourState, random);
++            }
++            return de.verdox.mccreativelab.behaviour.BehaviourUtil.evaluate(
++                de.verdox.mccreativelab.behaviour.block.BehaviorBlockState.getBehaviour(this.asState()),
++                behaviour -> behaviour.blockUpdate(org.bukkit.craftbukkit.block.CraftBlock.at(accessor, pos).getLocation(),
++                    this.asState().asBlockData(), org.bukkit.craftbukkit.block.CraftBlock.notchToBlockFace(directionToNeighbour),
++                    neighbourState.asBlockData(), org.bukkit.craftbukkit.block.CraftBlock.at(accessor, neighbourPos).getLocation()),
++                () -> this.getBlock().updateShape(this.asState(), level, ticks, pos, directionToNeighbour, neighbourPos, neighbourState, random),
++                de.verdox.mccreativelab.behaviour.BehaviourUtil.Converter.BlockData.INSTANCE);
+         }
+ 
+         public boolean isPathfindable(final PathComputationType type) {

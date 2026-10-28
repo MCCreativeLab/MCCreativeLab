@@ -1,0 +1,14 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox-w <verdox@solarminer.app>
+Date: Wed, 28 Oct 2026 09:17:05 +0000
+Subject: [PATCH] Ignore generated Checkstyle build outputs
+
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000000000000000000000000000000000000..7c9cf9c2a09136a93e478b255301683873b67ab4
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,2 @@
++/build/
++/.gradle/

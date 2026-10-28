@@ -3,7 +3,8 @@ package de.verdox.mccreativelab.advancement;
 import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.text.Component;
 import net.minecraft.advancements.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.advancements.triggers.Criterion;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -53,7 +54,7 @@ public class CraftAdvancementBuilder implements AdvancementBuilder {
 
     @Override
     public @NotNull Advancement addToBukkit(@NotNull NamespacedKey namespacedKey) {
-        Optional<ResourceLocation> parent = this.parent == null ? Optional.empty() : Optional.of(CraftNamespacedKey.toMinecraft(this.parent));
+        Optional<Identifier> parent = this.parent == null ? Optional.empty() : Optional.of(CraftNamespacedKey.toMinecraft(this.parent));
         Optional<net.minecraft.network.chat.Component> name = this.name == null ? Optional.empty() : Optional.of(PaperAdventure.asVanilla(this.name));
         DisplayInfo displayInfo = craftAdvancementDisplayBuilder.buildNMS();
         Map<String, Criterion<?>> criteria = craftAdvancementRequirementsBuilder.getCriteria();
@@ -72,8 +73,8 @@ public class CraftAdvancementBuilder implements AdvancementBuilder {
             name
         );
 
-        ResourceLocation minecraftkey = CraftNamespacedKey.toMinecraft(namespacedKey);
-        final com.google.common.collect.ImmutableMap.Builder<ResourceLocation, AdvancementHolder> mapBuilder = com.google.common.collect.ImmutableMap.builder();
+        Identifier minecraftkey = CraftNamespacedKey.toMinecraft(namespacedKey);
+        final com.google.common.collect.ImmutableMap.Builder<Identifier, AdvancementHolder> mapBuilder = com.google.common.collect.ImmutableMap.builder();
         mapBuilder.putAll(MinecraftServer.getServer().getAdvancements().advancements);
 
         final AdvancementHolder holder = new AdvancementHolder(minecraftkey, nms);
@@ -83,12 +84,15 @@ public class CraftAdvancementBuilder implements AdvancementBuilder {
         final AdvancementTree tree = MinecraftServer.getServer().getAdvancements().tree();
         tree.addAll(List.of(holder));
 
-        if (craftAdvancementDisplayBuilder.customCoordinates) {
+        {
             final AdvancementNode node = tree.get(minecraftkey);
             if (node != null) {
                 final AdvancementNode root = node.root();
                 if (root.holder().value().display().isPresent()) {
                     TreeNodePosition.run(root);
+                    if (craftAdvancementDisplayBuilder.customCoordinates) {
+                        craftAdvancementDisplayBuilder.applyCoordinates(node);
+                    }
                 }
             }
         }
@@ -98,7 +102,7 @@ public class CraftAdvancementBuilder implements AdvancementBuilder {
         if (bukkit != null) {
             MinecraftServer.getServer().getPlayerList().getPlayers().forEach(player -> {
                 player.getAdvancements().reload(MinecraftServer.getServer().getAdvancements());
-                player.getAdvancements().flushDirty(player);
+                player.getAdvancements().flushDirty(player, false);
             });
             return bukkit;
         }

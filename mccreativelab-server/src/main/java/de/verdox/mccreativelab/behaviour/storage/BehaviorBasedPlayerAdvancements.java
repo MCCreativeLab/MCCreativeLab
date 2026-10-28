@@ -8,7 +8,7 @@ import com.google.gson.stream.JsonReader;
 import com.mojang.datafixers.DataFixer;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.FileUtil;
+import net.minecraft.util.FileUtil;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.ServerAdvancementManager;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,7 +41,7 @@ public class BehaviorBasedPlayerAdvancements extends PlayerAdvancements {
                 GSON.toJson(jsonElement, GSON.newJsonWriter(bufferedWriter));
             }
         } catch (JsonIOException | IOException var7) {
-            LOGGER.error("Couldn't save player advancements to {}", pathToSave, ioexception);
+            LOGGER.error("Couldn't save player advancements to {}", this.playerSavePath, var7);
         }
     }
 

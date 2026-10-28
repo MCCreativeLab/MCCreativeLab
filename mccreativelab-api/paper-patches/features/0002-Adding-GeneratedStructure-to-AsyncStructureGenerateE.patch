@@ -5,23 +5,24 @@ Subject: [PATCH] Adding GeneratedStructure to AsyncStructureGenerateEvent
 
 
 diff --git a/src/main/java/org/bukkit/event/world/AsyncStructureGenerateEvent.java b/src/main/java/org/bukkit/event/world/AsyncStructureGenerateEvent.java
-index 91a137379fca184d164f130b981b7364b2a4a280..bff596278758e5f901114167a295ee79ab555bef 100644
+index b3d68f1f3ff182292e0fa6368bc2e1f758039d9a..f7d188a48fcfbf69f7fd925e48b356e9871719ab 100644
 --- a/src/main/java/org/bukkit/event/world/AsyncStructureGenerateEvent.java
 +++ b/src/main/java/org/bukkit/event/world/AsyncStructureGenerateEvent.java
-@@ -55,14 +55,27 @@ public class AsyncStructureGenerateEvent extends WorldEvent {
+@@ -50,15 +50,28 @@ public class AsyncStructureGenerateEvent extends WorldEvent {
      private final Map<NamespacedKey, BlockTransformer> blockTransformers = new LinkedHashMap<>();
      private final Map<NamespacedKey, EntityTransformer> entityTransformers = new LinkedHashMap<>();
  
--    public AsyncStructureGenerateEvent(@NotNull World world, boolean async, @NotNull Cause cause, @NotNull Structure structure, @NotNull BoundingBox boundingBox, int chunkX, int chunkZ) {
 +    public final org.bukkit.generator.structure.GeneratedStructure generatedStructure; // Paper - Adding GeneratedStructure to AsyncStructureGenerateEvent
 +
+     @ApiStatus.Internal
+-    public AsyncStructureGenerateEvent(@NotNull World world, boolean async, @NotNull Cause cause, @NotNull Structure structure, @NotNull BoundingBox boundingBox, int chunkX, int chunkZ) {
 +    public AsyncStructureGenerateEvent(@NotNull World world, boolean async, @NotNull org.bukkit.generator.structure.GeneratedStructure generatedStructure, @NotNull Cause cause, @NotNull Structure structure, @NotNull BoundingBox boundingBox, int chunkX, int chunkZ) { // Paper - Adding GeneratedStructure to AsyncStructureGenerateEvent
          super(world, async);
+         this.cause = cause;
          this.structure = structure;
          this.boundingBox = boundingBox;
          this.chunkX = chunkX;
          this.chunkZ = chunkZ;
-         this.cause = cause;
 +        this.generatedStructure = generatedStructure; // Paper - Adding GeneratedStructure to AsyncStructureGenerateEvent
 +    }
 +

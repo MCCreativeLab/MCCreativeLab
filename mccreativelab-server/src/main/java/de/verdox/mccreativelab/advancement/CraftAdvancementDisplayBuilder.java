@@ -80,27 +80,29 @@ public class CraftAdvancementDisplayBuilder implements AdvancementDisplayBuilder
     @Override
     public @NotNull AdvancementDisplayBuilder setX(float x) {
         this.x = x;
+        this.customCoordinates = true;
         return this;
     }
 
     @Override
     public @NotNull AdvancementDisplayBuilder setY(float y) {
         this.y = y;
+        this.customCoordinates = true;
         return this;
     }
 
     public DisplayInfo buildNMS(){
         DisplayInfo displayInfo = new DisplayInfo(
-            CraftItemStack.asNMSCopy(icon), 
+            net.minecraft.world.item.ItemStackTemplate.fromNonEmptyStack(CraftItemStack.asNMSCopy(icon)),
             PaperAdventure.asVanilla(title), 
             PaperAdventure.asVanilla(description),
-            background == null ? Optional.empty() : Optional.of(CraftNamespacedKey.toMinecraft(background)),
+            background == null ? Optional.empty() : Optional.of(new net.minecraft.core.ClientAsset.ResourceTexture(CraftNamespacedKey.toMinecraft(background))),
             asVanillaFrame(frame),
             showToast,
             announceToChat,
             isHidden
             );
-        displayInfo.setLocation(x, y);
+
         return displayInfo;
     }
 
@@ -110,5 +112,8 @@ public class CraftAdvancementDisplayBuilder implements AdvancementDisplayBuilder
             case CHALLENGE -> AdvancementType.CHALLENGE;
             case GOAL -> AdvancementType.GOAL;
         };
+    }
+    public void applyCoordinates(net.minecraft.advancements.AdvancementNode node) {
+        node.setLocation(this.x, this.y);
     }
 }

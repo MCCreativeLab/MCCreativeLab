@@ -51,10 +51,10 @@ public interface BehaviorBlockState extends BehaviourUtil {
     default void mcc$onExplosionHit(ServerLevel level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> dropConsumer) {
         BlockBehaviour behaviour = getBehaviour(asBlock());
         BehaviourUtil.evaluateVoid(behaviour,
-                blockBehaviour -> blockBehaviour.onExplosionHit(CraftBlock.at(level, pos), CraftExplosionResult.toBukkit(explosion.getBlockInteraction()), new BiConsumer<org.bukkit.inventory.ItemStack, Location>() {
+                blockBehaviour -> blockBehaviour.onExplosionHit(CraftBlock.at(level, pos), CraftExplosionResult.toExplosionResult(explosion.getBlockInteraction()), new BiConsumer<org.bukkit.inventory.ItemStack, Location>() {
                     @Override
                     public void accept(org.bukkit.inventory.ItemStack itemStack, Location location) {
-                        dropConsumer.accept(CraftItemStack.unwrap(itemStack), CraftLocation.toBlockPosition(location));
+                        dropConsumer.accept(CraftItemStack.unwrap(itemStack), CraftLocation.toBlockPos(location));
                     }
                 }),
                 () -> asBlock().onExplosionHit(level, pos, explosion, dropConsumer));
@@ -63,42 +63,53 @@ public interface BehaviorBlockState extends BehaviourUtil {
     default void mcc$onRemove(Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         BlockBehaviour behaviour = getBehaviour(asBlock());
         BehaviourUtil.evaluateVoid(behaviour,
-                blockBehaviour -> blockBehaviour.onRemove(CraftLocation.toBukkit(pos, level), CraftBlockData.fromData(newState), CraftBlockData.fromData(asBlock()), movedByPiston),
-                () -> asBlock().onRemove(level, pos, newState, movedByPiston));
+                blockBehaviour -> blockBehaviour.onRemove(CraftLocation.toBukkit(pos, level), CraftBlockData.createData(newState), CraftBlockData.createData(asBlock()), movedByPiston),
+                () -> asBlock().affectNeighborsAfterRemoval((ServerLevel) level, pos, movedByPiston));
+    }
+
+    default void mcc$onPlace(Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        mcc$onPlace(level, pos, oldState, movedByPiston, null);
     }
 
     default void mcc$onPlace(Level level, BlockPos pos, BlockState oldState, boolean movedByPiston, @Nullable net.minecraft.world.item.context.UseOnContext context) {
         BlockBehaviour behaviour = getBehaviour(asBlock());
+        BehaviourUtil.evaluateCallback(behaviour,
+                blockBehaviour -> blockBehaviour.onPlace(CraftLocation.toBukkit(pos, level), CraftBlockData.createData(asBlock()), CraftBlockData.createData(oldState), movedByPiston, context != null), () -> {});
         BehaviourUtil.evaluateVoid(behaviour,
-                blockBehaviour -> blockBehaviour.onPlace(CraftLocation.toBukkit(pos, level), CraftBlockData.fromData(asBlock()), CraftBlockData.fromData(oldState), movedByPiston),
+                blockBehaviour -> blockBehaviour.onPlace(CraftLocation.toBukkit(pos, level), CraftBlockData.createData(asBlock()), CraftBlockData.createData(oldState), movedByPiston),
                 () -> asBlock().onPlace(level, pos, oldState, movedByPiston, context));
+        if (context != null && context.getPlayer() != null) {
+            BehaviourUtil.evaluateCallback(behaviour, blockBehaviour -> blockBehaviour.onPlayerPlace(
+                    (org.bukkit.entity.Player) context.getPlayer().getBukkitEntity(), context.getItemInHand().asBukkitMirror(),
+                    CraftLocation.toBukkit(pos, level), CraftBlockData.createData(asBlock())), () -> {});
+        }
     }
 
     default void mcc$wasExploded(ServerLevel level, BlockPos pos, Explosion explosion) {
         BlockBehaviour behaviour = getBehaviour(asBlock());
         BehaviourUtil.evaluateVoid(behaviour,
-                blockBehaviour -> blockBehaviour.wasExploded(CraftBlock.at(level, pos), CraftExplosionResult.toBukkit(explosion.getBlockInteraction())),
+                blockBehaviour -> blockBehaviour.wasExploded(CraftBlock.at(level, pos), CraftExplosionResult.toExplosionResult(explosion.getBlockInteraction())),
                 () -> asBlock().getBlock().wasExploded(level, pos, explosion));
     }
 
     default void mcc$stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
         BlockBehaviour behaviour = getBehaviour(asBlock());
         BehaviourUtil.evaluateVoid(behaviour,
-                blockBehaviour -> blockBehaviour.stepOn(CraftBlock.at(level, pos), CraftBlockData.fromData(state), entity.getBukkitEntity()),
+                blockBehaviour -> blockBehaviour.stepOn(CraftBlock.at(level, pos), CraftBlockData.createData(state), entity.getBukkitEntity()),
                 () -> asBlock().getBlock().stepOn(level, pos, state, entity));
     }
 
-    default void mcc$fallOn(Level level, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
+    default void mcc$fallOn(Level level, BlockState state, BlockPos pos, Entity entity, double fallDistance) {
         BlockBehaviour behaviour = getBehaviour(asBlock());
         BehaviourUtil.evaluateVoid(behaviour,
-                blockBehaviour -> blockBehaviour.fallOn(CraftBlock.at(level, pos), CraftBlockData.fromData(state), entity.getBukkitEntity(), fallDistance),
+                blockBehaviour -> blockBehaviour.fallOn(CraftBlock.at(level, pos), CraftBlockData.createData(state), entity.getBukkitEntity(), (float) fallDistance),
                 () -> asBlock().getBlock().fallOn(level, state, pos, entity, fallDistance));
     }
 
     default void mcc$handlePrecipitation(BlockState state, Level level, BlockPos pos, Biome.Precipitation precipitation) {
         BlockBehaviour behaviour = getBehaviour(asBlock());
         BehaviourUtil.evaluateVoid(behaviour,
-                blockBehaviour -> blockBehaviour.handlePrecipitation(CraftBlock.at(level, pos), CraftBlockData.fromData(state), CraftPrecipitation.toBukkit(precipitation)),
+                blockBehaviour -> blockBehaviour.handlePrecipitation(CraftBlock.at(level, pos), CraftBlockData.createData(state), CraftPrecipitation.toBukkit(precipitation)),
                 () -> asBlock().getBlock().handlePrecipitation(state, level, pos, precipitation));
     }
 
@@ -124,6 +135,10 @@ public interface BehaviorBlockState extends BehaviourUtil {
                 () -> asBlock().old$canSurvive(level, pos));
     }
 
+    default boolean mcc$canSurvive(LevelReader level, BlockPos pos) {
+        return canSurvive(level, pos);
+    }
+
     //TODO:
     // - getMenuProvider
     // - getTicker
@@ -139,7 +154,7 @@ public interface BehaviorBlockState extends BehaviourUtil {
 
     default boolean mcc$isRandomlyTicking(Level level, int globalX, int globalY, int globalZ, BlockState blockState) {
         BlockBehaviour behaviour = getBehaviour(asBlock());
-        return BehaviourUtil.evaluateBoolean(behaviour, blockBehaviour -> blockBehaviour.isBlockRandomlyTicking(CraftBlock.at(level, new BlockPos(globalX, globalY, globalZ)), CraftBlockData.fromData(blockState)), () -> asBlock().isRandomlyTicking());
+        return BehaviourUtil.evaluateBoolean(behaviour, blockBehaviour -> blockBehaviour.isBlockRandomlyTicking(CraftBlock.at(level, new BlockPos(globalX, globalY, globalZ)), CraftBlockData.createData(blockState)), () -> asBlock().isRandomlyTicking());
     }
 
     default void mcc$onProjectileHit(Level level, BlockState state, BlockHitResult hit, Projectile projectile) {
@@ -163,7 +178,7 @@ public interface BehaviorBlockState extends BehaviourUtil {
     @org.jetbrains.annotations.Nullable
     public static <V extends BlockState> BlockBehaviour getBehaviour(V nmsBlock) {
         BlockType blockType = CraftBlockType.minecraftToBukkitNew(nmsBlock.getBlock());
-        BlockData blockData = CraftBlockData.fromData(nmsBlock);
+        BlockData blockData = CraftBlockData.createData(nmsBlock);
 
         if (BlockBehaviour.BLOCK_BEHAVIOUR_SPECIFIC.isImplemented(blockData)) {
             return BlockBehaviour.BLOCK_BEHAVIOUR_SPECIFIC.getBehaviour(blockData);

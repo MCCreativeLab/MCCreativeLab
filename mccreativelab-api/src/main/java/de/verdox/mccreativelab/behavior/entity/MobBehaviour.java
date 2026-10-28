@@ -83,7 +83,7 @@ public interface MobBehaviour <T extends Mob> extends LivingEntityBehaviour<T> {
      * @return if it should despawn
      */
     @NotNull
-    default BehaviourResult.Bool shouldDespawnInPeaceful(Mob entity){
+    default BehaviourResult.Bool shouldDespawnInPeaceful( @org.jetbrains.annotations.NotNull Mob entity){
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
@@ -92,7 +92,8 @@ public interface MobBehaviour <T extends Mob> extends LivingEntityBehaviour<T> {
      * @param entity the entity
      * @return the ambient sound interval
      */
-    default BehaviourResult.Object<Integer> getAmbientSoundInterval(Mob entity) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Object<Integer> getAmbientSoundInterval( @org.jetbrains.annotations.NotNull Mob entity) {
         return BehaviourResult.Object.DEFAULT_INSTANCE;
     }
 }

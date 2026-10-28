@@ -62,7 +62,8 @@ public interface EntityBehaviour<T extends Entity> extends Behaviour {
      * @param other the other entity
      * @return if it can collide
      */
-    default BehaviourResult.Bool canCollideWith(T entity, T other) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Bool canCollideWith( @org.jetbrains.annotations.NotNull T entity, @org.jetbrains.annotations.NotNull T other) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
@@ -71,7 +72,8 @@ public interface EntityBehaviour<T extends Entity> extends Behaviour {
      * @param entity the entity
      * @return if it accepts passengers
      */
-    default BehaviourResult.Bool couldAcceptPassenger(T entity) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Bool couldAcceptPassenger( @org.jetbrains.annotations.NotNull T entity) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
@@ -80,7 +82,8 @@ public interface EntityBehaviour<T extends Entity> extends Behaviour {
      * @param entity the entity
      * @return if it is attackable
      */
-    default BehaviourResult.Bool isAttackable(T entity) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Bool isAttackable( @org.jetbrains.annotations.NotNull T entity) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
@@ -89,7 +92,8 @@ public interface EntityBehaviour<T extends Entity> extends Behaviour {
      * @param entity the entity
      * @return the max fall distance
      */
-    default BehaviourResult.Object<Integer> getMaxFallDistance(T entity) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Object<Integer> getMaxFallDistance( @org.jetbrains.annotations.NotNull T entity) {
         return BehaviourResult.Object.DEFAULT_INSTANCE;
     }
 
@@ -99,7 +103,7 @@ public interface EntityBehaviour<T extends Entity> extends Behaviour {
      * @return void
      */
     @NotNull
-    default BehaviourResult.Void onBelowWorld(Entity entity) {
+    default BehaviourResult.Void onBelowWorld( @org.jetbrains.annotations.NotNull Entity entity) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 

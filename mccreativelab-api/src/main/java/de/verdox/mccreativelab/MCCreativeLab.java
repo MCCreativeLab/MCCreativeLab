@@ -16,6 +16,10 @@ public final class MCCreativeLab {
         MCCreativeLab.creativeLab = creativeLab;
     }
 
+    public static boolean isInitialized() {
+        return creativeLab != null;
+    }
+
     @NotNull
     public static de.verdox.mccreativelab.data.DataPackInterceptor getDataPackInterceptor() {
         return creativeLab.getDataPackInterceptor();

@@ -2,7 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    id("io.papermc.paperweight.patcher") version "2.0.0-beta.14"
+    id("io.papermc.paperweight.patcher") version "2.0.0-beta.24"
 }
 
 paperweight {
@@ -19,6 +19,17 @@ paperweight {
             outputFile = file("mccreativelab-api/build.gradle.kts")
             patchFile = file("mccreativelab-api/build.gradle.kts.patch")
         }
+        patchDir("paperCheckstyle") {
+            upstreamPath = "paper-checkstyle"
+            excludes = setOf("build", ".gradle")
+            patchesDir = file("build-data/paper-checkstyle-patches")
+            outputDir = file("paper-checkstyle")
+        }
+        patchDir("paperCheckstyleConfig") {
+            upstreamPath = ".checkstyle"
+            patchesDir = file("build-data/checkstyle-config-patches")
+            outputDir = file(".checkstyle")
+        }
         patchDir("paperApi") {
             upstreamPath = "paper-api"
             excludes = setOf("build.gradle.kts")
@@ -28,15 +39,44 @@ paperweight {
     }
 }
 
+// Rebuild tasks stage patch directories in this repository's shared Git index.
+// Serialize only these writers; compilation and tests can still run in parallel.
+val patchIndexWriters = listOf(
+    ":rebuildPaperCheckstyleConfigFilePatches", ":rebuildPaperCheckstyleConfigFeaturePatches",
+    ":rebuildPaperCheckstyleFilePatches", ":rebuildPaperCheckstyleFeaturePatches",
+    ":mccreativelab-server:rebuildPaperServerFilePatches", ":mccreativelab-server:rebuildPaperServerFeaturePatches",
+    ":rebuildPaperApiFilePatches", ":rebuildPaperApiFeaturePatches",
+    ":mccreativelab-server:rebuildMinecraftResourcePatches", ":mccreativelab-server:rebuildMinecraftSourcePatches",
+    ":mccreativelab-server:rebuildMinecraftFeaturePatches"
+)
+allprojects {
+    tasks.configureEach {
+        val writerIndex = patchIndexWriters.indexOf(path)
+        if (writerIndex > 0) mustRunAfter(patchIndexWriters.take(writerIndex))
+    }
+}
+
 val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
 
 subprojects {
+    // A combined apply/rebuild invocation must finish the shared upstream checkout
+    // before any subproject task reads it (paperweight-core does not model this).
+    tasks.configureEach {
+        mustRunAfter(":checkoutPaperRepo", ":applyPaperCheckstyleFilePatches", ":applyPaperCheckstyleFeaturePatches",
+            ":applyPaperCheckstyleConfigFilePatches", ":applyPaperCheckstyleConfigFeaturePatches")
+    }
+    // These paperweight inputs come from the checkout managed by the root patcher.
+    tasks.matching {
+        it.name in setOf("collectPaperATsFromPatches", "filterPaperServerFromPaper", "importPaperLibraryFiles")
+    }.configureEach {
+        dependsOn(":checkoutPaperRepo")
+    }
     apply(plugin = "java-library")
     apply(plugin = "maven-publish")
 
     extensions.configure<JavaPluginExtension> {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
+            languageVersion = JavaLanguageVersion.of(25)
         }
     }
 
@@ -52,7 +92,7 @@ subprojects {
     }
     tasks.withType<JavaCompile> {
         options.encoding = Charsets.UTF_8.name()
-        options.release = 21
+        options.release = 25
         options.isFork = true
     }
     tasks.withType<Javadoc> {

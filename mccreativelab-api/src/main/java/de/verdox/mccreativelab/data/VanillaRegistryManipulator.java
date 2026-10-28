@@ -12,5 +12,5 @@ public interface VanillaRegistryManipulator {
      * Injects code into the explained code point.
      * @param runnable the code
      */
-    void injectRegistryManipulationCode(Runnable runnable);
+    void injectRegistryManipulationCode( @org.jetbrains.annotations.NotNull Runnable runnable);
 }

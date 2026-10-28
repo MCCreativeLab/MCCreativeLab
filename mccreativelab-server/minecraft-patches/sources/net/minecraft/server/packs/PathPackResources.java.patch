@@ -1,18 +1,15 @@
 --- a/net/minecraft/server/packs/PathPackResources.java
 +++ b/net/minecraft/server/packs/PathPackResources.java
-@@ -86,7 +_,14 @@
-                 if (resourceLocation == null) {
-                     Util.logAndPauseIfInIde(String.format(Locale.ROOT, "Invalid path in pack: %s:%s, ignoring", namespace, string));
+@@ -109,7 +_,11 @@
+                 if (identifier == null) {
+                     Util.logAndPauseIfInIde(String.format(Locale.ROOT, "Invalid path in pack: %s:%s, ignoring", namespace, resourcePath));
                  } else {
--                    resourceOutput.accept(resourceLocation, IoSupplier.create(path1));
-+                    //resourceOutput.accept(resourceLocation, IoSupplier.create(path1));
-+                    // MCCLab start - Add DataPackInterceptor
-+                    de.verdox.mccreativelab.CraftDataPackInterceptor craft = (de.verdox.mccreativelab.CraftDataPackInterceptor) de.verdox.mccreativelab.MCCreativeLab.getDataPackInterceptor();
-+                    IoSupplier<InputStream> result = craft.evaluate(resourceLocation, path1, IoSupplier.create(path1));
-+                    if(result == null)
-+                        return;
-+                    resourceOutput.accept(resourceLocation, result);
-+                    // MCCLab end - Add DataPackInterceptor
+-                    output.accept(identifier, IoSupplier.create(file));
++                    de.verdox.mccreativelab.CraftDataPackInterceptor interceptor = (de.verdox.mccreativelab.CraftDataPackInterceptor) de.verdox.mccreativelab.MCCreativeLab.getDataPackInterceptor();
++                    IoSupplier<InputStream> intercepted = interceptor.evaluate(identifier, file, IoSupplier.create(file));
++                    if (intercepted != null) {
++                        output.accept(identifier, intercepted);
++                    }
                  }
              });
-         } catch (NotDirectoryException | NoSuchFileException var10) {
+         } catch (NoSuchFileException | NotDirectoryException var10) {

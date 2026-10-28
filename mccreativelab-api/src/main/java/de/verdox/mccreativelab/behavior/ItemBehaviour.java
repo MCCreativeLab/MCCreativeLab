@@ -25,7 +25,7 @@ public interface ItemBehaviour extends Behaviour {
      * @param miner - The miner
      */
     @NotNull
-    default BehaviourResult.Void mineBlock(ItemStack stack, Block block, Player miner) {
+    default BehaviourResult.Void mineBlock( @org.jetbrains.annotations.NotNull ItemStack stack, @org.jetbrains.annotations.NotNull Block block, @org.jetbrains.annotations.NotNull Player miner) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
@@ -36,7 +36,7 @@ public interface ItemBehaviour extends Behaviour {
      * @return - True when it is the correct tool
      */
     @NotNull
-    default BehaviourResult.Bool isCorrectToolForDrops(ItemStack stack, BlockData blockData) {
+    default BehaviourResult.Bool isCorrectToolForDrops( @org.jetbrains.annotations.NotNull ItemStack stack, @org.jetbrains.annotations.NotNull BlockData blockData) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
@@ -47,7 +47,7 @@ public interface ItemBehaviour extends Behaviour {
      * @return - Nothing
      */
     @NotNull
-    default BehaviourResult.Void onCraftedBy(ItemStack stack, Player player) {
+    default BehaviourResult.Void onCraftedBy( @org.jetbrains.annotations.NotNull ItemStack stack, @org.jetbrains.annotations.NotNull Player player) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
@@ -58,7 +58,7 @@ public interface ItemBehaviour extends Behaviour {
      * @return - nothing
      */
     @NotNull
-    default BehaviourResult.Void onDestroyed(ItemStack stack, Item item) {
+    default BehaviourResult.Void onDestroyed( @org.jetbrains.annotations.NotNull ItemStack stack, @org.jetbrains.annotations.NotNull Item item) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
@@ -68,7 +68,7 @@ public interface ItemBehaviour extends Behaviour {
      * @return - true if it can drop
      */
     @NotNull
-    default BehaviourResult.Bool canDropOnDeath(ItemStack stack) {
+    default BehaviourResult.Bool canDropOnDeath( @org.jetbrains.annotations.NotNull ItemStack stack) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
@@ -81,7 +81,7 @@ public interface ItemBehaviour extends Behaviour {
      * @return - An InteractionResult
      */
     @NotNull
-    default BehaviourResult.Object<InteractionResult> interactLivingEntity(ItemStack stack, Player player, LivingEntity livingEntity, EquipmentSlot equipmentSlot) {
+    default BehaviourResult.Object<InteractionResult> interactLivingEntity( @org.jetbrains.annotations.NotNull ItemStack stack, @org.jetbrains.annotations.NotNull Player player, @org.jetbrains.annotations.NotNull LivingEntity livingEntity, @org.jetbrains.annotations.NotNull EquipmentSlot equipmentSlot) {
         return BehaviourResult.Object.DEFAULT_INSTANCE;
     }
 
@@ -94,7 +94,7 @@ public interface ItemBehaviour extends Behaviour {
      * @return - An InteractionResult
      */
     @NotNull
-    default BehaviourResult.Object<InteractionResult> useOn(ItemStack stack, Player player, EquipmentSlot equipmentSlot, RayTraceResult rayTraceResult) {
+    default BehaviourResult.Object<InteractionResult> useOn( @org.jetbrains.annotations.NotNull ItemStack stack, @org.jetbrains.annotations.NotNull Player player, @org.jetbrains.annotations.NotNull EquipmentSlot equipmentSlot, @org.jetbrains.annotations.NotNull RayTraceResult rayTraceResult) {
         return BehaviourResult.Object.DEFAULT_INSTANCE;
     }
 
@@ -104,7 +104,7 @@ public interface ItemBehaviour extends Behaviour {
      * @return - true if it fits
      */
     @NotNull
-    default BehaviourResult.Bool canFitInsideContainerItems(ItemStack stack) {
+    default BehaviourResult.Bool canFitInsideContainerItems( @org.jetbrains.annotations.NotNull ItemStack stack) {
         return BehaviourResult.Bool.DEFAULT_INSTANCE;
     }
 
@@ -117,7 +117,25 @@ public interface ItemBehaviour extends Behaviour {
      * @return - the Blockdata that will be placed
      */
     @NotNull
-    default BehaviourResult.Object<BlockData> placeBlockAction(ItemStack stack, Player player, Location clickedPosition, BlockData vanillaBlockData){
+    default BehaviourResult.Object<BlockData> placeBlockAction( @org.jetbrains.annotations.NotNull ItemStack stack, @org.jetbrains.annotations.NotNull Player player, @org.jetbrains.annotations.NotNull Location clickedPosition, @org.jetbrains.annotations.NotNull BlockData vanillaBlockData){
         return BehaviourResult.Object.DEFAULT_INSTANCE;
     }
+    /** Overrides the remainder of this particular ingredient stack after crafting. */
+    @NotNull
+    default BehaviourResult.Object<ItemStack> getCraftRemainingItem(@NotNull ItemStack stack) {
+        return BehaviourResult.Object.DEFAULT_INSTANCE;
+    }
+
+    /** Overrides the native completion of consuming an item. */
+    @NotNull
+    default BehaviourResult.Object<ItemStack> finishUsingItem(@NotNull LivingEntity entity, @NotNull ItemStack stack) {
+        return BehaviourResult.Object.DEFAULT_INSTANCE;
+    }
+
+    /** Overrides using an item in the specified hand, including a successful replacement stack. */
+    @NotNull
+    default BehaviourResult.Object<de.verdox.mccreativelab.behavior.interaction.ItemStackInteraction> use(@NotNull ItemStack stack, @NotNull Player player, @NotNull EquipmentSlot hand) {
+        return BehaviourResult.Object.DEFAULT_INSTANCE;
+    }
+
 }

@@ -7,6 +7,11 @@ import net.minecraft.world.entity.LivingEntity;
 import org.bukkit.craftbukkit.entity.CraftEntityType;
 
 public interface BehaviorLivingEntity extends BehaviorEntity {
+    default float mcc$waterDamage() {
+        var behaviour = BehaviorEntity.getBehaviour(asLivingEntity(), org.bukkit.entity.LivingEntity.class, LivingEntityBehaviour.class);
+        return BehaviourUtil.evaluateFloat(behaviour, value -> value.waterDamage(asLivingEntity().getBukkitLivingEntity()), () -> 1.0F);
+    }
+
     default boolean mcc$isSensitiveToWater() {
         var behaviour = BehaviorEntity.getBehaviour(asLivingEntity(), org.bukkit.entity.LivingEntity.class, LivingEntityBehaviour.class);
         return BehaviourUtil.evaluateBoolean(behaviour, entityBehavior -> entityBehavior.isSensitiveToWater(asLivingEntity().getBukkitLivingEntity()), () -> asLivingEntity().isSensitiveToWater());
@@ -14,17 +19,17 @@ public interface BehaviorLivingEntity extends BehaviorEntity {
 
     default boolean mcc$canAttackType(EntityType<?> entityType) {
         var behaviour = BehaviorEntity.getBehaviour(asLivingEntity(), org.bukkit.entity.LivingEntity.class, LivingEntityBehaviour.class);
-        return BehaviourUtil.evaluateBoolean(behaviour, entityBehavior -> entityBehavior.canAttackType(CraftEntityType.minecraftToBukkit(entityType)), () -> asLivingEntity().canAttackType(entityType));
+        return BehaviourUtil.evaluateBoolean(behaviour, entityBehavior -> entityBehavior.canAttackType(CraftEntityType.minecraftToBukkit(entityType)), () -> true);
     }
 
     default boolean mcc$canAttack(LivingEntity entity) {
         var behaviour = BehaviorEntity.getBehaviour(asLivingEntity(), org.bukkit.entity.LivingEntity.class, LivingEntityBehaviour.class);
-        return BehaviourUtil.evaluateBoolean(behaviour, entityBehavior -> entityBehavior.canAttack(asLivingEntity().getBukkitLivingEntity(), entity.getBukkitLivingEntity()), () -> asLivingEntity().canAttack(entity));
+        return BehaviourUtil.evaluateBoolean(behaviour, entityBehavior -> entityBehavior.canAttack(asLivingEntity().getBukkitLivingEntity(), entity.getBukkitLivingEntity()), () -> asLivingEntity().canAttack(entity) && mcc$canAttackType(entity.getType()));
     }
 
     default boolean mcc$canBeNameTagged() {
         var behaviour = BehaviorEntity.getBehaviour(asLivingEntity(), org.bukkit.entity.LivingEntity.class, LivingEntityBehaviour.class);
-        return BehaviourUtil.evaluateBoolean(behaviour, entityBehavior -> entityBehavior.canBeNameTagged(asLivingEntity().getBukkitLivingEntity()), () -> asLivingEntity().canBeNameTagged());
+        return BehaviourUtil.evaluateBoolean(behaviour, entityBehavior -> entityBehavior.canBeNameTagged(asLivingEntity().getBukkitLivingEntity()), () -> asLivingEntity().getType().canSerialize());
     }
 
     default boolean mcc$canPickUpLoot() {

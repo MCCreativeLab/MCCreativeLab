@@ -21,23 +21,30 @@ public interface BehaviourUtil {
 
     // ### Standard Implementation
     public static <I, R, T extends BehaviourResult<I, ?>, V> R evaluate(@Nullable V behaviour, @NotNull Function<V, T> logicFunction, Supplier<R> vanillaLogic, @Nullable Converter<I, R> converter) {
+        Throwable[] nativeFailure = new Throwable[1];
+        Supplier<R> vanillaOnce = com.google.common.base.Suppliers.memoize(() -> {
+            try { return vanillaLogic.get(); }
+            catch (RuntimeException | Error error) { nativeFailure[0] = error; throw error; }
+        });
         if (behaviour == null)
-            return vanillaLogic.get();
+            return vanillaOnce.get();
         try {
             BehaviourResult<I, ?> behaviourResult = logicFunction.apply(behaviour);
             if (converter == null)
-                return vanillaLogic.get();
+                return vanillaOnce.get();
             var evaluatedValue = behaviourResult.evaluateReturnValue(() -> {
-                var vanillaValue = vanillaLogic.get();
+                var vanillaValue = vanillaOnce.get();
                 if (vanillaValue == null)
                     return null;
                 return converter.nmsToBukkitValue(vanillaValue);
             });
             return converter.bukkitToNMS(evaluatedValue);
         } catch (Throwable throwable) {
+            if (nativeFailure[0] instanceof RuntimeException error) throw error;
+            if (nativeFailure[0] instanceof Error error) throw error;
             Bukkit.getLogger()
                   .log(Level.WARNING, "An error occurred while running custom behaviour logic " + behaviour.getClass(), throwable);
-            return vanillaLogic.get();
+            return vanillaOnce.get();
         }
     }
 
@@ -177,6 +184,33 @@ public interface BehaviourUtil {
             }
         }
 
+
+        class InteractionResult implements Converter<de.verdox.mccreativelab.InteractionResult, net.minecraft.world.InteractionResult> {
+            public static final InteractionResult INSTANCE = new InteractionResult();
+
+            @Override
+            public net.minecraft.world.InteractionResult bukkitToNMS(de.verdox.mccreativelab.InteractionResult value) {
+                return switch (value) {
+                    case SUCCESS -> net.minecraft.world.InteractionResult.SUCCESS;
+                    case SUCCESS_NO_ITEM_USED -> net.minecraft.world.InteractionResult.SUCCESS.withoutItem();
+                    case CONSUME -> net.minecraft.world.InteractionResult.CONSUME;
+                    case CONSUME_PARTIAL -> net.minecraft.world.InteractionResult.CONSUME.withoutItem();
+                    case PASS -> net.minecraft.world.InteractionResult.PASS;
+                    case FAIL -> net.minecraft.world.InteractionResult.FAIL;
+                };
+            }
+
+            @Override
+            public de.verdox.mccreativelab.InteractionResult nmsToBukkitValue(net.minecraft.world.InteractionResult value) {
+                if (value instanceof net.minecraft.world.InteractionResult.Success success) {
+                    if (success.shouldSwing()) {
+                        return success.wasItemInteraction() ? de.verdox.mccreativelab.InteractionResult.SUCCESS : de.verdox.mccreativelab.InteractionResult.SUCCESS_NO_ITEM_USED;
+                    }
+                    return success.wasItemInteraction() ? de.verdox.mccreativelab.InteractionResult.CONSUME : de.verdox.mccreativelab.InteractionResult.CONSUME_PARTIAL;
+                }
+                return value instanceof net.minecraft.world.InteractionResult.Fail ? de.verdox.mccreativelab.InteractionResult.FAIL : de.verdox.mccreativelab.InteractionResult.PASS;
+            }
+        }
 
         class BlockData implements Converter<org.bukkit.block.data.BlockData, BlockState> {
             public static final BlockData INSTANCE = new BlockData();

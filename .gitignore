@@ -15,3 +15,7 @@ build
 
 .idea/
 /patches_rework
+
+# Generated from the pinned Paper upstream
+/paper-checkstyle
+/.checkstyle

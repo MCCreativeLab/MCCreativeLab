@@ -1,0 +1,100 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox-w <verdox@solarminer.app>
+Date: Tue, 27 Oct 2026 14:05:53 +0000
+Subject: [PATCH] Declare nullability of MCC API extensions
+
+
+diff --git a/src/main/java/org/bukkit/entity/Entity.java b/src/main/java/org/bukkit/entity/Entity.java
+index c1a019eaa4f11b1b2d1243ae69ac4033da106c0b..1f98bb3bb149c0ed4a4b27254932ab2472c9fbd8 100644
+--- a/src/main/java/org/bukkit/entity/Entity.java
++++ b/src/main/java/org/bukkit/entity/Entity.java
+@@ -1002,7 +1002,7 @@ public interface Entity extends Metadatable, CommandSender, Nameable, Persistent
+      * @param <T> - The Bukkit Entity Type
+      * @param <B> - The EntityBehaviour Type
+      */
+-    <T extends Entity, B extends de.verdox.mccreativelab.behavior.entity.EntityBehaviour<T>> void setCustomEntityBehaviour(Class<? extends T> entityTypeClass, B behaviour);
++    <T extends Entity, B extends de.verdox.mccreativelab.behavior.entity.EntityBehaviour<T>> void setCustomEntityBehaviour( @org.jetbrains.annotations.NotNull Class<? extends T> entityTypeClass, @org.jetbrains.annotations.NotNull B behaviour);
+ 
+     /**
+      * Gets the custom behaviour for this entity
+@@ -1011,14 +1011,15 @@ public interface Entity extends Metadatable, CommandSender, Nameable, Persistent
+      * @param <B> - The EntityBehaviour Type
+      */
+     @Nullable
+-    <T extends Entity, B extends de.verdox.mccreativelab.behavior.entity.EntityBehaviour<T>> B getCustomEntityBehaviour(Class<? extends B> behaviourType);
++    <T extends Entity, B extends de.verdox.mccreativelab.behavior.entity.EntityBehaviour<T>> B getCustomEntityBehaviour( @org.jetbrains.annotations.NotNull Class<? extends B> behaviourType);
+     /**
+      * Gets the custom behaviour for this entity if it is available and has the provided type
+      * @param behaviourType - The type of behaviour
+      * @param <T> - The Bukkit Entity Type
+      * @param <B> - The EntityBehaviour Type
+      */
+-    <T extends Entity, B extends de.verdox.mccreativelab.behavior.entity.EntityBehaviour<T>> B getCustomEntityBehaviourIfAvailable(Class<? extends B> behaviourType);
++    @org.jetbrains.annotations.Nullable
++    <T extends Entity, B extends de.verdox.mccreativelab.behavior.entity.EntityBehaviour<T>> B getCustomEntityBehaviourIfAvailable( @org.jetbrains.annotations.NotNull Class<? extends B> behaviourType);
+ 
+     boolean hasCustomEntityBehaviour();
+     // MCCreativeLab end - Add EntityBehaviour
+diff --git a/src/main/java/org/bukkit/event/world/AsyncStructureGenerateEvent.java b/src/main/java/org/bukkit/event/world/AsyncStructureGenerateEvent.java
+index f7d188a48fcfbf69f7fd925e48b356e9871719ab..a123123218570806ff0150c31f8343dc9da0012e 100644
+--- a/src/main/java/org/bukkit/event/world/AsyncStructureGenerateEvent.java
++++ b/src/main/java/org/bukkit/event/world/AsyncStructureGenerateEvent.java
+@@ -68,6 +68,7 @@ public class AsyncStructureGenerateEvent extends WorldEvent {
+      * Gets the structure as generated structure in the world
+      * @return - The Generated structure
+      */
++    @org.jetbrains.annotations.NotNull
+     public org.bukkit.generator.structure.GeneratedStructure getGeneratedStructure() {
+         return generatedStructure;
+     }
+diff --git a/src/main/java/org/bukkit/persistence/PersistentDataContainer.java b/src/main/java/org/bukkit/persistence/PersistentDataContainer.java
+index 5cdb345aa1ba7b70321c04a8c3334cf808d6578f..c827991365f637ee502cad353fb3d0e8fa3082f5 100644
+--- a/src/main/java/org/bukkit/persistence/PersistentDataContainer.java
++++ b/src/main/java/org/bukkit/persistence/PersistentDataContainer.java
+@@ -110,5 +110,6 @@ public interface PersistentDataContainer extends io.papermc.paper.persistence.Pe
+      * Gets the {@link PersistentDataObjectCache} of this persistent data container
+      * @return the persistent data object cache
+      */
++    @org.jetbrains.annotations.NotNull
+     PersistentDataObjectCache getPersistentDataObjectCache();
+ }
+diff --git a/src/main/java/org/bukkit/persistence/PersistentDataObject.java b/src/main/java/org/bukkit/persistence/PersistentDataObject.java
+index 720f7a3efc0640571aad30af2ed582ca7a85d5b8..bd87f9278a1a10ef4bfa734088baa2fb2bcda451 100644
+--- a/src/main/java/org/bukkit/persistence/PersistentDataObject.java
++++ b/src/main/java/org/bukkit/persistence/PersistentDataObject.java
+@@ -14,10 +14,11 @@ public interface PersistentDataObject {
+      * @param context - The PersistentDataAdapterContext
+      * @return The PersistentDataContainer the object is serialized into
+      */
++    @org.jetbrains.annotations.NotNull
+     PersistentDataContainer serialize(@NotNull PersistentDataAdapterContext context);
+     /**
+      * Called when the object is deserialized
+      * @param persistentDataContainer PersistentDataContainer the object was serialized into
+      */
+-    void deSerialize(PersistentDataContainer persistentDataContainer);
++    void deSerialize( @org.jetbrains.annotations.NotNull PersistentDataContainer persistentDataContainer);
+ }
+diff --git a/src/main/java/org/bukkit/persistence/PersistentDataObjectCache.java b/src/main/java/org/bukkit/persistence/PersistentDataObjectCache.java
+index 1a5eaf5499fe1f2f13d6f92cc573b71479428dea..1f42d06955543fb12f93584ec6e409039ea437d0 100644
+--- a/src/main/java/org/bukkit/persistence/PersistentDataObjectCache.java
++++ b/src/main/java/org/bukkit/persistence/PersistentDataObjectCache.java
+@@ -17,7 +17,7 @@ public interface PersistentDataObjectCache {
+      * @param <T> the type of persistent data object
+      */
+     @NotNull
+-    default <T extends PersistentDataObject> T loadOrCreatePersistentDataObject(@NotNull NamespacedKey key, T newObject){
++    default <T extends PersistentDataObject> T loadOrCreatePersistentDataObject(@NotNull NamespacedKey key, @org.jetbrains.annotations.NotNull T newObject){
+         return loadOrSupplyPersistentDataObject(key, () -> newObject);
+     }
+ 
+@@ -28,7 +28,8 @@ public interface PersistentDataObjectCache {
+      * @return the persistent data object
+      * @param <T> the type of persistent data object
+      */
+-    <T extends PersistentDataObject> T loadOrSupplyPersistentDataObject(@NotNull NamespacedKey key, Supplier<T> newObjectSupplier);
++    @org.jetbrains.annotations.NotNull
++    <T extends PersistentDataObject> T loadOrSupplyPersistentDataObject(@NotNull NamespacedKey key, @org.jetbrains.annotations.NotNull Supplier<T> newObjectSupplier);
+ 
+     /**
+      * Loads a persistent data object.

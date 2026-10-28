@@ -5,28 +5,18 @@ Subject: [PATCH] Add SerializationBehavior Draft
 
 
 diff --git a/net/minecraft/server/PlayerAdvancements.java b/net/minecraft/server/PlayerAdvancements.java
-index 64dbee1f67eaa17c93c13bfa38fbe27de57651e4..53931c957c2185316bfd03fdb887da1830121ad9 100644
+index e70701663abd6f19a506690167d80f0dceab8000..d76aac8ddfc4198681adf293f5a8753d470b76e5 100644
 --- a/net/minecraft/server/PlayerAdvancements.java
 +++ b/net/minecraft/server/PlayerAdvancements.java
-@@ -5,8 +5,6 @@ import com.google.gson.GsonBuilder;
+@@ -3,6 +3,7 @@ package net.minecraft.server;
+ import com.google.gson.Gson;
+ import com.google.gson.GsonBuilder;
  import com.google.gson.JsonElement;
++import io.papermc.paper.io.PlayerDataLoaderHelper;
  import com.google.gson.JsonIOException;
  import com.google.gson.JsonParseException;
--import com.google.gson.internal.Streams;
--import com.google.gson.stream.JsonReader;
  import com.mojang.datafixers.DataFixer;
- import com.mojang.logging.LogUtils;
- import com.mojang.serialization.Codec;
-@@ -24,6 +22,8 @@ import java.util.Set;
- import java.util.Map.Entry;
- import java.util.function.BiConsumer;
- import javax.annotation.Nullable;
-+
-+import io.papermc.paper.io.PlayerDataLoaderHelper;
- import net.minecraft.FileUtil;
- import net.minecraft.advancements.Advancement;
- import net.minecraft.advancements.AdvancementHolder;
-@@ -47,19 +47,19 @@ import org.slf4j.Logger;
+@@ -48,18 +49,18 @@ import org.slf4j.Logger;
  
  public class PlayerAdvancements {
      private static final Logger LOGGER = LogUtils.getLogger();
@@ -42,95 +32,79 @@ index 64dbee1f67eaa17c93c13bfa38fbe27de57651e4..53931c957c2185316bfd03fdb887da18
      private final Set<AdvancementNode> rootsToUpdate = new HashSet<>();
 -    private ServerPlayer player;
 +    protected ServerPlayer player;
-     @Nullable
-     private AdvancementHolder lastSelectedTab;
+     private @Nullable AdvancementHolder lastSelectedTab;
      private boolean isFirstPacket = true;
 -    private final Codec<PlayerAdvancements.Data> codec;
 +    protected final Codec<PlayerAdvancements.Data> codec;
-     public final Map<net.minecraft.advancements.critereon.SimpleCriterionTrigger<?>, Set<CriterionTrigger.Listener<?>>> criterionData = new java.util.IdentityHashMap<>(); // Paper - fix advancement data player leakage
+     private final Map<CriterionTrigger<?>, Map<PlayerAdvancements.TriggerInstanceKey, ? extends CriterionTriggerInstance>> activeTriggers = new IdentityHashMap<>();
  
-     public PlayerAdvancements(DataFixer dataFixer, PlayerList playerList, ServerAdvancementManager manager, Path playerSavePath, ServerPlayer player) {
-@@ -94,13 +94,13 @@ public class PlayerAdvancements {
+     public PlayerAdvancements(
+@@ -94,13 +95,13 @@ public class PlayerAdvancements {
          this.load(manager);
      }
  
--    private void registerListeners(ServerAdvancementManager manager) {
-+    protected void registerListeners(ServerAdvancementManager manager) {
-         for (AdvancementHolder advancementHolder : manager.getAllAdvancements()) {
-             this.registerListeners(advancementHolder);
+-    private void registerListeners(final ServerAdvancementManager manager) {
++    protected void registerListeners(final ServerAdvancementManager manager) {
+         for (AdvancementHolder advancement : manager.getAllAdvancements()) {
+             this.registerListeners(advancement);
          }
      }
  
--    private void checkForAutomaticTriggers(ServerAdvancementManager manager) {
-+    protected void checkForAutomaticTriggers(ServerAdvancementManager manager) {
-         for (AdvancementHolder advancementHolder : manager.getAllAdvancements()) {
-             Advancement advancement = advancementHolder.value();
+-    private void checkForAutomaticTriggers(final ServerAdvancementManager manager) {
++    protected void checkForAutomaticTriggers(final ServerAdvancementManager manager) {
+         for (AdvancementHolder holder : manager.getAllAdvancements()) {
+             Advancement advancement = holder.value();
              if (advancement.criteria().isEmpty()) {
-@@ -110,19 +110,10 @@ public class PlayerAdvancements {
+@@ -110,14 +111,12 @@ public class PlayerAdvancements {
          }
      }
  
--    private void load(ServerAdvancementManager manager) {
+-    private void load(final ServerAdvancementManager manager) {
 -        if (Files.isRegularFile(this.playerSavePath)) {
--            try (JsonReader jsonReader = new JsonReader(Files.newBufferedReader(this.playerSavePath, StandardCharsets.UTF_8))) {
--                jsonReader.setLenient(false);
--                JsonElement jsonElement = Streams.parse(jsonReader);
--                PlayerAdvancements.Data data = this.codec.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(JsonParseException::new);
--                this.applyFrom(manager, data);
--            } catch (JsonIOException | IOException var7) {
--                LOGGER.error("Couldn't access player advancements in {}", this.playerSavePath, var7);
--            } catch (JsonParseException var8) {
--                LOGGER.error("Couldn't parse player advancements in {}", this.playerSavePath, var8);
--            }
--        }
-+    protected void load(ServerAdvancementManager manager) {
-+        JsonElement jsonElement = PlayerDataLoaderHelper.data(player.getUUID()).consumeLoadedAdvancements();
-+        PlayerAdvancements.Data data = this.codec.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(JsonParseException::new);
-+        this.applyFrom(manager, data);
- 
-         this.checkForAutomaticTriggers(manager);
-         this.registerListeners(manager);
-@@ -143,7 +134,7 @@ public class PlayerAdvancements {
+-            try (Reader reader = Files.newBufferedReader(this.playerSavePath, StandardCharsets.UTF_8)) {
+-                JsonElement json = StrictJsonParser.parse(reader);
++    protected void load(final ServerAdvancementManager manager) {
++        JsonElement json = PlayerDataLoaderHelper.data(this.player.getUUID()).consumeLoadedAdvancements();
++        if (json != null) {
++            try {
+                 PlayerAdvancements.Data data = this.codec.parse(JsonOps.INSTANCE, json).getOrThrow(JsonParseException::new);
+                 this.applyFrom(manager, data);
+-            } catch (IOException | JsonIOException e) {
+-                LOGGER.error("Couldn't access player advancements in {}", this.playerSavePath, e);
+             } catch (JsonParseException e) {
+                 LOGGER.error("Couldn't parse player advancements in {}", this.playerSavePath, e);
+             }
+@@ -142,7 +141,7 @@ public class PlayerAdvancements {
          }
      }
  
--    private void applyFrom(ServerAdvancementManager advancementManager, PlayerAdvancements.Data data) {
-+    protected void applyFrom(ServerAdvancementManager advancementManager, PlayerAdvancements.Data data) {
-         data.forEach((path, progress) -> {
-             AdvancementHolder advancementHolder = advancementManager.get(path);
-             if (advancementHolder == null) {
-@@ -157,7 +148,7 @@ public class PlayerAdvancements {
+-    private void applyFrom(final ServerAdvancementManager manager, final PlayerAdvancements.Data data) {
++    protected void applyFrom(final ServerAdvancementManager manager, final PlayerAdvancements.Data data) {
+         data.forEach((id, progress) -> {
+             AdvancementHolder advancement = manager.get(id);
+             if (advancement == null) {
+@@ -156,7 +155,7 @@ public class PlayerAdvancements {
          });
      }
  
 -    private PlayerAdvancements.Data asData() {
 +    protected PlayerAdvancements.Data asData() {
-         Map<ResourceLocation, AdvancementProgress> map = new LinkedHashMap<>();
-         this.progress.forEach((advancementHolder, progress) -> {
+         Map<Identifier, AdvancementProgress> map = new LinkedHashMap<>();
+         this.progress.forEach((advancement, progress) -> {
              if (progress.hasProgress()) {
-@@ -337,7 +328,7 @@ public class PlayerAdvancements {
-         );
-     }
- 
--    record Data(Map<ResourceLocation, AdvancementProgress> map) {
-+    protected record Data(Map<ResourceLocation, AdvancementProgress> map) {
-         public static final Codec<PlayerAdvancements.Data> CODEC = Codec.unboundedMap(ResourceLocation.CODEC, AdvancementProgress.CODEC)
-             .xmap(PlayerAdvancements.Data::new, PlayerAdvancements.Data::map);
- 
 diff --git a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-index 6689aeacf50d1498e8d23cce696fb4fecbd1cf39..465f071eb349282fd3e93673749212bc65e5a39f 100644
+index eea7dd596eb9ac75dee29d843d786493d44034f3..6e3262c8773f44349d07b41d70847ca4a02bd05c 100644
 --- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
- import javax.annotation.Nullable;
- import javax.crypto.Cipher;
- import javax.crypto.SecretKey;
-+
+@@ -1,5 +1,7 @@
+ package net.minecraft.server.network;
+ 
 +import io.papermc.paper.io.PlayerDataLoaderHelper;
- import net.minecraft.CrashReport;
- import net.minecraft.CrashReportCategory;
- import net.minecraft.DefaultUncaughtExceptionHandler;
-@@ -384,6 +386,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
++
+ import com.google.common.primitives.Ints;
+ import com.mojang.authlib.GameProfile;
+ import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
+@@ -363,6 +365,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
                  this.disconnect(io.papermc.paper.adventure.PaperAdventure.asVanilla(asyncEvent.kickMessage())); // Paper - Adventure
              }
          }

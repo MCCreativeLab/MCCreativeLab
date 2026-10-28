@@ -1,5 +1,7 @@
 package de.verdox.mccreativelab.behaviour;
 
+import static de.verdox.mccreativelab.behaviour.BehaviourUtil.*;
+
 import de.verdox.mccreativelab.behavior.ItemBehaviour;
 import de.verdox.mccreativelab.recipe.CustomItemData;
 import net.minecraft.core.BlockPos;
@@ -28,6 +30,41 @@ import org.bukkit.util.Vector;
 import java.util.function.Supplier;
 
 public class ItemBehaviourUtil implements BehaviourUtil {
+    public static ItemStack getCraftRemainingItem(ItemStack stack) {
+        return evaluate(getBehaviour(stack), behaviour -> behaviour.getCraftRemainingItem(stack.asBukkitMirror()),
+            () -> {
+                var remainder = stack.getItem().getCraftingRemainder();
+                return remainder == null ? ItemStack.EMPTY : remainder.create();
+            }, Converter.ItemStack.INSTANCE);
+    }
+
+    public static ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity user) {
+        return evaluate(getBehaviour(stack), behaviour -> behaviour.finishUsingItem(user.getBukkitLivingEntity(), stack.asBukkitMirror()),
+            () -> stack.getItem().finishUsingItem(stack, level, user), Converter.ItemStack.INSTANCE);
+    }
+
+    public static InteractionResult use(ItemStack stack, Level level, Player player, InteractionHand hand) {
+        var behaviour = getBehaviour(stack);
+        java.util.function.Supplier<InteractionResult> vanilla = com.google.common.base.Suppliers.memoize(() -> stack.getItem().use(level, player, hand));
+        if (behaviour == null) return vanilla.get();
+        try {
+            var result = behaviour.use(stack.asBukkitMirror(), (org.bukkit.entity.Player) player.getBukkitEntity(), hand == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND);
+            var mode = result.getResult();
+            if (mode == de.verdox.mccreativelab.behavior.BehaviourResult.Type.USE_VANILLA_ONLY
+                    || mode == de.verdox.mccreativelab.behavior.BehaviourResult.Type.RUN_OWN_RETURN_VANILLA) {
+                return vanilla.get();
+            }
+            if (mode == de.verdox.mccreativelab.behavior.BehaviourResult.Type.RUN_VANILLA_RETURN_OWN) vanilla.get();
+            var value = java.util.Objects.requireNonNull(result.getValue());
+            var nativeResult = Converter.InteractionResult.INSTANCE.bukkitToNMS(value.interactionResult());
+            return nativeResult instanceof net.minecraft.world.InteractionResult.Success success
+                ? success.heldItemTransformedTo(Converter.ItemStack.INSTANCE.bukkitToNMS(value.stack())) : nativeResult;
+        } catch (Throwable exception) {
+            org.bukkit.Bukkit.getLogger().log(java.util.logging.Level.WARNING, "Custom item use failed", exception);
+            return vanilla.get();
+        }
+    }
+
     public static BlockState placeBlockAction(Player player, BlockPos pos, Level world, ItemStack stack, BlockState state, Supplier<BlockState> vanillaLogic){
         return evaluate(getBehaviour(stack),
             itemBehaviour -> itemBehaviour.placeBlockAction(stack.getBukkitStack(), ((CraftPlayer) player.getBukkitEntity()), new Location(world.getWorld(), pos.getX(), pos.getY(), pos.getZ()), Converter.BlockData.INSTANCE.nmsToBukkitValue(state)),
@@ -54,7 +91,7 @@ public class ItemBehaviourUtil implements BehaviourUtil {
 
     public static boolean isCorrectToolForDrops(ItemStack stack, BlockState blockState) {
         return evaluateBoolean(getBehaviour(stack),
-            itemBehaviour -> itemBehaviour.isCorrectToolForDrops(stack.asBukkitMirror(), blockState.createCraftBlockData()),
+            itemBehaviour -> itemBehaviour.isCorrectToolForDrops(stack.asBukkitMirror(), blockState.asBlockData()),
             () -> stack.getItem().isCorrectToolForDrops(stack, blockState)
         );
     }

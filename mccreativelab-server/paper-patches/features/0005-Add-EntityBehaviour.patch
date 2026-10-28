@@ -5,10 +5,10 @@ Subject: [PATCH] Add EntityBehaviour
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftAnimals.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftAnimals.java
-index ab42bc721d5b6c17c2ca6c7153b757571aea05e8..14476d20e3a06adde6e514dbb4a610bef743f05f 100644
+index e10748f9d1cec70b57b229aa416fa00606173029..81474627d97232f5fc8d09d9dfc6c7d2a960cdc1 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftAnimals.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftAnimals.java
-@@ -53,7 +53,7 @@ public class CraftAnimals extends CraftAgeable implements Animals {
+@@ -50,7 +50,7 @@ public class CraftAnimals extends CraftAgeable implements Animals {
  
      @Override
      public boolean isBreedItem(ItemStack itemStack) {
@@ -18,14 +18,14 @@ index ab42bc721d5b6c17c2ca6c7153b757571aea05e8..14476d20e3a06adde6e514dbb4a610be
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
-index 4f98d138a275a6c34528b7a5148ef265bc38d6b5..1cb7b2989a9ee1ce3a22a9d4445732d197bf5786 100644
+index 119959cd00560577038c582349bdf039ca7ae4bb..3f5a7efab729e2a178636ee851b429ff57148d6e 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
-@@ -767,7 +767,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
+@@ -720,7 +720,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
      @Override
      public boolean getCanPickupItems() {
          if (this.getHandle() instanceof Mob) {
--            return ((Mob) this.getHandle()).canPickUpLoot();
+-            return this.getHandle().canPickUpLoot();
 +            return ((Mob) this.getHandle()).mcc$canPickUpLoot();
          } else {
              return this.getHandle().bukkitPickUpLoot;

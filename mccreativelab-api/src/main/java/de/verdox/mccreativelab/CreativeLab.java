@@ -25,7 +25,7 @@ public interface CreativeLab {
     @NotNull VanillaRegistryManipulator getRegistryManipulator();
 
     /**
-     * Returns the {@link @NotNull AdvancementBuilder}
+     * Returns the {@link AdvancementBuilder}
      * @return the advancement builder
      */
     @NotNull AdvancementBuilder createAdvancement();

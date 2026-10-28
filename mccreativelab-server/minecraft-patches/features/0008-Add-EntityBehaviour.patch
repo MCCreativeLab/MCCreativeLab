@@ -5,68 +5,66 @@ Subject: [PATCH] Add EntityBehaviour
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java b/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
-index e04bd54744335fb5398c6e4f7ce8b981f35bfb7d..be4651431a72a97832267250f074105fbeacdcb6 100644
+index 11d4f2d5caba52b492b8e130faa4701f3980b0f1..c72e0b990fd8e93ed830ac125b9b309d30b41eb5 100644
 --- a/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
 +++ b/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
-@@ -2094,7 +2094,7 @@ public final class CollisionUtil {
+@@ -2101,7 +2101,7 @@ public final class CollisionUtil {
                  continue;
              }
  
--            if ((entity == null && otherEntity.canBeCollidedWith()) || (entity != null && entity.canCollideWith(otherEntity))) {
-+            if ((entity == null && otherEntity.canBeCollidedWith()) || (entity != null && entity.mcc$canCollideWith(otherEntity))) {
+-            if ((entity == null && otherEntity.canBeCollidedWith(entity)) || (entity != null && entity.canCollideWith(otherEntity))) {
++            if ((entity == null && otherEntity.canBeCollidedWith(entity)) || (entity != null && entity.mcc$canCollideWith(otherEntity))) {
                  if (checkOnly) {
                      return true;
                  } else {
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index 27ef385a85b13ceb58e8d149849983107c539b31..1d3133fdc8a2128414016c4465a12b14e5639ec9 100644
+index 1136aa375b08ae5383c40916067a234cfc842b72..fb27374a3cb39b383198d25d1b6c6a2ea7b44e45 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-@@ -2808,7 +2808,7 @@ public class ServerGamePacketListenerImpl
-                                 if (!(target instanceof ItemEntity)
-                                     && !(target instanceof ExperienceOrb)
-                                     && (target != ServerGamePacketListenerImpl.this.player || ServerGamePacketListenerImpl.this.player.isSpectator()) // CraftBukkit
--                                    && !(target instanceof AbstractArrow abstractArrow && !abstractArrow.isAttackable())) {
-+                                    && !(target instanceof AbstractArrow abstractArrow && !abstractArrow.mcc$isAttackable())) {
-                                     ItemStack itemInHand = ServerGamePacketListenerImpl.this.player.getItemInHand(InteractionHand.MAIN_HAND);
-                                     if (itemInHand.isItemEnabled(serverLevel.enabledFeatures())) {
-                                         ServerGamePacketListenerImpl.this.player.attack(target);
+@@ -2912,7 +2912,7 @@ public class ServerGamePacketListenerImpl
+                         if (target instanceof ItemEntity
+                             || target instanceof ExperienceOrb
+                             || target == this.player
+-                            || target instanceof AbstractArrow abstractArrow && !abstractArrow.isAttackable()) {
++                            || target instanceof AbstractArrow abstractArrow && !abstractArrow.mcc$isAttackable()) {
+                             this.disconnect(Component.translatable("multiplayer.disconnect.invalid_entity_attacked"), org.bukkit.event.player.PlayerKickEvent.Cause.INVALID_ENTITY_ATTACKED); // Paper - add cause
+                             LOGGER.warn("Player {} tried to attack an invalid entity", this.player.getPlainTextName());
+                         } else if (mainHandItem.isItemEnabled(level.enabledFeatures())) {
 diff --git a/net/minecraft/world/entity/ConversionType.java b/net/minecraft/world/entity/ConversionType.java
-index 56dea3cf7c9dd9a062dcc7c1f50b75dbd9cc0261..c2514701111c0274e62d18f4e6c2e44a3edce332 100644
+index e83bddd0ad8a64b0accdd7c7ffed33a3d91f5900..f4b0c56dcbb540ddeb36a3e1f7901c419aae0e4a 100644
 --- a/net/minecraft/world/entity/ConversionType.java
 +++ b/net/minecraft/world/entity/ConversionType.java
-@@ -111,7 +111,7 @@ public enum ConversionType {
+@@ -116,7 +116,7 @@ public enum ConversionType {
          }
  
-         if (conversionParams.preserveCanPickUpLoot()) {
--            newMob.setCanPickUpLoot(oldMob.canPickUpLoot());
-+            newMob.setCanPickUpLoot(oldMob.mcc$canPickUpLoot());
+         if (params.preserveCanPickUpLoot()) {
+-            to.setCanPickUpLoot(from.canPickUpLoot());
++            to.setCanPickUpLoot(from.mcc$canPickUpLoot());
          }
  
-         newMob.setLeftHanded(oldMob.isLeftHanded());
+         to.setLeftHanded(from.isLeftHanded());
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 1d0151a042ed5de4e235ef0bdac1a0e8240e85e7..b18338940262e9141eb6bbdf1324fa970ec84cad 100644
+index 267be9e775b8bb8c816c79fb4357a3ef23317b40..e6a5d6a18e0d1af3be90f658f8a88f55c99d79e9 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
- import com.google.common.collect.Sets;
- import com.google.common.collect.ImmutableList.Builder;
- import com.mojang.logging.LogUtils;
+@@ -1,5 +1,6 @@
+ package net.minecraft.world.entity;
+ 
 +import de.verdox.mccreativelab.behaviour.entity.BehaviorEntity;
- import it.unimi.dsi.fastutil.floats.FloatArraySet;
- import it.unimi.dsi.fastutil.floats.FloatArrays;
- import it.unimi.dsi.fastutil.floats.FloatSet;
-@@ -135,8 +136,9 @@ import net.minecraft.world.scores.ScoreHolder;
- import net.minecraft.world.scores.Team;
- import org.slf4j.Logger;
- 
--public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess, ScoreHolder, ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity, ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerEntity {  // Paper - rewrite chunk system // Paper - optimise entity tracker
-+public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess, ScoreHolder, ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity, ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerEntity, BehaviorEntity {  // Paper - rewrite chunk system // Paper - optimise entity tracker
- 
-+    public @org.jetbrains.annotations.Nullable de.verdox.mccreativelab.behavior.entity.EntityBehaviour<? extends org.bukkit.entity.Entity> behaviour; // MCCreativeLab - Add EntityBehaviour
+ import com.google.common.collect.ImmutableList;
+ import com.google.common.collect.Lists;
+ import com.google.common.collect.Sets;
+@@ -166,7 +167,8 @@ public abstract class Entity
+     ItemOwner,
+     SlotProvider,
+     DebugValueSource,
+-    TypedInstance<EntityType<?>>, ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity, ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerEntity { // Paper - rewrite chunk system // Paper - optimise entity tracker
++    TypedInstance<EntityType<?>>, ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity, ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerEntity, BehaviorEntity { // Paper - rewrite chunk system // Paper - optimise entity tracker
++    public @org.jetbrains.annotations.Nullable de.verdox.mccreativelab.behavior.entity.EntityBehaviour<? extends org.bukkit.entity.Entity> behaviour;
      // CraftBukkit start
      private static final int CURRENT_LEVEL = 2;
-     public boolean preserveMotion = true; // Paper - Fix Entity Teleportation and cancel velocity if teleported; keep initial motion on first setPositionRotation
-@@ -821,6 +823,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+     static boolean isLevelAtLeast(ValueInput input, int level) {
+@@ -889,6 +891,7 @@ public abstract class Entity
  
      // CraftBukkit start
      public void postTick() {
@@ -74,16 +72,16 @@ index 1d0151a042ed5de4e235ef0bdac1a0e8240e85e7..b18338940262e9141eb6bbdf1324fa97
          // No clean way to break out of ticking once the entity has been copied to a new world, so instead we move the portalling later in the tick cycle
          if (!(this instanceof ServerPlayer) && this.isAlive()) { // Paper - don't attempt to teleport dead entities
              this.handlePortal();
-@@ -853,7 +856,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -922,7 +925,7 @@ public abstract class Entity
          this.updateSwimming();
          if (this.level() instanceof ServerLevel serverLevel) {
              if (this.remainingFireTicks > 0) {
 -                if (this.fireImmune()) {
 +                if (this.mcc$fireImmune()) {
-                     this.setRemainingFireTicks(this.remainingFireTicks - 4);
-                     if (this.remainingFireTicks < 0) {
-                         this.clearFire();
-@@ -908,7 +911,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+                     this.clearFire();
+                 } else {
+                     if (this.remainingFireTicks % 20 == 0 && !this.isInLava()) {
+@@ -977,7 +980,7 @@ public abstract class Entity
              && this.level.paperConfig().environment.netherCeilingVoidDamageHeight.test(v -> this.getY() >= v)
              && (!(this instanceof Player player) || !player.getAbilities().invulnerable))) {
              // Paper end - Configurable nether ceiling damage
@@ -92,17 +90,26 @@ index 1d0151a042ed5de4e235ef0bdac1a0e8240e85e7..b18338940262e9141eb6bbdf1324fa97
          }
      }
  
-@@ -935,7 +938,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
-     }
+@@ -1010,7 +1013,7 @@ public abstract class Entity
  
-     public void lavaHurt() {
+     public void lavaIgnite(@Nullable BlockPos pos) {
+         // Paper end - track lava contact
 -        if (!this.fireImmune()) {
 +        if (!this.mcc$fireImmune()) {
              // CraftBukkit start - Fallen in lava TODO: this event spams!
              if (this instanceof net.minecraft.world.entity.LivingEntity && this.remainingFireTicks <= 0) {
                  // not on fire yet
-@@ -1005,7 +1008,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
-         this.setRemainingFireTicks(0);
+@@ -1036,7 +1039,7 @@ public abstract class Entity
+ 
+     public void lavaHurt(@Nullable BlockPos pos) {
+         // Paper end - track lava contact
+-        if (!this.fireImmune()) {
++        if (!this.mcc$fireImmune()) {
+             if (this.level() instanceof ServerLevel serverLevel
+                 && this.hurtServer(serverLevel, this.damageSources().lava().eventBlockDamager(this.level, pos), 4.0F) // CraftBukkit - we also don't throw an event unless the object in lava is living, to save on some event calls
+                 && this.shouldPlayLavaHurtSound()
+@@ -1090,7 +1093,7 @@ public abstract class Entity
+         this.setRemainingFireTicks(Math.min(0, this.getRemainingFireTicks()));
      }
  
 -    protected void onBelowWorld() {
@@ -110,41 +117,50 @@ index 1d0151a042ed5de4e235ef0bdac1a0e8240e85e7..b18338940262e9141eb6bbdf1324fa97
          this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.OUT_OF_WORLD); // CraftBukkit - add Bukkit remove cause
      }
  
-@@ -2498,6 +2501,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -2136,7 +2139,7 @@ public abstract class Entity
+     }
+ 
+     public boolean fireImmune() {
+-        return this.getType().fireImmune();
++        return this.getType().mcc$fireImmune();
+     }
+ 
+     public boolean causeFallDamage(final double fallDistance, final float damageModifier, final DamageSource damageSource) {
+@@ -2806,6 +2809,7 @@ public abstract class Entity
+                     output.discard("Passengers");
                  }
              }
- 
 +            mcc$addAdditionalSaveData();
              // CraftBukkit start - stores eventually existing bukkit values
              if (this.bukkitEntity != null) {
-                 this.bukkitEntity.storeBukkitValues(compound);
-@@ -2625,6 +2629,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
-             }
-             // CraftBukkit end
+                 this.bukkitEntity.storeBukkitValues(output);
+@@ -2924,6 +2928,7 @@ public abstract class Entity
  
-+            mcc$readAdditionalSaveData();
              // CraftBukkit start
              // Paper - move world parsing/loading to PlayerList#placeNewPlayer
-             this.getBukkitEntity().readBukkitValues(compound);
-@@ -2661,7 +2666,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
++            mcc$readAdditionalSaveData();
+             this.getBukkitEntity().readBukkitValues(input);
+             input.read("Bukkit.invisible", Codec.BOOL).ifPresent(bukkitInvisible -> {
+                 this.setInvisible(bukkitInvisible);
+@@ -2951,7 +2956,7 @@ public abstract class Entity
              if (spawnReason == null) {
                  if (spawnedViaMobSpawner) {
                      spawnReason = org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER;
--                } else if (this instanceof Mob && (this instanceof net.minecraft.world.entity.animal.Animal || this instanceof net.minecraft.world.entity.animal.AbstractFish) && !((Mob) this).removeWhenFarAway(0.0)) {
-+                } else if (this instanceof Mob && (this instanceof net.minecraft.world.entity.animal.Animal || this instanceof net.minecraft.world.entity.animal.AbstractFish) && !((Mob) this).mcc$removeWhenFarAway(0.0)) {
-                     if (!compound.getBoolean("PersistenceRequired")) {
+-                } else if (this instanceof Mob && (this instanceof net.minecraft.world.entity.animal.Animal || this instanceof net.minecraft.world.entity.animal.fish.AbstractFish) && !((Mob) this).removeWhenFarAway(0.0)) {
++                } else if (this instanceof Mob && (this instanceof net.minecraft.world.entity.animal.Animal || this instanceof net.minecraft.world.entity.animal.fish.AbstractFish) && !((Mob) this).mcc$removeWhenFarAway(0.0)) {
+                     if (!input.getBooleanOr("PersistenceRequired", false)) {
                          spawnReason = org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.NATURAL;
                      }
-@@ -3026,7 +3031,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
-     public boolean startRiding(Entity vehicle, boolean force) {
-         if (vehicle == this.vehicle || vehicle.level != this.level) { // Paper - Ensure entity passenger world matches ridden entity (bad plugins)
+@@ -3401,7 +3406,7 @@ public abstract class Entity
              return false;
--        } else if (!vehicle.couldAcceptPassenger()) {
-+        } else if (!vehicle.mcc$couldAcceptPassenger()) {
+         }
+ 
+-        if (!entityToRide.couldAcceptPassenger()) {
++        if (!entityToRide.mcc$couldAcceptPassenger()) {
              return false;
-         } else if (!force && !this.level().isClientSide() && !vehicle.type.canSerialize()) { // SPIGOT-7947: Allow force riding all entities
-             return false;
-@@ -3183,7 +3188,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+         }
+ 
+@@ -3571,7 +3576,7 @@ public abstract class Entity
          return this.passengers.isEmpty();
      }
  
@@ -153,77 +169,58 @@ index 1d0151a042ed5de4e235ef0bdac1a0e8240e85e7..b18338940262e9141eb6bbdf1324fa97
          return true;
      }
  
-@@ -3307,7 +3312,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -3721,7 +3726,7 @@ public abstract class Entity
  
      public boolean isOnFire() {
-         boolean flag = this.level() != null && this.level().isClientSide;
--        return !this.fireImmune() && (this.remainingFireTicks > 0 || flag && this.getSharedFlag(0));
-+        return !this.mcc$fireImmune() && (this.remainingFireTicks > 0 || flag && this.getSharedFlag(0));
+         boolean isClientSide = this.level() != null && this.level().isClientSide();
+-        return !this.fireImmune() && (this.remainingFireTicks > 0 || isClientSide && this.getSharedFlag(FLAG_ONFIRE));
++        return !this.mcc$fireImmune() && (this.remainingFireTicks > 0 || isClientSide && this.getSharedFlag(FLAG_ONFIRE));
      }
  
      public boolean isPassenger() {
-@@ -3532,7 +3537,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
-             }
-         }
- 
--        if (this.fireImmune()) {
-+        if (this.mcc$fireImmune()) {
-             return;
-         }
- 
-@@ -3695,7 +3700,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
-     public final boolean isInvulnerableToBase(DamageSource damageSource) {
+@@ -4150,7 +4155,7 @@ public abstract class Entity
+     public final boolean isInvulnerableToBase(final DamageSource source) {
          return this.isRemoved()
-             || this.invulnerable && !damageSource.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && !damageSource.isCreativePlayer()
--            || damageSource.is(DamageTypeTags.IS_FIRE) && this.fireImmune()
-+            || damageSource.is(DamageTypeTags.IS_FIRE) && this.mcc$fireImmune()
-             || damageSource.is(DamageTypeTags.IS_FALL) && this.getType().is(EntityTypeTags.FALL_DAMAGE_IMMUNE);
+             || this.isInvulnerable() && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && !source.isCreativePlayer()
+-            || source.is(DamageTypeTags.IS_FIRE) && this.fireImmune()
++            || source.is(DamageTypeTags.IS_FIRE) && this.mcc$fireImmune()
+             || source.is(DamageTypeTags.IS_FALL) && this.is(EntityTypeTags.FALL_DAMAGE_IMMUNE);
      }
  
 diff --git a/net/minecraft/world/entity/Leashable.java b/net/minecraft/world/entity/Leashable.java
-index 8e115fa3039be5ce6917728cda2a7e756af88a13..b9dc0d0c785aa90dd4ccd04dd5971e13ab85feea 100644
+index 98034a4c96bf2972316078d3b3a49140921aab50..61423c767452581d8f65657bfcd7e3fdf87126b2 100644
 --- a/net/minecraft/world/entity/Leashable.java
 +++ b/net/minecraft/world/entity/Leashable.java
-@@ -32,7 +32,7 @@ public interface Leashable {
+@@ -54,7 +54,7 @@ public interface Leashable {
      }
  
-     default boolean canHaveALeashAttachedToIt() {
--        return this.canBeLeashed() && !this.isLeashed();
-+        return ((Entity) this).mcc$canBeLeashed() && !this.isLeashed();
+     default boolean canHaveALeashAttachedTo(final Entity entity) {
+-        return this != entity && !(this.leashDistanceTo(entity) > this.leashSnapDistance()) && this.canBeLeashed();
++        return this != entity && !(this.leashDistanceTo(entity) > this.leashSnapDistance()) && this.mcc$canBeLeashed();
      }
  
-     default boolean canBeLeashed() {
+     default double leashDistanceTo(final Entity entity) {
 diff --git a/net/minecraft/world/entity/LivingEntity.java b/net/minecraft/world/entity/LivingEntity.java
-index 239c443ddc9bacc08a39a8ef2ab17016a2480549..f37001e390002d4d8ef011c24e58ca9cf1667c28 100644
+index 23297b54c74684765f90e9e599d051a44357e9a5..371830b3033f839e0222a1bb47277c9dd73d3cdd 100644
 --- a/net/minecraft/world/entity/LivingEntity.java
 +++ b/net/minecraft/world/entity/LivingEntity.java
-@@ -11,6 +11,7 @@ import com.mojang.datafixers.util.Pair;
- import com.mojang.logging.LogUtils;
- import com.mojang.serialization.DataResult;
- import com.mojang.serialization.Dynamic;
+@@ -1,5 +1,6 @@
+ package net.minecraft.world.entity;
+ 
 +import de.verdox.mccreativelab.behaviour.entity.BehaviorLivingEntity;
- import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
- import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
- import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
-@@ -161,7 +162,7 @@ import org.bukkit.event.entity.EntityTeleportEvent;
- import org.bukkit.event.player.PlayerItemConsumeEvent;
+ import com.google.common.annotations.VisibleForTesting;
+ import com.google.common.base.Objects;
+ import com.google.common.collect.ImmutableList;
+@@ -154,7 +155,7 @@ import org.bukkit.event.entity.EntityRegainHealthEvent;
+ import org.bukkit.event.entity.EntityResurrectEvent;
  // CraftBukkit end
  
--public abstract class LivingEntity extends Entity implements Attackable {
-+public abstract class LivingEntity extends Entity implements Attackable, BehaviorLivingEntity {
+-public abstract class LivingEntity extends Entity implements Attackable, WaypointTransmitter {
++public abstract class LivingEntity extends Entity implements Attackable, WaypointTransmitter, BehaviorLivingEntity {
      private static final Logger LOGGER = LogUtils.getLogger();
      private static final String TAG_ACTIVE_EFFECTS = "active_effects";
-     private static final ResourceLocation SPEED_MODIFIER_POWDER_SNOW_ID = ResourceLocation.withDefaultNamespace("powder_snow");
-@@ -445,7 +446,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
-         super.baseTick();
-         ProfilerFiller profilerFiller = Profiler.get();
-         profilerFiller.push("livingEntityBaseTick");
--        if (this.fireImmune() || this.level().isClientSide) {
-+        if (this.mcc$fireImmune() || this.level().isClientSide) {
-             this.clearFire();
-         }
- 
-@@ -2592,7 +2593,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
+     public static final String TAG_ATTRIBUTES = "attributes";
+@@ -2793,7 +2794,7 @@ public abstract class LivingEntity extends Entity implements Attackable, Waypoin
      }
  
      @Override
@@ -232,136 +229,148 @@ index 239c443ddc9bacc08a39a8ef2ab17016a2480549..f37001e390002d4d8ef011c24e58ca9c
          this.hurt(this.damageSources().fellOutOfWorld(), this.level().getWorld().getVoidDamageAmount()); // Paper - use configured void damage amount
      }
  
-@@ -3492,7 +3493,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
+@@ -3823,7 +3824,7 @@ public abstract class LivingEntity extends Entity implements Attackable, Waypoin
              }
          }
          // Paper end - Add EntityMoveEvent
--        if (this.level() instanceof ServerLevel serverLevel && this.isSensitiveToWater() && this.isInWaterRainOrBubble()) {
-+        if (this.level() instanceof ServerLevel serverLevel && this.mcc$isSensitiveToWater() && this.isInWaterRainOrBubble()) {
+-        if (this.level() instanceof ServerLevel serverLevel && this.isSensitiveToWater() && this.isInWaterOrRain()) {
++        if (this.level() instanceof ServerLevel serverLevel && this.mcc$isSensitiveToWater() && this.isInWaterOrRain()) {
              this.hurtServer(serverLevel, this.damageSources().drown(), 1.0F);
          }
      }
+diff --git a/net/minecraft/world/entity/Marker.java b/net/minecraft/world/entity/Marker.java
+index 8609b2c851a3964bb63a4d6862a90b453aa8172c..389443f1625665073655e3478135ac4b130d0178 100644
+--- a/net/minecraft/world/entity/Marker.java
++++ b/net/minecraft/world/entity/Marker.java
+@@ -44,7 +44,7 @@ public class Marker extends Entity {
+     }
+ 
+     @Override
+-    protected boolean couldAcceptPassenger() {
++    public boolean couldAcceptPassenger() {
+         return false;
+     }
+ 
 diff --git a/net/minecraft/world/entity/Mob.java b/net/minecraft/world/entity/Mob.java
-index 1ed07fd23985a6bf8cf8300f74c92b7531a79fc6..67dc1fa4cdf3b2a70e0e397160831427a50cdff3 100644
+index 92ce15b22517bda5033e6377c76abaa6a9d68d03..1688b69ec1432bd3825e99dc9e1e195e4d7d1243 100644
 --- a/net/minecraft/world/entity/Mob.java
 +++ b/net/minecraft/world/entity/Mob.java
-@@ -3,6 +3,7 @@ package net.minecraft.world.entity;
- import com.google.common.annotations.VisibleForTesting;
- import com.google.common.collect.Iterables;
- import com.google.common.collect.Maps;
+@@ -1,5 +1,6 @@
+ package net.minecraft.world.entity;
+ 
 +import de.verdox.mccreativelab.behaviour.entity.BehaviorMob;
+ import com.google.common.annotations.VisibleForTesting;
+ import com.google.common.collect.Maps;
  import it.unimi.dsi.fastutil.objects.Object2IntMap.Entry;
- import java.util.Arrays;
- import java.util.HashSet;
-@@ -96,7 +97,7 @@ import org.bukkit.event.entity.EntityUnleashEvent;
- import org.bukkit.event.entity.EntityUnleashEvent.UnleashReason;
+@@ -105,7 +106,7 @@ import org.bukkit.event.entity.EntityTransformEvent;
+ import org.bukkit.event.entity.EntityUnleashEvent;
  // CraftBukkit end
  
--public abstract class Mob extends LivingEntity implements EquipmentUser, Leashable, Targeting {
-+public abstract class Mob extends LivingEntity implements EquipmentUser, Leashable, Targeting, BehaviorMob {
+-public abstract class Mob extends LivingEntity implements Targeting, EquipmentUser, Leashable {
++public abstract class Mob extends LivingEntity implements Targeting, EquipmentUser, Leashable, BehaviorMob {
      private static final EntityDataAccessor<Byte> DATA_MOB_FLAGS_ID = SynchedEntityData.defineId(Mob.class, EntityDataSerializers.BYTE);
      private static final int MOB_FLAG_NO_AI = 1;
      private static final int MOB_FLAG_LEFTHANDED = 2;
-@@ -429,7 +430,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
+@@ -433,7 +434,7 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
      @Override
-     public void addAdditionalSaveData(CompoundTag compound) {
-         super.addAdditionalSaveData(compound);
--        compound.putBoolean("CanPickUpLoot", this.canPickUpLoot());
-+        compound.putBoolean("CanPickUpLoot", this.mcc$canPickUpLoot());
-         compound.putBoolean("PersistenceRequired", this.persistenceRequired);
-         ListTag listTag = new ListTag();
- 
-@@ -617,7 +618,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
-         ProfilerFiller profilerFiller = Profiler.get();
-         profilerFiller.push("looting");
+     protected void addAdditionalSaveData(final ValueOutput output) {
+         super.addAdditionalSaveData(output);
+-        output.putBoolean("CanPickUpLoot", this.canPickUpLoot());
++        output.putBoolean("CanPickUpLoot", this.mcc$canPickUpLoot());
+         output.putBoolean("PersistenceRequired", this.persistenceRequired);
+         if (!this.dropChances.equals(DropChances.DEFAULT)) {
+             output.store("drop_chances", DropChances.CODEC, this.dropChances);
+@@ -543,7 +544,7 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
+         ProfilerFiller profiler = Profiler.get();
+         profiler.push("looting");
          if (this.level() instanceof ServerLevel serverLevel
 -            && this.canPickUpLoot()
 +            && this.mcc$canPickUpLoot()
              && this.isAlive()
              && !this.dead
-             && serverLevel.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
-@@ -628,7 +629,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
-                 if (!itemEntity.isRemoved()
-                     && !itemEntity.getItem().isEmpty()
-                     && !itemEntity.hasPickUpDelay()
--                    && this.wantsToPickUp(serverLevel, itemEntity.getItem())) {
-+                    && this.mcc$wantsToPickUp(serverLevel, itemEntity.getItem())) {
-                     // Paper start - Item#canEntityPickup
-                     if (!itemEntity.canMobPickup) {
-                         continue;
-@@ -676,7 +677,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
-         }
+             && serverLevel.getGameRules().get(GameRules.MOB_GRIEFING)) {
+@@ -551,7 +552,7 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
  
+             for (ItemEntity entity : this.level()
+                 .getEntitiesOfClass(ItemEntity.class, this.getBoundingBox().inflate(pickupReach.getX(), pickupReach.getY(), pickupReach.getZ()))) {
+-                if (!entity.isRemoved() && !entity.getItem().isEmpty() && !entity.hasPickUpDelay() && this.wantsToPickUp(serverLevel, entity.getItem())) {
++                if (!entity.isRemoved() && !entity.getItem().isEmpty() && !entity.hasPickUpDelay() && this.mcc$wantsToPickUp(serverLevel, entity.getItem())) {
+                     // Paper start - Item#canEntityPickup
+                     if (!entity.canMobPickup) {
+                         continue;
+@@ -633,7 +634,7 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
+             canReplace = current.isEmpty();
+         }
          // CraftBukkit start
--        boolean canPickup = canReplaceCurrentItem && this.canHoldItem(stack);
-+        boolean canPickup = canReplaceCurrentItem && this.mcc$canHoldItem(stack);
+-        boolean canPickup = canReplace && this.canHoldItem(itemStack);
++        boolean canPickup = canReplace && this.mcc$canHoldItem(itemStack);
          if (entity != null) {
              canPickup = !org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, entity, 0, !canPickup).isCancelled();
          }
-@@ -788,7 +789,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
+@@ -763,7 +764,7 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
      }
  
-     public boolean wantsToPickUp(ServerLevel level, ItemStack stack) {
--        return this.canHoldItem(stack);
-+        return this.mcc$canHoldItem(stack);
+     public boolean wantsToPickUp(final ServerLevel level, final ItemStack itemStack) {
+-        return this.canHoldItem(itemStack);
++        return this.mcc$canHoldItem(itemStack);
      }
  
-     @Nullable
-@@ -804,13 +805,13 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
-         return this.isPassenger();
-     }
- 
--    protected boolean shouldDespawnInPeaceful() {
-+    public boolean shouldDespawnInPeaceful() {
-         return false;
-     }
- 
-     @Override
-     public void checkDespawn() {
--        if (this.level().getDifficulty() == Difficulty.PEACEFUL && this.shouldDespawnInPeaceful()) {
-+        if (this.level().getDifficulty() == Difficulty.PEACEFUL && this.mcc$shouldDespawnInPeaceful()) {
-             this.discard(EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
-         } else if (!this.isPersistenceRequired() && !this.requiresCustomPersistence()) {
-             Entity nearestPlayer = this.level().findNearbyPlayer(this, -1.0, EntitySelector.PLAYER_AFFECTS_SPAWNING); // Paper - Affects Spawning API
-@@ -824,12 +825,12 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
-                 final double dzSqr = Math.pow(nearestPlayer.getZ() - this.getZ(), 2);
+     public @Nullable TagKey<Item> getPreferredWeaponType() {
+@@ -795,7 +796,7 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
+                 final double dzSqr = Mth.square(player.getZ() - this.getZ());
                  final double distanceSquared = dxSqr + dzSqr + dySqr;
                  // Despawn if hard/soft limit is exceeded
--                if (despawnRangePair.hard().shouldDespawn(shape, dxSqr, dySqr, dzSqr, dy) && this.removeWhenFarAway(distanceSquared)) {
-+                if (despawnRangePair.hard().shouldDespawn(shape, dxSqr, dySqr, dzSqr, dy) && this.mcc$removeWhenFarAway(distanceSquared)) {
+-                if (!isPersistent && despawnRangePair.hard().shouldDespawn(shape, dxSqr, dySqr, dzSqr, dy) && this.removeWhenFarAway(distanceSquared)) {
++                if (!isPersistent && despawnRangePair.hard().shouldDespawn(shape, dxSqr, dySqr, dzSqr, dy) && this.mcc$removeWhenFarAway(distanceSquared)) {
                      this.discard(EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
-                  }
+                 }
  
-                 if (despawnRangePair.soft().shouldDespawn(shape, dxSqr, dySqr, dzSqr, dy)) {
--                    if (this.noActionTime > 600 && this.random.nextInt(800) == 0 && this.removeWhenFarAway(distanceSquared)) {
-+                    if (this.noActionTime > 600 && this.random.nextInt(800) == 0 && this.mcc$removeWhenFarAway(distanceSquared)) {
+@@ -803,7 +804,7 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
+                     if (!isPersistent
+                         && this.noActionTime > 600
+                         && this.random.nextInt(800) == 0
+-                        && this.removeWhenFarAway(distanceSquared)) {
++                        && this.mcc$removeWhenFarAway(distanceSquared)) {
                          this.discard(EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
                      }
                  } else {
-@@ -1313,7 +1314,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
+@@ -1301,7 +1302,7 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
  
      @Override
-     protected boolean canDispenserEquipIntoSlot(EquipmentSlot slot) {
+     protected boolean canDispenserEquipIntoSlot(final EquipmentSlot slot) {
 -        return this.canPickUpLoot();
 +        return this.mcc$canPickUpLoot();
      }
  
      public boolean isPersistenceRequired() {
 diff --git a/net/minecraft/world/entity/NeutralMob.java b/net/minecraft/world/entity/NeutralMob.java
-index 180b17136fde74350f2083d2807670929fdfdfc1..fc050121d5e09c15d8d222b78c727b33521f66ef 100644
+index 3425ac4f186f144527e612bc895457ba4cd3ff93..200d39e6c8315cc6894d62cf689275098e6fe15d 100644
 --- a/net/minecraft/world/entity/NeutralMob.java
 +++ b/net/minecraft/world/entity/NeutralMob.java
-@@ -69,7 +69,7 @@ public interface NeutralMob {
+@@ -97,7 +97,7 @@ public interface NeutralMob {
      }
  
-     default boolean isAngryAt(LivingEntity entity, ServerLevel level) {
--        return this.canAttack(entity)
-+        return ((Mob) this).mcc$canAttack(entity)
-             && (entity.getType() == EntityType.PLAYER && this.isAngryAtAllPlayers(level) || entity.getUUID().equals(this.getPersistentAngerTarget()));
+     default boolean isAngryAt(final LivingEntity entity, final ServerLevel level) {
+-        if (!this.canAttack(entity)) {
++        if (!this.mcc$canAttack(entity)) {
+             return false;
+         }
+ 
+diff --git a/net/minecraft/world/entity/OminousItemSpawner.java b/net/minecraft/world/entity/OminousItemSpawner.java
+index 580cb952b2772761d3e7e1fa0789512732a1117d..95ef45a95567f69f954aac4819ea86af2734f00f 100644
+--- a/net/minecraft/world/entity/OminousItemSpawner.java
++++ b/net/minecraft/world/entity/OminousItemSpawner.java
+@@ -132,7 +132,7 @@ public class OminousItemSpawner extends Entity {
+     }
+ 
+     @Override
+-    protected boolean couldAcceptPassenger() {
++    public boolean couldAcceptPassenger() {
+         return false;
      }
  
 diff --git a/net/minecraft/world/entity/PathfinderMob.java b/net/minecraft/world/entity/PathfinderMob.java
-index af59a700755654eb68d6bf57d0712c4a2ac6c09b..f393b55523ab4ca37a879473fd9ba24e17add7e1 100644
+index c661311dfdc1e21e3d6ec65e1e8b953637149675..93ec309eb0d767dff6f974f9d91b3cfa9ae6dfee 100644
 --- a/net/minecraft/world/entity/PathfinderMob.java
 +++ b/net/minecraft/world/entity/PathfinderMob.java
 @@ -1,5 +1,6 @@
@@ -379,18 +388,18 @@ index af59a700755654eb68d6bf57d0712c4a2ac6c09b..f393b55523ab4ca37a879473fd9ba24e
 +public abstract class PathfinderMob extends Mob implements BehaviorPathfinderMob {
      protected static final float DEFAULT_WALK_TARGET_VALUE = 0.0F;
  
-     protected PathfinderMob(EntityType<? extends PathfinderMob> entityType, Level level) {
+     protected PathfinderMob(final EntityType<? extends PathfinderMob> type, final Level level) {
 @@ -64,7 +65,7 @@ public abstract class PathfinderMob extends Mob {
-             Vec3 vec3 = new Vec3(entity.getX() - this.getX(), entity.getY() - this.getY(), entity.getZ() - this.getZ())
+             Vec3 delta = new Vec3(leashHolder.getX() - this.getX(), leashHolder.getY() - this.getY(), leashHolder.getZ() - this.getZ())
                  .normalize()
-                 .scale(Math.max(f1 - 2.0F, 0.0F));
--            this.getNavigation().moveTo(this.getX() + vec3.x, this.getY() + vec3.y, this.getZ() + vec3.z, this.followLeashSpeed());
-+            this.getNavigation().moveTo(this.getX() + vec3.x, this.getY() + vec3.y, this.getZ() + vec3.z, this.mcc$followLeashSpeed());
+                 .scale(Math.max(distanceTo - 2.0F, 0.0F));
+-            this.getNavigation().moveTo(this.getX() + delta.x, this.getY() + delta.y, this.getZ() + delta.z, this.followLeashSpeed());
++            this.getNavigation().moveTo(this.getX() + delta.x, this.getY() + delta.y, this.getZ() + delta.z, this.mcc$followLeashSpeed());
          }
      }
  
 @@ -74,7 +75,7 @@ public abstract class PathfinderMob extends Mob {
-         return true;
+         super.whenLeashedTo(leashHolder);
      }
  
 -    protected double followLeashSpeed() {
@@ -399,155 +408,129 @@ index af59a700755654eb68d6bf57d0712c4a2ac6c09b..f393b55523ab4ca37a879473fd9ba24e
      }
  }
 diff --git a/net/minecraft/world/entity/TamableAnimal.java b/net/minecraft/world/entity/TamableAnimal.java
-index fc3ba135ae502aaa5c3a9fa3297bf7b12c1ab063..b0e01134f14195668591efb8519607c14a44dae4 100644
+index 8881d76b5346baf5f14926696e93e07dc0889a24..5a59f546bb4c2fac59071dd50c9c235b7a21fbb4 100644
 --- a/net/minecraft/world/entity/TamableAnimal.java
 +++ b/net/minecraft/world/entity/TamableAnimal.java
-@@ -197,7 +197,7 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
+@@ -182,7 +182,7 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
  
      @Override
-     public boolean canAttack(LivingEntity target) {
+     public boolean canAttack(final LivingEntity target) {
 -        return !this.isOwnedBy(target) && super.canAttack(target);
 +        return !this.isOwnedBy(target) && super.mcc$canAttack(target);
      }
  
-     public boolean isOwnedBy(LivingEntity entity) {
+     public boolean isOwnedBy(final LivingEntity entity) {
 diff --git a/net/minecraft/world/entity/ai/behavior/AnimalMakeLove.java b/net/minecraft/world/entity/ai/behavior/AnimalMakeLove.java
-index 0eb23e01808d94505349c76eedd47b0e41842127..f6717e2d5db163ff5e0e778b8316ba09f4c41f27 100644
+index 142d70f554fd2804aa6aeec39836d601799653c0..66890c49b5eb31a110138ddbf92d1322e47ed596 100644
 --- a/net/minecraft/world/entity/ai/behavior/AnimalMakeLove.java
 +++ b/net/minecraft/world/entity/ai/behavior/AnimalMakeLove.java
-@@ -66,7 +66,7 @@ public class AnimalMakeLove extends Behavior<Animal> {
-         } else {
-             Animal breedTarget = this.getBreedTarget(entity);
-             return breedTarget.isAlive()
--                && entity.canMate(breedTarget)
-+                && entity.mcc$canMate(breedTarget)
-                 && BehaviorUtils.entityIsVisible(entity.getBrain(), breedTarget)
-                 && gameTime <= this.spawnChildAtTime
-                 && !entity.isPanicking()
-@@ -109,7 +109,7 @@ public class AnimalMakeLove extends Behavior<Animal> {
+@@ -67,7 +67,7 @@ public class AnimalMakeLove extends Behavior<Animal> {
+ 
+         Animal partner = this.getBreedTarget(body);
+         return partner.isAlive()
+-            && body.canMate(partner)
++            && body.mcc$canMate(partner)
+             && BehaviorUtils.entityIsVisible(body.getBrain(), partner)
+             && timestamp <= this.spawnChildAtTime
+             && !body.isPanicking()
+@@ -108,7 +108,7 @@ public class AnimalMakeLove extends Behavior<Animal> {
+         return body.getBrain()
              .getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES)
              .get()
-             .findClosest(
--                entity -> entity.getType() == this.partnerType && entity instanceof Animal animal1 && animal.canMate(animal1) && !animal1.isPanicking()
-+                entity -> entity.getType() == this.partnerType && entity instanceof Animal animal1 && animal.mcc$canMate(animal1) && !animal1.isPanicking()
-             )
+-            .findClosest(entity -> entity.is(this.partnerType) && entity instanceof Animal animal && body.canMate(animal) && !animal.isPanicking())
++            .findClosest(entity -> entity.is(this.partnerType) && entity instanceof Animal animal && body.mcc$canMate(animal) && !animal.isPanicking())
              .map(Animal.class::cast);
      }
-diff --git a/net/minecraft/world/entity/ai/behavior/BehaviorUtils.java b/net/minecraft/world/entity/ai/behavior/BehaviorUtils.java
-index 2664d72c3b6906d0505df2e63c0e5075eba9461b..71eeaa19b832f7245cead22f938ff1c8231a5f8e 100644
---- a/net/minecraft/world/entity/ai/behavior/BehaviorUtils.java
-+++ b/net/minecraft/world/entity/ai/behavior/BehaviorUtils.java
-@@ -107,7 +107,7 @@ public class BehaviorUtils {
-     }
- 
-     public static boolean isWithinAttackRange(Mob mob, LivingEntity target, int cooldown) {
--        if (mob.getMainHandItem().getItem() instanceof ProjectileWeaponItem projectileWeaponItem && mob.canFireProjectileWeapon(projectileWeaponItem)) {
-+        if (mob.getMainHandItem().getItem() instanceof ProjectileWeaponItem projectileWeaponItem && mob.mcc$canFireProjectileWeapon(projectileWeaponItem)) {
-             int i = projectileWeaponItem.getDefaultProjectileRange() - cooldown;
-             return mob.closerThan(target, i);
-         } else {
+ }
 diff --git a/net/minecraft/world/entity/ai/behavior/GoToWantedItem.java b/net/minecraft/world/entity/ai/behavior/GoToWantedItem.java
-index e74351a7fe7c47821f032147693d6ab53a86371f..077cb3b5433917e02d1ad63d77fec3733637c1bc 100644
+index aff2db230f992b1cd139de0997497322f0efc419..568fb8f0c606424e810d9a363034e6ccb7e82c7c 100644
 --- a/net/minecraft/world/entity/ai/behavior/GoToWantedItem.java
 +++ b/net/minecraft/world/entity/ai/behavior/GoToWantedItem.java
-@@ -34,7 +34,7 @@ public class GoToWantedItem {
-                                 && canWalkToItem.test(entity)
-                                 && itemEntity.closerThan(entity, maxDistToWalk)
-                                 && entity.level().getWorldBorder().isWithinBounds(itemEntity.blockPosition())
--                                && entity.canPickUpLoot()) {
-+                                && entity.mcc$canPickUpLoot()) {
+@@ -36,7 +36,7 @@ public class GoToWantedItem {
+                                 && predicate.test(body)
+                                 && item.closerThan(body, maxDistToWalk)
+                                 && body.level().getWorldBorder().isWithinBounds(item.blockPosition())
+-                                && body.canPickUpLoot()) {
++                                && body.mcc$canPickUpLoot()) {
                                  // CraftBukkit start
-                                 if (entity instanceof net.minecraft.world.entity.animal.allay.Allay) {
-                                     org.bukkit.event.entity.EntityTargetEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetEvent(entity, itemEntity, org.bukkit.event.entity.EntityTargetEvent.TargetReason.CLOSEST_ENTITY);
-diff --git a/net/minecraft/world/entity/ai/behavior/MeleeAttack.java b/net/minecraft/world/entity/ai/behavior/MeleeAttack.java
-index a0dd180fb1230caa7298b1ccd20222e5bf651259..3708e4e7256f6c18e09d18ff0973d01c550fa1c5 100644
---- a/net/minecraft/world/entity/ai/behavior/MeleeAttack.java
-+++ b/net/minecraft/world/entity/ai/behavior/MeleeAttack.java
-@@ -47,7 +47,7 @@ public class MeleeAttack {
-     private static boolean isHoldingUsableProjectileWeapon(Mob mob) {
-         return mob.isHolding(itemStack -> {
-             Item item = itemStack.getItem();
--            return item instanceof ProjectileWeaponItem && mob.canFireProjectileWeapon((ProjectileWeaponItem)item);
-+            return item instanceof ProjectileWeaponItem && mob.mcc$canFireProjectileWeapon((ProjectileWeaponItem)item);
-         });
-     }
- }
+                                 if (body instanceof net.minecraft.world.entity.animal.allay.Allay) {
+                                     org.bukkit.event.entity.EntityTargetEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetEvent(body, item, org.bukkit.event.entity.EntityTargetEvent.TargetReason.CLOSEST_ENTITY);
 diff --git a/net/minecraft/world/entity/ai/behavior/StartAttacking.java b/net/minecraft/world/entity/ai/behavior/StartAttacking.java
-index 19d81490128ef5ba91aa24b42b09826fa47f5e81..314d094bbd4ce6c935d736ce81079787183112b0 100644
+index f28b65e23b58d5d78b77111b2b2596021c298d65..8f1d1c603b2c50889c3b6a47f916b87f76e81c0d 100644
 --- a/net/minecraft/world/entity/ai/behavior/StartAttacking.java
 +++ b/net/minecraft/world/entity/ai/behavior/StartAttacking.java
-@@ -24,7 +24,7 @@ public class StartAttacking {
-                             return false;
-                         } else {
-                             LivingEntity livingEntity = optional.get();
--                            if (!entity.canAttack(livingEntity)) {
-+                            if (!entity.mcc$canAttack(livingEntity)) {
-                                 return false;
-                             } else {
-                                 // CraftBukkit start
+@@ -28,7 +28,7 @@ public class StartAttacking {
+                     }
+ 
+                     LivingEntity targetEntity = target.get();
+-                    if (!body.canAttack(targetEntity)) {
++                    if (!body.mcc$canAttack(targetEntity)) {
+                         return false;
+                     }
+ 
 diff --git a/net/minecraft/world/entity/ai/behavior/StopAttackingIfTargetInvalid.java b/net/minecraft/world/entity/ai/behavior/StopAttackingIfTargetInvalid.java
-index b350a7aa0ff4ecd48a771316413a430c61c728f2..4ca00be75c1e8f94d03aaa2eeec394992b5cb934 100644
+index 53574a1801344cea3d9ef9b364c411c8ada608dd..8b6293bbf9a2d3dad95c1897a5b58630ab50fbd8 100644
 --- a/net/minecraft/world/entity/ai/behavior/StopAttackingIfTargetInvalid.java
 +++ b/net/minecraft/world/entity/ai/behavior/StopAttackingIfTargetInvalid.java
 @@ -33,7 +33,7 @@ public class StopAttackingIfTargetInvalid {
-                     instance,
-                     (memoryAccessor, memoryAccessor1) -> (level, entity, l) -> {
-                         LivingEntity livingEntity = instance.get(memoryAccessor);
--                        if (entity.canAttack(livingEntity)
-+                        if (entity.mcc$canAttack(livingEntity)
-                             && (!canGrowTiredOfTryingToReachTarget || !isTiredOfTryingToReachTarget(entity, instance.tryGet(memoryAccessor1)))
-                             && livingEntity.isAlive()
-                             && livingEntity.level() == entity.level()
-@@ -42,7 +42,7 @@ public class StopAttackingIfTargetInvalid {
-                         } else {
+                     i,
+                     (attackTarget, cantReachSince) -> (level, body, timestamp) -> {
+                         LivingEntity target = i.get(attackTarget);
+-                        if (body.canAttack(target)
++                        if (body.mcc$canAttack(target)
+                             && (!canGrowTiredOfTryingToReachTarget || !isTiredOfTryingToReachTarget(body, i.tryGet(cantReachSince)))
+                             && target.isAlive()
+                             && target.level() == body.level()
+@@ -43,7 +43,7 @@ public class StopAttackingIfTargetInvalid {
+ 
                          // Paper start - better track target change reason
                          final org.bukkit.event.entity.EntityTargetEvent.TargetReason reason;
--                        if (!entity.canAttack(livingEntity)) {
-+                        if (!entity.mcc$canAttack(livingEntity)) {
+-                        if (!body.canAttack(target)) {
++                        if (!body.mcc$canAttack(target)) {
                              reason = org.bukkit.event.entity.EntityTargetEvent.TargetReason.TARGET_INVALID;
-                         } else if (canGrowTiredOfTryingToReachTarget && StopAttackingIfTargetInvalid.isTiredOfTryingToReachTarget(entity, instance.tryGet(memoryAccessor1))) {
+                         } else if (canGrowTiredOfTryingToReachTarget && StopAttackingIfTargetInvalid.isTiredOfTryingToReachTarget(body, i.tryGet(cantReachSince))) {
                              reason = org.bukkit.event.entity.EntityTargetEvent.TargetReason.FORGOT_TARGET;
 diff --git a/net/minecraft/world/entity/ai/goal/BegGoal.java b/net/minecraft/world/entity/ai/goal/BegGoal.java
-index 28ef40e8a645989ea181297069cf2bbe571f3082..ab33c4e65ca9b4d9fba3a4a79584bb3e281901fb 100644
+index de09e4f4b1de208dd6e6f90e0271dc97dae75ab9..e594de40d3c3c3ee712d4f175fd0ff2059c67165 100644
 --- a/net/minecraft/world/entity/ai/goal/BegGoal.java
 +++ b/net/minecraft/world/entity/ai/goal/BegGoal.java
-@@ -62,7 +62,7 @@ public class BegGoal extends Goal {
-     private boolean playerHoldingInteresting(Player player) {
-         for (InteractionHand interactionHand : InteractionHand.values()) {
-             ItemStack itemInHand = player.getItemInHand(interactionHand);
--            if (itemInHand.is(Items.BONE) || this.wolf.isFood(itemInHand)) {
-+            if (itemInHand.is(Items.BONE) || this.wolf.mcc$isFood(itemInHand)) {
+@@ -61,7 +61,7 @@ public class BegGoal extends Goal {
+     private boolean playerHoldingInteresting(final Player player) {
+         for (InteractionHand hand : InteractionHand.values()) {
+             ItemStack itemStack = player.getItemInHand(hand);
+-            if (itemStack.is(Items.BONE) || this.wolf.isFood(itemStack)) {
++            if (itemStack.is(Items.BONE) || this.wolf.mcc$isFood(itemStack)) {
                  return true;
              }
          }
 diff --git a/net/minecraft/world/entity/ai/goal/BreedGoal.java b/net/minecraft/world/entity/ai/goal/BreedGoal.java
-index 5c714cfa1f8c8853133e68c8292fc1fcf6329d72..cb7a0e15cd918c581bf380a92643e666fae39825 100644
+index a98d058d7ff97e72916df4c021d100ec04cb3d45..9728370823de715979d9b9421fdc4734ade78ae6 100644
 --- a/net/minecraft/world/entity/ai/goal/BreedGoal.java
 +++ b/net/minecraft/world/entity/ai/goal/BreedGoal.java
-@@ -68,7 +68,7 @@ public class BreedGoal extends Goal {
-         Animal animal = null;
+@@ -66,7 +66,7 @@ public class BreedGoal extends Goal {
+         Animal partner = null;
  
-         for (Animal animal1 : nearbyEntities) {
--            if (this.animal.canMate(animal1) && !animal1.isPanicking() && this.animal.distanceToSqr(animal1) < d) {
-+            if (this.animal.mcc$canMate(animal1) && !animal1.isPanicking() && this.animal.distanceToSqr(animal1) < d) {
-                 animal = animal1;
-                 d = this.animal.distanceToSqr(animal1);
+         for (Animal potentialPartner : animals) {
+-            if (this.animal.canMate(potentialPartner) && !potentialPartner.isPanicking() && this.animal.distanceToSqr(potentialPartner) < dist) {
++            if (this.animal.mcc$canMate(potentialPartner) && !potentialPartner.isPanicking() && this.animal.distanceToSqr(potentialPartner) < dist) {
+                 partner = potentialPartner;
+                 dist = this.animal.distanceToSqr(potentialPartner);
              }
 diff --git a/net/minecraft/world/entity/ai/goal/EatBlockGoal.java b/net/minecraft/world/entity/ai/goal/EatBlockGoal.java
-index e84893780b533b1ecb3675606b5c2daf7339b861..17511e14d0699ec49306e2fdb438f6b6cefa9b4e 100644
+index dd65ec0122329378e9c5a0a84718634e08cddc4a..2eb2954c8055f74fcd0fff87f69d73ce3ac6c66e 100644
 --- a/net/minecraft/world/entity/ai/goal/EatBlockGoal.java
 +++ b/net/minecraft/world/entity/ai/goal/EatBlockGoal.java
-@@ -71,7 +71,7 @@ public class EatBlockGoal extends Goal {
-                     this.level.destroyBlock(blockPos, false);
+@@ -68,7 +68,7 @@ public class EatBlockGoal extends Goal {
+                     this.level.destroyBlock(pos, false);
                  }
  
 -                this.mob.ate();
 +                this.mob.mcc$ate();
              } else {
-                 BlockPos blockPos1 = blockPos.below();
-                 if (this.level.getBlockState(blockPos1).is(Blocks.GRASS_BLOCK)) {
-@@ -80,7 +80,7 @@ public class EatBlockGoal extends Goal {
-                         this.level.setBlock(blockPos1, Blocks.DIRT.defaultBlockState(), 2);
+                 BlockPos below = pos.below();
+                 if (this.level.getBlockState(below).is(Blocks.GRASS_BLOCK)) {
+@@ -77,7 +77,7 @@ public class EatBlockGoal extends Goal {
+                         this.level.setBlock(below, Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
                      }
  
 -                    this.mob.ate();
@@ -556,407 +539,396 @@ index e84893780b533b1ecb3675606b5c2daf7339b861..17511e14d0699ec49306e2fdb438f6b6
              }
          }
 diff --git a/net/minecraft/world/entity/ai/goal/target/TargetGoal.java b/net/minecraft/world/entity/ai/goal/target/TargetGoal.java
-index ae585f10827f52db80f048b84d6096737d12fee2..9cdc9fe69b06d1a6cd9022ba197dfd0ac3c9c2c2 100644
+index 89765d720fdd810545e8c2010e05a002f87b0c7f..c33872496486105c6eec86d90c8b39f285e6934e 100644
 --- a/net/minecraft/world/entity/ai/goal/target/TargetGoal.java
 +++ b/net/minecraft/world/entity/ai/goal/target/TargetGoal.java
-@@ -43,7 +43,7 @@ public abstract class TargetGoal extends Goal {
+@@ -44,7 +44,7 @@ public abstract class TargetGoal extends Goal {
+             return false;
+         }
  
-         if (target == null) {
+-        if (!this.mob.canAttack(target)) {
++        if (!this.mob.mcc$canAttack(target)) {
              return false;
--        } else if (!this.mob.canAttack(target)) {
-+        } else if (!this.mob.mcc$canAttack(target)) {
-             return false;
-         } else {
-             Team team = this.mob.getTeam();
+         }
+ 
 diff --git a/net/minecraft/world/entity/ai/sensing/NearestItemSensor.java b/net/minecraft/world/entity/ai/sensing/NearestItemSensor.java
-index 09fd13e2d958da8326276c4dadf25bf488aff5ac..9bceb51ee6a4bfd01a4996d458a23b94d3a7adc8 100644
+index 8aeea55380462421cde43afb4b2fb0ce44b65195..7fe26406960b2ea8ab3392b960e87c9a9057da90 100644
 --- a/net/minecraft/world/entity/ai/sensing/NearestItemSensor.java
 +++ b/net/minecraft/world/entity/ai/sensing/NearestItemSensor.java
 @@ -24,7 +24,7 @@ public class NearestItemSensor extends Sensor<Mob> {
      @Override
-     protected void doTick(ServerLevel level, Mob entity) {
-         Brain<?> brain = entity.getBrain();
--        List<ItemEntity> entitiesOfClass = level.getEntitiesOfClass(ItemEntity.class, entity.getBoundingBox().inflate(32.0, 16.0, 32.0), itemEntity -> itemEntity.closerThan(entity, MAX_DISTANCE_TO_WANTED_ITEM) && entity.wantsToPickUp(level, itemEntity.getItem())); // Paper - Perf: Move predicate into getEntities
-+        List<ItemEntity> entitiesOfClass = level.getEntitiesOfClass(ItemEntity.class, entity.getBoundingBox().inflate(32.0, 16.0, 32.0), itemEntity -> itemEntity.closerThan(entity, MAX_DISTANCE_TO_WANTED_ITEM) && entity.mcc$wantsToPickUp(level, itemEntity.getItem())); // Paper - Perf: Move predicate into getEntities
-         entitiesOfClass.sort(Comparator.comparingDouble(entity::distanceToSqr));
+     protected void doTick(final ServerLevel level, final Mob body) {
+         Brain<?> brain = body.getBrain();
+-        List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, body.getBoundingBox().inflate(32.0, 16.0, 32.0), item -> item.closerThan(body, MAX_DISTANCE_TO_WANTED_ITEM) && body.wantsToPickUp(level, item.getItem())); // Paper - Perf: Move predicate into getEntities
++        List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, body.getBoundingBox().inflate(32.0, 16.0, 32.0), item -> item.closerThan(body, MAX_DISTANCE_TO_WANTED_ITEM) && body.mcc$wantsToPickUp(level, item.getItem())); // Paper - Perf: Move predicate into getEntities
+         items.sort(Comparator.comparingDouble(body::distanceToSqr));
          // Paper start - Perf: remove streams from hot code
          ItemEntity nearest = null;
 diff --git a/net/minecraft/world/entity/ai/sensing/PiglinSpecificSensor.java b/net/minecraft/world/entity/ai/sensing/PiglinSpecificSensor.java
-index 110f6c63eadce2535847d6c499dab379a07d15e7..be620974a2fb643cbda4453e41266053473f5bf1 100644
+index 89d330f44b5ed85072d04dce20d396f51a26b3d3..24c73fb540f2272fbf773eaccd0c009a02d9ef5d 100644
 --- a/net/minecraft/world/entity/ai/sensing/PiglinSpecificSensor.java
 +++ b/net/minecraft/world/entity/ai/sensing/PiglinSpecificSensor.java
-@@ -84,7 +84,7 @@ public class PiglinSpecificSensor extends Sensor<LivingEntity> {
+@@ -79,7 +79,7 @@ public class PiglinSpecificSensor extends Sensor<LivingEntity> {
+                     visibleAdultPiglins.add(piglin);
                  }
-             } else if (livingEntity instanceof Player) {
-                 Player player = (Player)livingEntity;
--                if (optional5.isEmpty() && !PiglinAi.isWearingSafeArmor(player) && entity.canAttack(livingEntity)) {
-+                if (optional5.isEmpty() && !PiglinAi.isWearingSafeArmor(player) && entity.mcc$canAttack(livingEntity)) {
-                     optional5 = Optional.of(player);
+             } else if (entity instanceof Player player) {
+-                if (playerNotWearingGold.isEmpty() && !PiglinAi.isWearingSafeArmor(player) && body.canAttack(entity)) {
++                if (playerNotWearingGold.isEmpty() && !PiglinAi.isWearingSafeArmor(player) && body.mcc$canAttack(entity)) {
+                     playerNotWearingGold = Optional.of(player);
                  }
  
 diff --git a/net/minecraft/world/entity/ai/targeting/TargetingConditions.java b/net/minecraft/world/entity/ai/targeting/TargetingConditions.java
-index 2f8920d8ee765d057a22d76f24f7d7dc1b0b17ca..358baedefef369b59570d0cb95fc1421b8e4eb7a 100644
+index bd6d9fdeb468428bdf35e888be141293088228a4..2c985b4a51c6fd39bef6a5cba6867546aeed91ee 100644
 --- a/net/minecraft/world/entity/ai/targeting/TargetingConditions.java
 +++ b/net/minecraft/world/entity/ai/targeting/TargetingConditions.java
-@@ -70,7 +70,7 @@ public class TargetingConditions {
-                     return false;
-                 }
-             } else {
--                if (this.isCombat && (!entity.canAttack(target) || !entity.canAttackType(target.getType()) || entity.isAlliedTo(target))) {
-+                if (this.isCombat && (!entity.mcc$canAttack(target) || !entity.mcc$canAttackType(target.getType()) || entity.isAlliedTo(target))) {
-                     return false;
-                 }
+@@ -74,7 +74,7 @@ public class TargetingConditions {
+                 return false;
+             }
+         } else {
+-            if (this.isCombat && (!targeter.canAttack(target) || targeter.isAlliedTo(target))) {
++            if (this.isCombat && (!targeter.mcc$canAttack(target) || targeter.isAlliedTo(target))) {
+                 return false;
+             }
  
 diff --git a/net/minecraft/world/entity/animal/Animal.java b/net/minecraft/world/entity/animal/Animal.java
-index e34e3b949676aa28dd7c82a47f2ed3b44ad200e3..bef1a98aca1b18da5a34b3cb576a26598c6d5400 100644
+index 0814912f7b9e6ab1f8037006a2224b57e1ef241b..6db4bdc471a0c4f6dcb6710debdd2a4dec46548a 100644
 --- a/net/minecraft/world/entity/animal/Animal.java
 +++ b/net/minecraft/world/entity/animal/Animal.java
-@@ -3,6 +3,8 @@ package net.minecraft.world.entity.animal;
- import java.util.Optional;
- import java.util.UUID;
- import javax.annotation.Nullable;
-+
+@@ -1,5 +1,6 @@
+ package net.minecraft.world.entity.animal;
+ 
 +import de.verdox.mccreativelab.behaviour.entity.BehaviorAnimal;
- import net.minecraft.advancements.CriteriaTriggers;
+ import java.util.Optional;
+ import net.minecraft.advancements.triggers.CriteriaTriggers;
  import net.minecraft.core.BlockPos;
- import net.minecraft.core.component.DataComponents;
-@@ -34,7 +36,7 @@ import net.minecraft.world.level.LevelReader;
- import net.minecraft.world.level.block.Blocks;
- import net.minecraft.world.level.pathfinder.PathType;
+@@ -40,7 +41,7 @@ import net.minecraft.world.phys.AABB;
+ import net.minecraft.world.phys.Vec3;
+ import org.jspecify.annotations.Nullable;
  
 -public abstract class Animal extends AgeableMob {
 +public abstract class Animal extends AgeableMob implements BehaviorAnimal {
      protected static final int PARENT_AGE_AFTER_BREEDING = 6000;
-     public int inLove;
-     @Nullable
-@@ -140,7 +142,7 @@ public abstract class Animal extends AgeableMob {
+     private static final int DEFAULT_IN_LOVE_TIME = 0;
+     private int inLove = 0;
+@@ -144,7 +145,7 @@ public abstract class Animal extends AgeableMob {
      @Override
-     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-         ItemStack itemInHand = player.getItemInHand(hand);
--        if (this.isFood(itemInHand)) {
-+        if (this.mcc$isFood(itemInHand)) {
+     public InteractionResult mobInteract(final Player player, final InteractionHand hand) {
+         ItemStack itemStack = player.getItemInHand(hand);
+-        if (this.isFood(itemStack)) {
++        if (this.mcc$isFood(itemStack)) {
              int age = this.getAge();
-             if (!this.level().isClientSide && age == 0 && this.canFallInLove()) {
-                 final ItemStack breedCopy = itemInHand.copy(); // Paper - Fix EntityBreedEvent copying
-diff --git a/net/minecraft/world/entity/animal/Bee.java b/net/minecraft/world/entity/animal/Bee.java
-index 94244b148533ef026bf5c56abbc2bb5cfa83c938..e0509cb16ba965831c76565212ae33b4ce78f0cf 100644
---- a/net/minecraft/world/entity/animal/Bee.java
-+++ b/net/minecraft/world/entity/animal/Bee.java
-@@ -604,7 +604,7 @@ public class Bee extends Animal implements NeutralMob, FlyingAnimal {
+             if (player instanceof ServerPlayer serverPlayer && age == 0 && this.canFallInLove()) {
+                 final ItemStack breedCopy = itemStack.copy(); // Paper - Fix EntityBreedEvent copying
+diff --git a/net/minecraft/world/entity/animal/allay/Allay.java b/net/minecraft/world/entity/animal/allay/Allay.java
+index a051b6c69b76b4a5251a951bbc2028c6363d4881..941a109a2d98dc507c01c025a236f88f661e1d24 100644
+--- a/net/minecraft/world/entity/animal/allay/Allay.java
++++ b/net/minecraft/world/entity/animal/allay/Allay.java
+@@ -105,7 +105,7 @@ public class Allay extends PathfinderMob implements InventoryCarrier, VibrationS
+     public Allay(final EntityType<? extends Allay> type, final Level level) {
+         super(type, level);
+         this.moveControl = new FlyingMoveControl<>(this, 20, true);
+-        this.setCanPickUpLoot(this.canPickUpLoot());
++        this.setCanPickUpLoot(this.mcc$canPickUpLoot());
+         this.vibrationUser = new Allay.VibrationUser();
+         this.vibrationData = new VibrationSystem.Data();
+         this.dynamicVibrationListener = new DynamicGameEventListener<>(new VibrationSystem.Listener(this));
+diff --git a/net/minecraft/world/entity/animal/bee/Bee.java b/net/minecraft/world/entity/animal/bee/Bee.java
+index fed07676ae1d7d8ce240e8ec8f0a2582ef45eea2..c3440752430f2cb089e304ae9421d0a80d12e864 100644
+--- a/net/minecraft/world/entity/animal/bee/Bee.java
++++ b/net/minecraft/world/entity/animal/bee/Bee.java
+@@ -589,7 +589,7 @@ public class Bee extends Animal implements NeutralMob {
      @Override
-     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-         ItemStack itemInHand = player.getItemInHand(hand);
--        if (this.isFood(itemInHand) && itemInHand.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof FlowerBlock flowerBlock) {
-+        if (this.mcc$isFood(itemInHand) && itemInHand.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof FlowerBlock flowerBlock) {
-             MobEffectInstance beeInteractionEffect = flowerBlock.getBeeInteractionEffect();
-             if (beeInteractionEffect != null) {
-                 this.usePlayerItem(player, hand, itemInHand);
-diff --git a/net/minecraft/world/entity/animal/Cat.java b/net/minecraft/world/entity/animal/Cat.java
-index 1a7a5c81a260cc740994d1a63c4775c41c238dea..daed264fd4d1c9b21717b6380247f3528995801a 100644
---- a/net/minecraft/world/entity/animal/Cat.java
-+++ b/net/minecraft/world/entity/animal/Cat.java
-@@ -329,7 +329,7 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
- 
-     @Override
-     public boolean canMate(Animal otherAnimal) {
--        return this.isTame() && otherAnimal instanceof Cat cat && cat.isTame() && super.canMate(otherAnimal);
-+        return this.isTame() && otherAnimal instanceof Cat cat && cat.isTame() && super.mcc$canMate(otherAnimal);
-     }
- 
-     @Nullable
-@@ -372,7 +372,7 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
- 
-                         return InteractionResult.SUCCESS;
-                     }
--                } else if (this.isFood(itemInHand) && this.getHealth() < this.getMaxHealth()) {
-+                } else if (this.mcc$isFood(itemInHand) && this.getHealth() < this.getMaxHealth()) {
-                     if (!this.level().isClientSide()) {
-                         this.usePlayerItem(player, hand, itemInHand);
-                         FoodProperties foodProperties = itemInHand.get(DataComponents.FOOD);
-@@ -391,7 +391,7 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
- 
+     public InteractionResult mobInteract(final Player player, final InteractionHand hand) {
+         ItemStack heldItem = player.getItemInHand(hand);
+-        if (this.isFood(heldItem) && heldItem.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof FlowerBlock flower) {
++        if (this.mcc$isFood(heldItem) && heldItem.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof FlowerBlock flower) {
+             MobEffectInstance effect = flower.getBeeInteractionEffect();
+             if (effect != null) {
+                 this.usePlayerItem(player, hand, heldItem);
+diff --git a/net/minecraft/world/entity/animal/camel/Camel.java b/net/minecraft/world/entity/animal/camel/Camel.java
+index 5ed0ad722a3dfb84d5aabd9888bce24e8e1847c3..fffcc86aa473986bd33b35389edc710ab69abb41 100644
+--- a/net/minecraft/world/entity/animal/camel/Camel.java
++++ b/net/minecraft/world/entity/animal/camel/Camel.java
+@@ -387,7 +387,7 @@ public class Camel extends AbstractHorse {
+             InteractionResult interactionResult = itemStack.interactLivingEntity(player, this, hand);
+             if (interactionResult.consumesAction()) {
                  return interactionResult;
-             }
--        } else if (this.isFood(itemInHand)) {
-+        } else if (this.mcc$isFood(itemInHand)) {
-             if (!this.level().isClientSide()) {
-                 this.usePlayerItem(player, hand, itemInHand);
-                 this.tryToTame(player);
-diff --git a/net/minecraft/world/entity/animal/Dolphin.java b/net/minecraft/world/entity/animal/Dolphin.java
-index 4141052dfd635804195a5cfa24dbd0394355a7da..6cfa65dc02ccdd50254f6000da727422c7a91f03 100644
---- a/net/minecraft/world/entity/animal/Dolphin.java
-+++ b/net/minecraft/world/entity/animal/Dolphin.java
-@@ -198,7 +198,7 @@ public class Dolphin extends AgeableWaterCreature {
+-            } else if (this.isFood(itemStack)) {
++            } else if (this.mcc$isFood(itemStack)) {
+                 return this.fedFood(player, itemStack);
+             } else if (this.getPassengers().size() < 2 && !this.isBaby()) {
+                 this.doPlayerRide(player);
+@@ -417,7 +417,7 @@ public class Camel extends AbstractHorse {
  
      @Override
-     public boolean canAttack(LivingEntity target) {
+     protected boolean handleEating(final Player player, final ItemStack itemStack) {
+-        if (!this.isFood(itemStack)) {
++        if (!this.mcc$isFood(itemStack)) {
+             return false;
+         }
+ 
+diff --git a/net/minecraft/world/entity/animal/dolphin/Dolphin.java b/net/minecraft/world/entity/animal/dolphin/Dolphin.java
+index 13e38d0c9b28c2a8ba10ac146e0fd62494fb6ffb..13a13e68a1582a6fc2851a9da3d35ff823c65d3a 100644
+--- a/net/minecraft/world/entity/animal/dolphin/Dolphin.java
++++ b/net/minecraft/world/entity/animal/dolphin/Dolphin.java
+@@ -197,7 +197,7 @@ public class Dolphin extends AgeableWaterCreature {
+ 
+     @Override
+     public boolean canAttack(final LivingEntity target) {
 -        return !this.isBaby() && super.canAttack(target);
 +        return !this.isBaby() && super.mcc$canAttack(target);
      }
  
      @Override
-@@ -228,14 +228,14 @@ public class Dolphin extends AgeableWaterCreature {
+@@ -222,14 +222,14 @@ public class Dolphin extends AgeableWaterCreature {
  
      @Override
-     protected boolean canDispenserEquipIntoSlot(EquipmentSlot slot) {
+     protected boolean canDispenserEquipIntoSlot(final EquipmentSlot slot) {
 -        return slot == EquipmentSlot.MAINHAND && this.canPickUpLoot();
 +        return slot == EquipmentSlot.MAINHAND && this.mcc$canPickUpLoot();
      }
  
      @Override
-     protected void pickUpItem(ServerLevel level, ItemEntity entity) {
+     protected void pickUpItem(final ServerLevel level, final ItemEntity entity) {
          if (this.getItemBySlot(EquipmentSlot.MAINHAND).isEmpty()) {
-             ItemStack item = entity.getItem();
--            if (this.canHoldItem(item)) {
-+            if (this.mcc$canHoldItem(item)) {
+             ItemStack itemStack = entity.getItem();
+-            if (this.canHoldItem(itemStack)) {
++            if (this.mcc$canHoldItem(itemStack)) {
                  // CraftBukkit start - call EntityPickupItemEvent
-                 if (org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, entity, 0, false).isCancelled()) return;
-                 item = entity.getItem(); // CraftBukkit- update ItemStack from event
-diff --git a/net/minecraft/world/entity/animal/Fox.java b/net/minecraft/world/entity/animal/Fox.java
-index 44bb04cc9796a16f5477d8f2ad22af62c9af1fc3..c80cc9435b70c919f03b71189074f2601d0d4383 100644
---- a/net/minecraft/world/entity/animal/Fox.java
-+++ b/net/minecraft/world/entity/animal/Fox.java
-@@ -473,7 +473,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Variant> {
+                 if (org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, entity, 0).isCancelled()) return;
+                 itemStack = entity.getItem(); // CraftBukkit- update ItemStack from event
+diff --git a/net/minecraft/world/entity/animal/equine/AbstractChestedHorse.java b/net/minecraft/world/entity/animal/equine/AbstractChestedHorse.java
+index 15f95a42be96d73a1a86210553098ad5a92d8900..0f81f6d02cd245fb9098a392d9b835b90e8de2c4 100644
+--- a/net/minecraft/world/entity/animal/equine/AbstractChestedHorse.java
++++ b/net/minecraft/world/entity/animal/equine/AbstractChestedHorse.java
+@@ -145,7 +145,7 @@ public abstract class AbstractChestedHorse extends AbstractHorse {
+         if (!this.isVehicle() && !shouldOpenInventory && (!this.isBaby() || !player.isHolding(Items.GOLDEN_DANDELION))) {
+             ItemStack itemStack = player.getItemInHand(hand);
+             if (!itemStack.isEmpty()) {
+-                if (this.isFood(itemStack)) {
++                if (this.mcc$isFood(itemStack)) {
+                     return this.fedFood(player, itemStack);
+                 }
+ 
+diff --git a/net/minecraft/world/entity/animal/equine/Horse.java b/net/minecraft/world/entity/animal/equine/Horse.java
+index 013ca7a41ac31005f3b60af4ab89efae37144573..53f60e6e47d4d56c8f8f9cecbccd31527c324933 100644
+--- a/net/minecraft/world/entity/animal/equine/Horse.java
++++ b/net/minecraft/world/entity/animal/equine/Horse.java
+@@ -158,7 +158,7 @@ public class Horse extends AbstractHorse {
+         if (!this.isVehicle() && !shouldOpenInventory && (!this.isBaby() || !player.isHolding(Items.GOLDEN_DANDELION))) {
+             ItemStack itemStack = player.getItemInHand(hand);
+             if (!itemStack.isEmpty()) {
+-                if (this.isFood(itemStack)) {
++                if (this.mcc$isFood(itemStack)) {
+                     return this.fedFood(player, itemStack);
+                 }
+ 
+diff --git a/net/minecraft/world/entity/animal/equine/Llama.java b/net/minecraft/world/entity/animal/equine/Llama.java
+index aa3f316705e00a040dc37aa509963f760335db2b..df0972a1d42fc57bde3fac1ba2120e58f7d36e61 100644
+--- a/net/minecraft/world/entity/animal/equine/Llama.java
++++ b/net/minecraft/world/entity/animal/equine/Llama.java
+@@ -412,7 +412,7 @@ public class Llama extends AbstractChestedHorse implements RangedAttackMob {
+     }
  
      @Override
-     protected boolean canDispenserEquipIntoSlot(EquipmentSlot slot) {
+-    protected double followLeashSpeed() {
++    public double followLeashSpeed() {
+         return 2.0;
+     }
+ 
+diff --git a/net/minecraft/world/entity/animal/feline/Cat.java b/net/minecraft/world/entity/animal/feline/Cat.java
+index 608118a7388c834924bb0309f02e7f32fa764884..694a0a626422da50f80c778ddf078bf1541280e5 100644
+--- a/net/minecraft/world/entity/animal/feline/Cat.java
++++ b/net/minecraft/world/entity/animal/feline/Cat.java
+@@ -391,7 +391,7 @@ public class Cat extends TamableAnimal {
+ 
+     @Override
+     public boolean canMate(final Animal partner) {
+-        return this.isTame() && partner instanceof Cat cat && cat.isTame() && super.canMate(partner);
++        return this.isTame() && partner instanceof Cat cat && cat.isTame() && super.mcc$canMate(partner);
+     }
+ 
+     @Override
+@@ -425,7 +425,7 @@ public class Cat extends TamableAnimal {
+ 
+                         return InteractionResult.SUCCESS;
+                     }
+-                } else if (this.isFood(itemStack) && this.getHealth() < this.getMaxHealth()) {
++                } else if (this.mcc$isFood(itemStack) && this.getHealth() < this.getMaxHealth()) {
+                     if (!this.level().isClientSide()) {
+                         this.feed(player, hand, itemStack, 1.0F, 1.0F);
+                     }
+@@ -441,7 +441,7 @@ public class Cat extends TamableAnimal {
+ 
+                 return parentInteraction;
+             }
+-        } else if (this.isFood(itemStack)) {
++        } else if (this.mcc$isFood(itemStack)) {
+             if (!this.level().isClientSide()) {
+                 this.usePlayerItem(player, hand, itemStack);
+                 this.tryToTame(player);
+diff --git a/net/minecraft/world/entity/animal/feline/Ocelot.java b/net/minecraft/world/entity/animal/feline/Ocelot.java
+index 9c58a0ada0ab1e6d89f7e3505948694febc99df8..06cca94b1cf06110079dd208236e2a0d045749a9 100644
+--- a/net/minecraft/world/entity/animal/feline/Ocelot.java
++++ b/net/minecraft/world/entity/animal/feline/Ocelot.java
+@@ -166,7 +166,7 @@ public class Ocelot extends Animal {
+     @Override
+     public InteractionResult mobInteract(final Player player, final InteractionHand hand) {
+         ItemStack itemStack = player.getItemInHand(hand);
+-        if ((this.temptGoal == null || this.temptGoal.isRunning()) && !this.isTrusting() && this.isFood(itemStack) && player.distanceToSqr(this) < 9.0) {
++        if ((this.temptGoal == null || this.temptGoal.isRunning()) && !this.isTrusting() && this.mcc$isFood(itemStack) && player.distanceToSqr(this) < 9.0) {
+             this.usePlayerItem(player, hand, itemStack);
+             if (!this.level().isClientSide()) {
+                 if (this.random.nextInt(3) == 0 && !org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTameEvent(this, player).isCancelled()) { // CraftBukkit - added event call and isCancelled check
+diff --git a/net/minecraft/world/entity/animal/fox/Fox.java b/net/minecraft/world/entity/animal/fox/Fox.java
+index 8f2cd8975625beacdad077b8d31a33dab4145624..83052391083a394a267465f7433330694638145e 100644
+--- a/net/minecraft/world/entity/animal/fox/Fox.java
++++ b/net/minecraft/world/entity/animal/fox/Fox.java
+@@ -517,7 +517,7 @@ public class Fox extends Animal {
+ 
+     @Override
+     protected boolean canDispenserEquipIntoSlot(final EquipmentSlot slot) {
 -        return slot == EquipmentSlot.MAINHAND && this.canPickUpLoot();
 +        return slot == EquipmentSlot.MAINHAND && this.mcc$canPickUpLoot();
      }
  
      @Override
-@@ -502,7 +502,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Variant> {
+@@ -546,7 +546,7 @@ public class Fox extends Animal {
      @Override
-     protected void pickUpItem(ServerLevel level, ItemEntity entity) {
-         ItemStack item = entity.getItem();
--        if (!org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, entity, item.getCount() - 1, !this.canHoldItem(item)).isCancelled()) { // CraftBukkit - call EntityPickupItemEvent
-+        if (!org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, entity, item.getCount() - 1, !this.mcc$canHoldItem(item)).isCancelled()) { // CraftBukkit - call EntityPickupItemEvent
-             item = entity.getItem(); // CraftBukkit - update item after event
-             int count = item.getCount();
+     protected void pickUpItem(final ServerLevel level, final ItemEntity entity) {
+         ItemStack itemStack = entity.getItem();
+-        if (!org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, entity, itemStack.getCount() - 1, !this.canHoldItem(itemStack)).isCancelled()) { // CraftBukkit - call EntityPickupItemEvent
++        if (!org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, entity, itemStack.getCount() - 1, !this.mcc$canHoldItem(itemStack)).isCancelled()) { // CraftBukkit - call EntityPickupItemEvent
+             itemStack = entity.getItem(); // CraftBukkit - update item after event
+             int count = itemStack.getCount();
              if (count > 1) {
-diff --git a/net/minecraft/world/entity/animal/IronGolem.java b/net/minecraft/world/entity/animal/IronGolem.java
-index 8e9ba307a0528eb1aef56bdc0f4ded0e71621253..a1a254e2ec1aadc25029d20a378ddf808276f5ad 100644
---- a/net/minecraft/world/entity/animal/IronGolem.java
-+++ b/net/minecraft/world/entity/animal/IronGolem.java
-@@ -133,7 +133,7 @@ public class IronGolem extends AbstractGolem implements NeutralMob {
+diff --git a/net/minecraft/world/entity/animal/goat/Goat.java b/net/minecraft/world/entity/animal/goat/Goat.java
+index 588be92d27cf1caa53515e4dae1406403a808571..b3fd8ac509d22b53df49f44870c77e808a6ac2df 100644
+--- a/net/minecraft/world/entity/animal/goat/Goat.java
++++ b/net/minecraft/world/entity/animal/goat/Goat.java
+@@ -234,7 +234,7 @@ public class Goat extends Animal {
+         }
+ 
+         InteractionResult interactionResult = super.mobInteract(player, hand);
+-        if (interactionResult.consumesAction() && this.isFood(heldItem)) {
++        if (interactionResult.consumesAction() && this.mcc$isFood(heldItem)) {
+             this.playEatingSound();
+         }
+ 
+diff --git a/net/minecraft/world/entity/animal/panda/Panda.java b/net/minecraft/world/entity/animal/panda/Panda.java
+index 5f41c5422f21bafb9bce2c90d8ff52cca3c5ef07..db76f42cf5b9218ebd1cb7d6b3f7013904c2c4d0 100644
+--- a/net/minecraft/world/entity/animal/panda/Panda.java
++++ b/net/minecraft/world/entity/animal/panda/Panda.java
+@@ -114,7 +114,7 @@ public class Panda extends Animal {
  
      @Override
-     public boolean canAttackType(EntityType<?> type) {
--        return (!this.isPlayerCreated() || type != EntityType.PLAYER) && type != EntityType.CREEPER && super.canAttackType(type);
-+        return (!this.isPlayerCreated() || type != EntityType.PLAYER) && type != EntityType.CREEPER && super.mcc$canAttackType(type);
-     }
- 
-     @Override
-diff --git a/net/minecraft/world/entity/animal/Ocelot.java b/net/minecraft/world/entity/animal/Ocelot.java
-index 5b59f68141c2ceeaf7907bbf5e7b9e08cbe2239e..a9d8d49801a606adbfaa6b02b27023b3e7dfc3db 100644
---- a/net/minecraft/world/entity/animal/Ocelot.java
-+++ b/net/minecraft/world/entity/animal/Ocelot.java
-@@ -156,7 +156,7 @@ public class Ocelot extends Animal {
-     @Override
-     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-         ItemStack itemInHand = player.getItemInHand(hand);
--        if ((this.temptGoal == null || this.temptGoal.isRunning()) && !this.isTrusting() && this.isFood(itemInHand) && player.distanceToSqr(this) < 9.0) {
-+        if ((this.temptGoal == null || this.temptGoal.isRunning()) && !this.isTrusting() && this.mcc$isFood(itemInHand) && player.distanceToSqr(this) < 9.0) {
-             this.usePlayerItem(player, hand, itemInHand);
-             if (!this.level().isClientSide) {
-                 if (this.random.nextInt(3) == 0 && !org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTameEvent(this, player).isCancelled()) { // CraftBukkit - added event call and isCancelled check
-diff --git a/net/minecraft/world/entity/animal/Panda.java b/net/minecraft/world/entity/animal/Panda.java
-index 283ddf7d13a17c0a6df5a52b7fd26ed7b7a4826b..945bbb3eaf12a7aa7084733079976f6436794e05 100644
---- a/net/minecraft/world/entity/animal/Panda.java
-+++ b/net/minecraft/world/entity/animal/Panda.java
-@@ -107,7 +107,7 @@ public class Panda extends Animal {
- 
-     @Override
-     protected boolean canDispenserEquipIntoSlot(EquipmentSlot slot) {
+     protected boolean canDispenserEquipIntoSlot(final EquipmentSlot slot) {
 -        return slot == EquipmentSlot.MAINHAND && this.canPickUpLoot();
 +        return slot == EquipmentSlot.MAINHAND && this.mcc$canPickUpLoot();
      }
  
      public int getUnhappyCounter() {
-@@ -620,7 +620,7 @@ public class Panda extends Animal {
-         } else if (this.isOnBack()) {
-             this.setOnBack(false);
+@@ -623,7 +623,7 @@ public class Panda extends Animal {
              return InteractionResult.SUCCESS;
--        } else if (this.isFood(itemInHand)) {
-+        } else if (this.mcc$isFood(itemInHand)) {
+         }
+ 
+-        if (this.isFood(interactionItemStack)) {
++        if (this.mcc$isFood(interactionItemStack)) {
              if (this.getTarget() != null) {
                  this.gotBamboo = true;
              }
-diff --git a/net/minecraft/world/entity/animal/Pig.java b/net/minecraft/world/entity/animal/Pig.java
-index d203d9c63c13f40a913235ad78a24a3bf489a083..7f2b48b9b17ea0605f08c39920707b220a3df718 100644
---- a/net/minecraft/world/entity/animal/Pig.java
-+++ b/net/minecraft/world/entity/animal/Pig.java
-@@ -131,7 +131,7 @@ public class Pig extends Animal implements ItemSteerable, Saddleable {
+diff --git a/net/minecraft/world/entity/animal/pig/Pig.java b/net/minecraft/world/entity/animal/pig/Pig.java
+index 9ff021a13a2c654d7edf9bf202fcbc2494b22100..9846434ae690fe05dd12b388b627c0b6dbe91946 100644
+--- a/net/minecraft/world/entity/animal/pig/Pig.java
++++ b/net/minecraft/world/entity/animal/pig/Pig.java
+@@ -165,7 +165,7 @@ public class Pig extends Animal implements ItemSteerable {
  
      @Override
-     public InteractionResult mobInteract(Player player, InteractionHand hand) {
--        boolean isFood = this.isFood(player.getItemInHand(hand));
-+        boolean isFood = this.mcc$isFood(player.getItemInHand(hand));
-         if (!isFood && this.isSaddled() && !this.isVehicle() && !player.isSecondaryUseActive()) {
-             if (!this.level().isClientSide) {
+     public InteractionResult mobInteract(final Player player, final InteractionHand hand) {
+-        boolean hasFood = this.isFood(player.getItemInHand(hand));
++        boolean hasFood = this.mcc$isFood(player.getItemInHand(hand));
+         if (!hasFood && this.isSaddled() && !this.isVehicle() && !player.isSecondaryUseActive()) {
+             if (!this.level().isClientSide()) {
                  player.startRiding(this);
-diff --git a/net/minecraft/world/entity/animal/Sheep.java b/net/minecraft/world/entity/animal/Sheep.java
-index e686c500e4b5f3e7b0e808af8b2e43ddbd163bef..e45fa1843ea4ff70e1b3661688c8c91c3df84031 100644
---- a/net/minecraft/world/entity/animal/Sheep.java
-+++ b/net/minecraft/world/entity/animal/Sheep.java
-@@ -314,7 +314,7 @@ public class Sheep extends Animal implements Shearable {
+diff --git a/net/minecraft/world/entity/animal/sheep/Sheep.java b/net/minecraft/world/entity/animal/sheep/Sheep.java
+index 450bdc5fab3b4e2fd9007595b339327adebbca60..7b2c4563940f2731727479feea041d9939ab9291 100644
+--- a/net/minecraft/world/entity/animal/sheep/Sheep.java
++++ b/net/minecraft/world/entity/animal/sheep/Sheep.java
+@@ -313,7 +313,7 @@ public class Sheep extends Animal implements Shearable {
      @Override
      public void ate() {
          if (!new org.bukkit.event.entity.SheepRegrowWoolEvent((org.bukkit.entity.Sheep) this.getBukkitEntity()).callEvent()) return; // CraftBukkit
 -        super.ate();
 +        super.mcc$ate();
          this.setSheared(false);
-         if (this.isBaby()) {
+         if (this.canAgeUp()) {
              this.ageUp(60);
-diff --git a/net/minecraft/world/entity/animal/Wolf.java b/net/minecraft/world/entity/animal/Wolf.java
-index 133e14efb19f8984061b8cb5922aa4f0c7aaf4d9..1b44e1173929cabe3ef5c7766bd6a3d617819ad4 100644
---- a/net/minecraft/world/entity/animal/Wolf.java
-+++ b/net/minecraft/world/entity/animal/Wolf.java
-@@ -407,7 +407,7 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
-         ItemStack itemInHand = player.getItemInHand(hand);
-         Item item = itemInHand.getItem();
-         if (this.isTame()) {
--            if (this.isFood(itemInHand) && this.getHealth() < this.getMaxHealth()) {
-+            if (this.mcc$isFood(itemInHand) && this.getHealth() < this.getMaxHealth()) {
-                 this.usePlayerItem(player, hand, itemInHand);
-                 FoodProperties foodProperties = itemInHand.get(DataComponents.FOOD);
-                 float f = foodProperties != null ? foodProperties.nutrition() : 1.0F;
-diff --git a/net/minecraft/world/entity/animal/allay/Allay.java b/net/minecraft/world/entity/animal/allay/Allay.java
-index aafb32295d4ce239609bb62e6bdf2261739f7aa0..7c39c20d0a32c30643d357b866c63bcbc33f23a4 100644
---- a/net/minecraft/world/entity/animal/allay/Allay.java
-+++ b/net/minecraft/world/entity/animal/allay/Allay.java
-@@ -123,7 +123,7 @@ public class Allay extends PathfinderMob implements InventoryCarrier, VibrationS
-     public Allay(EntityType<? extends Allay> entityType, Level level) {
-         super(entityType, level);
-         this.moveControl = new FlyingMoveControl(this, 20, true);
--        this.setCanPickUpLoot(this.canPickUpLoot());
-+        this.setCanPickUpLoot(this.mcc$canPickUpLoot());
-         this.vibrationUser = new Allay.VibrationUser();
-         this.vibrationData = new VibrationSystem.Data();
-         this.dynamicVibrationListener = new DynamicGameEventListener<>(new VibrationSystem.Listener(this));
-diff --git a/net/minecraft/world/entity/animal/camel/Camel.java b/net/minecraft/world/entity/animal/camel/Camel.java
-index 3ac169f83c5619b5c00c866354a2e066a0a738cc..bdc322ebeb1fe065e89d47c9a3986f775a11ec5e 100644
---- a/net/minecraft/world/entity/animal/camel/Camel.java
-+++ b/net/minecraft/world/entity/animal/camel/Camel.java
-@@ -354,7 +354,7 @@ public class Camel extends AbstractHorse {
-             InteractionResult interactionResult = itemInHand.interactLivingEntity(player, this, hand);
-             if (interactionResult.consumesAction()) {
-                 return interactionResult;
--            } else if (this.isFood(itemInHand)) {
-+            } else if (this.mcc$isFood(itemInHand)) {
-                 return this.fedFood(player, itemInHand);
-             } else {
-                 if (this.getPassengers().size() < 2 && !this.isBaby()) {
-@@ -381,7 +381,7 @@ public class Camel extends AbstractHorse {
- 
-     @Override
-     protected boolean handleEating(Player player, ItemStack stack) {
--        if (!this.isFood(stack)) {
-+        if (!this.mcc$isFood(stack)) {
-             return false;
-         } else {
-             boolean flag = this.getHealth() < this.getMaxHealth();
-diff --git a/net/minecraft/world/entity/animal/goat/Goat.java b/net/minecraft/world/entity/animal/goat/Goat.java
-index 504a30ead8d2bb13d559acbde62f9d44a5dda1cb..7020dbf639fdabdefc4e807f94fa9304d296863f 100644
---- a/net/minecraft/world/entity/animal/goat/Goat.java
-+++ b/net/minecraft/world/entity/animal/goat/Goat.java
-@@ -244,7 +244,7 @@ public class Goat extends Animal {
-             player.setItemInHand(hand, itemStack);
-             return InteractionResult.SUCCESS;
-         } else {
--            boolean isFood = this.isFood(itemInHand); // Paper - track before stack is possibly decreased to 0 (Fixes MC-244739)
-+            boolean isFood = this.mcc$isFood(itemInHand); // Paper - track before stack is possibly decreased to 0 (Fixes MC-244739)
-             InteractionResult interactionResult = super.mobInteract(player, hand);
-             if (interactionResult.consumesAction() && isFood) { // Paper
-                 this.playEatingSound();
-diff --git a/net/minecraft/world/entity/animal/horse/AbstractChestedHorse.java b/net/minecraft/world/entity/animal/horse/AbstractChestedHorse.java
-index fbb9840e853052368012d13d287b62defe6cfcb1..d68b46bd593cd1b8387cf05f683aa5f83b0bec08 100644
---- a/net/minecraft/world/entity/animal/horse/AbstractChestedHorse.java
-+++ b/net/minecraft/world/entity/animal/horse/AbstractChestedHorse.java
-@@ -156,7 +156,7 @@ public abstract class AbstractChestedHorse extends AbstractHorse {
-         if (!this.isVehicle() && !flag) {
-             ItemStack itemInHand = player.getItemInHand(hand);
-             if (!itemInHand.isEmpty()) {
--                if (this.isFood(itemInHand)) {
-+                if (this.mcc$isFood(itemInHand)) {
-                     return this.fedFood(player, itemInHand);
-                 }
- 
-diff --git a/net/minecraft/world/entity/animal/horse/Horse.java b/net/minecraft/world/entity/animal/horse/Horse.java
-index c6d0700f29d6c8123e96efe225faf2d99202ac81..03f03d60a378d8fb41a9f29f6f41df8836d1db1a 100644
---- a/net/minecraft/world/entity/animal/horse/Horse.java
-+++ b/net/minecraft/world/entity/animal/horse/Horse.java
-@@ -134,7 +134,7 @@ public class Horse extends AbstractHorse implements VariantHolder<Variant> {
-         if (!this.isVehicle() && !flag) {
-             ItemStack itemInHand = player.getItemInHand(hand);
-             if (!itemInHand.isEmpty()) {
--                if (this.isFood(itemInHand)) {
-+                if (this.mcc$isFood(itemInHand)) {
-                     return this.fedFood(player, itemInHand);
-                 }
- 
 diff --git a/net/minecraft/world/entity/animal/sniffer/Sniffer.java b/net/minecraft/world/entity/animal/sniffer/Sniffer.java
-index 62ca7871d1e5d0fe611948ad43e44c23fdc2d3f8..aeea3f0f787dbd1d7bd8cc2ff5ec65c3839b5370 100644
+index 0d84b8885bbd0fb65c3202c68fccea93e3f64e6f..87bdd9d9e0f4bff3274b04ac32a66bcd8b7b7932 100644
 --- a/net/minecraft/world/entity/animal/sniffer/Sniffer.java
 +++ b/net/minecraft/world/entity/animal/sniffer/Sniffer.java
-@@ -367,7 +367,7 @@ public class Sniffer extends Animal {
+@@ -386,7 +386,7 @@ public class Sniffer extends Animal {
      @Override
-     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-         ItemStack itemInHand = player.getItemInHand(hand);
--        boolean isFood = this.isFood(itemInHand);
-+        boolean isFood = this.mcc$isFood(itemInHand);
+     public InteractionResult mobInteract(final Player player, final InteractionHand hand) {
+         ItemStack heldItem = player.getItemInHand(hand);
+-        boolean isFood = this.isFood(heldItem);
++        boolean isFood = this.mcc$isFood(heldItem);
          InteractionResult interactionResult = super.mobInteract(player, hand);
          if (interactionResult.consumesAction() && isFood) {
              this.playEatingSound();
-@@ -428,7 +428,7 @@ public class Sniffer extends Animal {
+@@ -442,7 +442,7 @@ public class Sniffer extends Animal {
              return false;
          } else {
-             Set<Sniffer.State> set = Set.of(Sniffer.State.IDLING, Sniffer.State.SCENTING, Sniffer.State.FEELING_HAPPY);
--            return set.contains(this.getState()) && set.contains(sniffer.getState()) && super.canMate(otherAnimal);
-+            return set.contains(this.getState()) && set.contains(sniffer.getState()) && super.mcc$canMate(otherAnimal);
+             Set<Sniffer.State> states = Set.of(Sniffer.State.IDLING, Sniffer.State.SCENTING, Sniffer.State.FEELING_HAPPY);
+-            return states.contains(this.getState()) && states.contains(snifferPartner.getState()) && super.canMate(partner);
++            return states.contains(this.getState()) && states.contains(snifferPartner.getState()) && super.mcc$canMate(partner);
          }
      }
  
+diff --git a/net/minecraft/world/entity/animal/wolf/Wolf.java b/net/minecraft/world/entity/animal/wolf/Wolf.java
+index 52bd00213dbbbef45c1039f13aa7dd3ef2bf6dad..20c793edf1a2d750ff42694e7645804dfa88f46b 100644
+--- a/net/minecraft/world/entity/animal/wolf/Wolf.java
++++ b/net/minecraft/world/entity/animal/wolf/Wolf.java
+@@ -458,7 +458,7 @@ public class Wolf extends TamableAnimal implements NeutralMob {
+     public InteractionResult mobInteract(final Player player, final InteractionHand hand) {
+         ItemStack itemStack = player.getItemInHand(hand);
+         if (this.isTame()) {
+-            if (this.isFood(itemStack) && this.getHealth() < this.getMaxHealth()) {
++            if (this.mcc$isFood(itemStack) && this.getHealth() < this.getMaxHealth()) {
+                 this.feed(player, hand, itemStack, 2.0F, 2.0F);
+                 return InteractionResult.SUCCESS;
+             }
 diff --git a/net/minecraft/world/entity/boss/enderdragon/phases/DragonHoldingPatternPhase.java b/net/minecraft/world/entity/boss/enderdragon/phases/DragonHoldingPatternPhase.java
-index 1afb9ff6a5546f912238b1b03aacf45033f7c481..93487717af5a6cd060ea5f4be50054906e5e4ed7 100644
+index f682b497d51328a8911c25085f50b4da5143f5f4..7c264f34dedc3e4021bb90bf8ff9c7f8a981b166 100644
 --- a/net/minecraft/world/entity/boss/enderdragon/phases/DragonHoldingPatternPhase.java
 +++ b/net/minecraft/world/entity/boss/enderdragon/phases/DragonHoldingPatternPhase.java
-@@ -131,7 +131,7 @@ public class DragonHoldingPatternPhase extends AbstractDragonPhaseInstance {
+@@ -129,7 +129,7 @@ public class DragonHoldingPatternPhase extends AbstractDragonPhaseInstance {
  
      @Override
-     public void onCrystalDestroyed(EndCrystal crystal, BlockPos pos, DamageSource dmgSrc, @Nullable Player plyr) {
--        if (plyr != null && this.dragon.canAttack(plyr)) {
-+        if (plyr != null && this.dragon.mcc$canAttack(plyr)) {
-             this.strafePlayer(plyr);
+     public void onCrystalDestroyed(final EndCrystal crystal, final BlockPos pos, final DamageSource source, final @Nullable Player player) {
+-        if (player != null && this.dragon.canAttack(player)) {
++        if (player != null && this.dragon.mcc$canAttack(player)) {
+             this.strafePlayer(player);
          }
      }
 diff --git a/net/minecraft/world/entity/boss/wither/WitherBoss.java b/net/minecraft/world/entity/boss/wither/WitherBoss.java
-index afe43600c4976e01e61d716034a2823d50fb55cb..a4723d1214546435bf8718c735207d766e8ea632 100644
+index 1ab44f34b5d18d12259717444370f886b3a56144..fc92e9fa6200e85a538947f38cfbf341f217797b 100644
 --- a/net/minecraft/world/entity/boss/wither/WitherBoss.java
 +++ b/net/minecraft/world/entity/boss/wither/WitherBoss.java
-@@ -316,7 +316,7 @@ public class WitherBoss extends Monster implements RangedAttackMob {
-                     if (alternativeTarget > 0) {
-                         LivingEntity livingEntity = (LivingEntity)level.getEntity(alternativeTarget);
-                         if (livingEntity != null
--                            && this.canAttack(livingEntity)
-+                            && this.mcc$canAttack(livingEntity)
-                             && !(this.distanceToSqr(livingEntity) > 900.0)
-                             && this.hasLineOfSight(livingEntity)) {
-                             this.performRangedAttack(ix + 1, livingEntity);
-@@ -523,7 +523,7 @@ public class WitherBoss extends Monster implements RangedAttackMob {
- 
-     @Override
-     public void checkDespawn() {
--        if (this.level().getDifficulty() == Difficulty.PEACEFUL && this.shouldDespawnInPeaceful()) {
-+        if (this.level().getDifficulty() == Difficulty.PEACEFUL && this.mcc$shouldDespawnInPeaceful()) {
-             this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
-         } else {
-             this.noActionTime = 0;
+@@ -319,7 +319,7 @@ public class WitherBoss extends Monster implements RangedAttackMob {
+                     int headTarget = this.getAlternativeTarget(i);
+                     if (headTarget > 0) {
+                         LivingEntity current = (LivingEntity)level.getEntity(headTarget);
+-                        if (current != null && this.canAttack(current) && !(this.distanceToSqr(current) > 900.0) && this.hasLineOfSight(current)) {
++                        if (current != null && this.mcc$canAttack(current) && !(this.distanceToSqr(current) > 900.0) && this.hasLineOfSight(current)) {
+                             this.performRangedAttack(i + 1, current);
+                             this.nextHeadUpdate[i - 1] = this.tickCount + 40 + this.random.nextInt(20);
+                             this.idleHeadUpdates[i - 1] = 0;
 diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
-index 52a7ed0d991758bad0dcedcb7f97fb15ac6c6d04..d6a4f051926c24a1df18c560fbe2e8a5edde85f6 100644
+index a1fa75b4a02187686f1bd18f409abd2e6cbe31be..f8cf2a3a7cf1502579db4c015c8e70f918c76524 100644
 --- a/net/minecraft/world/entity/item/ItemEntity.java
 +++ b/net/minecraft/world/entity/item/ItemEntity.java
-@@ -322,7 +322,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+@@ -319,7 +319,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
  
      @Override
      public boolean fireImmune() {
@@ -965,33 +937,20 @@ index 52a7ed0d991758bad0dcedcb7f97fb15ac6c6d04..d6a4f051926c24a1df18c560fbe2e8a5
      }
  
      @Override
-diff --git a/net/minecraft/world/entity/monster/AbstractIllager.java b/net/minecraft/world/entity/monster/AbstractIllager.java
-index 88075e1f49bfe7dfe1a31094a8ef64cb8abe2bf2..8e7c93dff31e5a5e7125b56975929b16ea2a9fb9 100644
---- a/net/minecraft/world/entity/monster/AbstractIllager.java
-+++ b/net/minecraft/world/entity/monster/AbstractIllager.java
-@@ -25,7 +25,7 @@ public abstract class AbstractIllager extends Raider {
- 
-     @Override
-     public boolean canAttack(LivingEntity target) {
--        return (!(target instanceof AbstractVillager) || !target.isBaby()) && super.canAttack(target);
-+        return (!(target instanceof AbstractVillager) || !target.isBaby()) && super.mcc$canAttack(target);
-     }
- 
-     @Override
 diff --git a/net/minecraft/world/entity/monster/Blaze.java b/net/minecraft/world/entity/monster/Blaze.java
-index 419c729502ee708bba9e750f1b951450eca82695..c52c6715ca48c750c7013a522a4778b48255cbd0 100644
+index d48e066e8c43494aa74158452da369e5617d6a7e..ffa5ece2a119e05722f11e2a8b3a3865e5899308 100644
 --- a/net/minecraft/world/entity/monster/Blaze.java
 +++ b/net/minecraft/world/entity/monster/Blaze.java
-@@ -124,7 +124,7 @@ public class Blaze extends Monster {
+@@ -125,7 +125,7 @@ public class Blaze extends Monster {
          }
  
          LivingEntity target = this.getTarget();
 -        if (target != null && target.getEyeY() > this.getEyeY() + this.allowedHeightOffset && this.canAttack(target)) {
 +        if (target != null && target.getEyeY() > this.getEyeY() + this.allowedHeightOffset && this.mcc$canAttack(target)) {
-             Vec3 deltaMovement = this.getDeltaMovement();
-             this.setDeltaMovement(this.getDeltaMovement().add(0.0, (0.3F - deltaMovement.y) * 0.3F, 0.0));
-             this.hasImpulse = true;
-@@ -167,7 +167,7 @@ public class Blaze extends Monster {
+             Vec3 movement = this.getDeltaMovement();
+             this.setDeltaMovement(this.getDeltaMovement().add(0.0, (0.3F - movement.y) * 0.3F, 0.0));
+             this.needsSync = true;
+@@ -168,7 +168,7 @@ public class Blaze extends Monster {
          @Override
          public boolean canUse() {
              LivingEntity target = this.blaze.getTarget();
@@ -1000,103 +959,37 @@ index 419c729502ee708bba9e750f1b951450eca82695..c52c6715ca48c750c7013a522a4778b4
          }
  
          @Override
-diff --git a/net/minecraft/world/entity/monster/Slime.java b/net/minecraft/world/entity/monster/Slime.java
-index 8db4cba1be6d7a5538295ba8da1fdaf7a77a16d0..f205fae68d3e8437dff321389ac31e50229294ae 100644
---- a/net/minecraft/world/entity/monster/Slime.java
-+++ b/net/minecraft/world/entity/monster/Slime.java
-@@ -430,7 +430,7 @@ public class Slime extends Mob implements Enemy {
-             if (target == null || !target.isAlive()) {
-                 return false;
-             }
--            if (!this.slime.canAttack(target)) {
-+            if (!this.slime.mcc$canAttack(target)) {
-                 return false;
-             }
-             return this.slime.getMoveControl() instanceof Slime.SlimeMoveControl && this.slime.canWander && new com.destroystokyo.paper.event.entity.SlimeTargetLivingEntityEvent((org.bukkit.entity.Slime) this.slime.getBukkitEntity(), (org.bukkit.entity.LivingEntity) target.getBukkitEntity()).callEvent();
-@@ -451,7 +451,7 @@ public class Slime extends Mob implements Enemy {
-             if (target == null || !target.isAlive()) {
-                 return false;
-             }
--            if (!this.slime.canAttack(target)) {
-+            if (!this.slime.mcc$canAttack(target)) {
-                 return false;
-             }
-             return --this.growTiredTimer > 0 && this.slime.canWander && new com.destroystokyo.paper.event.entity.SlimeTargetLivingEntityEvent((org.bukkit.entity.Slime) this.slime.getBukkitEntity(), (org.bukkit.entity.LivingEntity) target.getBukkitEntity()).callEvent();
 diff --git a/net/minecraft/world/entity/monster/Strider.java b/net/minecraft/world/entity/monster/Strider.java
-index cbae85171a1bb64ee3be40ba211d88e68bf672e4..3b23c3d7ff30cd5d7f11794a9d5844b6c4144c84 100644
+index dcbbdf1aa3bcd18996cd382fd46949722313f45c..b8ae0d5db50a7a861d970c1adc0d54b901861064 100644
 --- a/net/minecraft/world/entity/monster/Strider.java
 +++ b/net/minecraft/world/entity/monster/Strider.java
-@@ -413,7 +413,7 @@ public class Strider extends Animal implements ItemSteerable, Saddleable {
+@@ -410,7 +410,7 @@ public class Strider extends Animal implements ItemSteerable {
  
      @Override
-     public InteractionResult mobInteract(Player player, InteractionHand hand) {
--        boolean isFood = this.isFood(player.getItemInHand(hand));
-+        boolean isFood = this.mcc$isFood(player.getItemInHand(hand));
-         if (!isFood && this.isSaddled() && !this.isVehicle() && !player.isSecondaryUseActive()) {
-             if (!this.level().isClientSide) {
+     public InteractionResult mobInteract(final Player player, final InteractionHand hand) {
+-        boolean hasFood = this.isFood(player.getItemInHand(hand));
++        boolean hasFood = this.mcc$isFood(player.getItemInHand(hand));
+         if (!hasFood && this.isSaddled() && !this.isVehicle() && !player.isSecondaryUseActive()) {
+             if (!this.level().isClientSide()) {
                  player.startRiding(this);
-diff --git a/net/minecraft/world/entity/monster/WitherSkeleton.java b/net/minecraft/world/entity/monster/WitherSkeleton.java
-index eed8dbefd4d04082dc4e091c858e50309ed5c49b..14150313d82a5e00946a2b3908834ce671abbb41 100644
---- a/net/minecraft/world/entity/monster/WitherSkeleton.java
-+++ b/net/minecraft/world/entity/monster/WitherSkeleton.java
-@@ -67,7 +67,7 @@ public class WitherSkeleton extends AbstractSkeleton {
- 
-     @Override
-     public boolean canHoldItem(ItemStack stack) {
--        return !stack.is(ItemTags.WITHER_SKELETON_DISLIKED_WEAPONS) && super.canHoldItem(stack);
-+        return !stack.is(ItemTags.WITHER_SKELETON_DISLIKED_WEAPONS) && super.mcc$canHoldItem(stack);
-     }
- 
-     @Override
 diff --git a/net/minecraft/world/entity/monster/Zoglin.java b/net/minecraft/world/entity/monster/Zoglin.java
-index 9b94e74f6317f835500225b087fe93487a7a0b22..6efc939ec152a5d12cd0d03282f76366fde81ed0 100644
+index 1ac54b86353d99619231a850278405c66482a6c1..6ee6dca522a501e919b6567a053570884b9ac4f7 100644
 --- a/net/minecraft/world/entity/monster/Zoglin.java
 +++ b/net/minecraft/world/entity/monster/Zoglin.java
-@@ -215,7 +215,7 @@ public class Zoglin extends Monster implements HoglinBase {
-     public boolean hurtServer(ServerLevel level, DamageSource damageSource, float amount) {
-         boolean flag = super.hurtServer(level, damageSource, amount);
-         if (flag && damageSource.getEntity() instanceof LivingEntity livingEntity) {
--            if (this.canAttack(livingEntity) && !BehaviorUtils.isOtherTargetMuchFurtherAwayThanCurrentAttackTarget(this, livingEntity, 4.0)) {
-+            if (this.mcc$canAttack(livingEntity) && !BehaviorUtils.isOtherTargetMuchFurtherAwayThanCurrentAttackTarget(this, livingEntity, 4.0)) {
-                 this.setAttackTarget(livingEntity);
+@@ -205,7 +205,7 @@ public class Zoglin extends Monster implements HoglinBase {
+     public boolean hurtServer(final ServerLevel level, final DamageSource source, final float damage) {
+         boolean wasHurt = super.hurtServer(level, source, damage);
+         if (wasHurt && source.getEntity() instanceof LivingEntity attacker) {
+-            if (this.canAttack(attacker) && !BehaviorUtils.isOtherTargetMuchFurtherAwayThanCurrentAttackTarget(this, attacker, 4.0)) {
++            if (this.mcc$canAttack(attacker) && !BehaviorUtils.isOtherTargetMuchFurtherAwayThanCurrentAttackTarget(this, attacker, 4.0)) {
+                 this.setAttackTarget(attacker);
              }
  
-diff --git a/net/minecraft/world/entity/monster/Zombie.java b/net/minecraft/world/entity/monster/Zombie.java
-index cf231380febd6d316eb902d43c636135ee0d7fa4..9983689b8313bdeee407a5c02ea20a14afc53026 100644
---- a/net/minecraft/world/entity/monster/Zombie.java
-+++ b/net/minecraft/world/entity/monster/Zombie.java
-@@ -492,12 +492,12 @@ public class Zombie extends Monster {
- 
-     @Override
-     public boolean canHoldItem(ItemStack stack) {
--        return (!stack.is(Items.EGG) || !this.isBaby() || !this.isPassenger()) && super.canHoldItem(stack);
-+        return (!stack.is(Items.EGG) || !this.isBaby() || !this.isPassenger()) && super.mcc$canHoldItem(stack);
-     }
- 
-     @Override
-     public boolean wantsToPickUp(ServerLevel level, ItemStack stack) {
--        return !stack.is(Items.GLOW_INK_SAC) && super.wantsToPickUp(level, stack);
-+        return !stack.is(Items.GLOW_INK_SAC) && super.mcc$wantsToPickUp(level, stack);
-     }
- 
-     @Nullable
-diff --git a/net/minecraft/world/entity/monster/ZombifiedPiglin.java b/net/minecraft/world/entity/monster/ZombifiedPiglin.java
-index c7eab22fe4a0541ebdba96961521271ee5619cd4..e2a23d73a48c381ba992fa4bac471f3b7e02039c 100644
---- a/net/minecraft/world/entity/monster/ZombifiedPiglin.java
-+++ b/net/minecraft/world/entity/monster/ZombifiedPiglin.java
-@@ -261,6 +261,6 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
- 
-     @Override
-     public boolean wantsToPickUp(ServerLevel level, ItemStack stack) {
--        return this.canHoldItem(stack);
-+        return this.mcc$canHoldItem(stack);
-     }
- }
 diff --git a/net/minecraft/world/entity/monster/creaking/Creaking.java b/net/minecraft/world/entity/monster/creaking/Creaking.java
-index eba1e78352f956618b2796ce7cbe5d6f7e6591b6..dfa496805396e8882d433f83010639daaf7ff7ca 100644
+index ed5a38579d5d31967a58a5c965378169a9e0b70d..37e585f2b4b3a5d2bb25caf6eb2cb5bb94b2ad60 100644
 --- a/net/minecraft/world/entity/monster/creaking/Creaking.java
 +++ b/net/minecraft/world/entity/monster/creaking/Creaking.java
-@@ -341,12 +341,12 @@ public class Creaking extends Monster {
+@@ -344,7 +344,7 @@ public class Creaking extends Monster {
  
      @Override
      public boolean fireImmune() {
@@ -1105,216 +998,245 @@ index eba1e78352f956618b2796ce7cbe5d6f7e6591b6..dfa496805396e8882d433f83010639da
      }
  
      @Override
-     public boolean canBeNameTagged() {
--        return !this.isHeartBound() && super.canBeNameTagged();
-+        return !this.isHeartBound() && super.mcc$canBeNameTagged();
-     }
+@@ -467,7 +467,7 @@ public class Creaking extends Monster {
+             boolean hasPotentialTarget = false;
  
-     @Override
-@@ -355,8 +355,8 @@ public class Creaking extends Monster {
-     }
- 
-     @Override
--    protected boolean couldAcceptPassenger() {
--        return !this.isHeartBound() && super.couldAcceptPassenger();
-+    public boolean couldAcceptPassenger() {
-+        return !this.isHeartBound() && super.mcc$couldAcceptPassenger();
-     }
- 
-     @Override
-@@ -499,7 +499,7 @@ public class Creaking extends Monster {
-             boolean flag = false;
- 
-             for (Player player : list) {
+             for (Player player : players) {
 -                if (this.canAttack(player) && !this.isAlliedTo(player)) {
 +                if (this.mcc$canAttack(player) && !this.isAlliedTo(player)) {
-                     flag = true;
-                     if ((!isActive || LivingEntity.PLAYER_NOT_WEARING_DISGUISE_ITEM.test(player))
+                     hasPotentialTarget = true;
+                     if ((!active || LivingEntity.PLAYER_NOT_WEARING_DISGUISE_ITEM.test(player))
                          && this.isLookingAtMe(
+diff --git a/net/minecraft/world/entity/monster/illager/AbstractIllager.java b/net/minecraft/world/entity/monster/illager/AbstractIllager.java
+index 017056bb37970803f639ccae809aab532f846384..131582cc489d74658ebff089370dbfa11e96f5d8 100644
+--- a/net/minecraft/world/entity/monster/illager/AbstractIllager.java
++++ b/net/minecraft/world/entity/monster/illager/AbstractIllager.java
+@@ -25,7 +25,7 @@ public abstract class AbstractIllager extends Raider {
+ 
+     @Override
+     public boolean canAttack(final LivingEntity target) {
+-        return (!(target instanceof AbstractVillager) || !target.isBaby()) && super.canAttack(target);
++        return (!(target instanceof AbstractVillager) || !target.isBaby()) && super.mcc$canAttack(target);
+     }
+ 
+     @Override
 diff --git a/net/minecraft/world/entity/monster/piglin/Piglin.java b/net/minecraft/world/entity/monster/piglin/Piglin.java
-index 0257eada48b35ea024520afe30596beae8a7ef1e..2052ebf75842a2b371e4351d59be1c3a6b001319 100644
+index b567fc282af18836e30d5dbab6ef25fe8d58e01d..427e8e597f94e445e2c80a3d5899a61d298c635b 100644
 --- a/net/minecraft/world/entity/monster/piglin/Piglin.java
 +++ b/net/minecraft/world/entity/monster/piglin/Piglin.java
-@@ -447,7 +447,7 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
+@@ -379,7 +379,7 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
  
      @Override
-     public boolean wantsToPickUp(ServerLevel level, ItemStack stack) {
--        return level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) && this.canPickUpLoot() && PiglinAi.wantsToPickup(this, stack);
-+        return level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) && this.mcc$canPickUpLoot() && PiglinAi.wantsToPickup(this, stack);
+     public boolean wantsToPickUp(final ServerLevel level, final ItemStack itemStack) {
+-        return level.getGameRules().get(GameRules.MOB_GRIEFING) && this.canPickUpLoot() && PiglinAi.wantsToPickup(this, itemStack);
++        return level.getGameRules().get(GameRules.MOB_GRIEFING) && this.mcc$canPickUpLoot() && PiglinAi.wantsToPickup(this, itemStack);
      }
  
-     protected boolean canReplaceCurrentItem(ItemStack candidate) {
+     protected boolean canReplaceCurrentItem(final ItemStack newItemStack) {
 diff --git a/net/minecraft/world/entity/monster/piglin/PiglinBrute.java b/net/minecraft/world/entity/monster/piglin/PiglinBrute.java
-index 0964b138e87357b7601ddfe937a2b9132afd5478..b229d380071e5197cb9b70a93bff31c173c4d416 100644
+index 8bba57ee432ab41b47b6dd89a21bf17c4b462d1f..6f2173ef1dff5063e470b4839a9cab94bb69982e 100644
 --- a/net/minecraft/world/entity/monster/piglin/PiglinBrute.java
 +++ b/net/minecraft/world/entity/monster/piglin/PiglinBrute.java
-@@ -110,7 +110,7 @@ public class PiglinBrute extends AbstractPiglin {
+@@ -89,7 +89,7 @@ public class PiglinBrute extends AbstractPiglin {
  
      @Override
-     public boolean wantsToPickUp(ServerLevel level, ItemStack stack) {
--        return stack.is(Items.GOLDEN_AXE) && super.wantsToPickUp(level, stack);
-+        return stack.is(Items.GOLDEN_AXE) && super.mcc$wantsToPickUp(level, stack);
+     public boolean wantsToPickUp(final ServerLevel level, final ItemStack itemStack) {
+-        return itemStack.is(Items.GOLDEN_AXE) && super.wantsToPickUp(level, itemStack);
++        return itemStack.is(Items.GOLDEN_AXE) && super.mcc$wantsToPickUp(level, itemStack);
      }
  
      @Override
-diff --git a/net/minecraft/world/entity/npc/AbstractVillager.java b/net/minecraft/world/entity/npc/AbstractVillager.java
-index a71d16d968bb90fd7aca6f01a3dd56df4f9a7ce6..1fc5e734fdbd53219ba26d61c4d676bb7a917c2a 100644
---- a/net/minecraft/world/entity/npc/AbstractVillager.java
-+++ b/net/minecraft/world/entity/npc/AbstractVillager.java
-@@ -157,7 +157,7 @@ public abstract class AbstractVillager extends AgeableMob implements InventoryCa
+diff --git a/net/minecraft/world/entity/monster/skeleton/WitherSkeleton.java b/net/minecraft/world/entity/monster/skeleton/WitherSkeleton.java
+index a69cda3d70e1698e1750142efd194f98a0805a47..5a12ea63185bcf6273cec5ef0ed054940a604c4d 100644
+--- a/net/minecraft/world/entity/monster/skeleton/WitherSkeleton.java
++++ b/net/minecraft/world/entity/monster/skeleton/WitherSkeleton.java
+@@ -67,7 +67,7 @@ public class WitherSkeleton extends AbstractSkeleton {
+ 
      @Override
-     public void notifyTrade(MerchantOffer offer) {
+     public boolean canHoldItem(final ItemStack itemStack) {
+-        return !itemStack.is(ItemTags.WITHER_SKELETON_DISLIKED_WEAPONS) && super.canHoldItem(itemStack);
++        return !itemStack.is(ItemTags.WITHER_SKELETON_DISLIKED_WEAPONS) && super.mcc$canHoldItem(itemStack);
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/monster/zombie/Zombie.java b/net/minecraft/world/entity/monster/zombie/Zombie.java
+index 071c1fba954486634599eab7843f7ae751ee5be6..ad265abbbe0eaf624bd414ab9a338a1237e3d416 100644
+--- a/net/minecraft/world/entity/monster/zombie/Zombie.java
++++ b/net/minecraft/world/entity/monster/zombie/Zombie.java
+@@ -456,12 +456,12 @@ public class Zombie extends Monster {
+ 
+     @Override
+     public boolean canHoldItem(final ItemStack itemStack) {
+-        return (!itemStack.is(ItemTags.EGGS) || !this.isBaby() || !this.isPassenger()) && super.canHoldItem(itemStack);
++        return (!itemStack.is(ItemTags.EGGS) || !this.isBaby() || !this.isPassenger()) && super.mcc$canHoldItem(itemStack);
+     }
+ 
+     @Override
+     public boolean wantsToPickUp(final ServerLevel level, final ItemStack itemStack) {
+-        return !itemStack.is(Items.GLOW_INK_SAC) && super.wantsToPickUp(level, itemStack);
++        return !itemStack.is(Items.GLOW_INK_SAC) && super.mcc$wantsToPickUp(level, itemStack);
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java b/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
+index a806369361bf18e2729ba634d7508f8f68882b36..9b0794c6207284157ccad8d365fdb360d88b4072 100644
+--- a/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
++++ b/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
+@@ -252,6 +252,6 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
+ 
+     @Override
+     public boolean wantsToPickUp(final ServerLevel level, final ItemStack itemStack) {
+-        return this.canHoldItem(itemStack);
++        return this.mcc$canHoldItem(itemStack);
+     }
+ }
+diff --git a/net/minecraft/world/entity/npc/InventoryCarrier.java b/net/minecraft/world/entity/npc/InventoryCarrier.java
+index 6e4aa90e43b963a98f8f8d449283a1d4eb6fa7bb..cd554e84291e38d82e9c0c1e5b9e4630882d980a 100644
+--- a/net/minecraft/world/entity/npc/InventoryCarrier.java
++++ b/net/minecraft/world/entity/npc/InventoryCarrier.java
+@@ -15,7 +15,7 @@ public interface InventoryCarrier {
+ 
+     static void pickUpItem(final ServerLevel level, final Mob mob, final InventoryCarrier inventoryCarrier, final ItemEntity itemEntity) {
+         ItemStack itemStack = itemEntity.getItem();
+-        if (mob.wantsToPickUp(level, itemStack)) {
++        if (mob.mcc$wantsToPickUp(level, itemStack)) {
+             SimpleContainer inventory = inventoryCarrier.getInventory();
+             boolean hasSpace = inventory.canAddItem(itemStack);
+             if (!hasSpace) {
+diff --git a/net/minecraft/world/entity/npc/villager/AbstractVillager.java b/net/minecraft/world/entity/npc/villager/AbstractVillager.java
+index 5d742dcd507a1f47feb802ad5c2ce24a05d57bbf..23908e7fdd4d68a6eceab891f32d6e273dc7f563 100644
+--- a/net/minecraft/world/entity/npc/villager/AbstractVillager.java
++++ b/net/minecraft/world/entity/npc/villager/AbstractVillager.java
+@@ -161,7 +161,7 @@ public abstract class AbstractVillager extends AgeableMob implements Npc, Mercha
+     @Override
+     public void notifyTrade(final MerchantOffer offer) {
          // offer.increaseUses(); // Paper - Add PlayerTradeEvent and PlayerPurchaseEvent
 -        this.ambientSoundTime = -this.getAmbientSoundInterval();
 +        this.ambientSoundTime = -this.mcc$getAmbientSoundInterval();
          // this.rewardTradeXp(offer); // Paper - Add PlayerTradeEvent and PlayerPurchaseEvent
          if (this.tradingPlayer instanceof ServerPlayer) {
              CriteriaTriggers.TRADE.trigger((ServerPlayer)this.tradingPlayer, this, offer.getResult());
-diff --git a/net/minecraft/world/entity/npc/InventoryCarrier.java b/net/minecraft/world/entity/npc/InventoryCarrier.java
-index 21c8ebb8cfb03528fadf05af6b747d1d3ac190b2..8e15286b7d0a09e323704f97e599913873ed9e4e 100644
---- a/net/minecraft/world/entity/npc/InventoryCarrier.java
-+++ b/net/minecraft/world/entity/npc/InventoryCarrier.java
-@@ -19,7 +19,7 @@ public interface InventoryCarrier {
- 
-     static void pickUpItem(ServerLevel level, Mob mob, InventoryCarrier carrier, ItemEntity itemEntity) {
-         ItemStack item = itemEntity.getItem();
--        if (mob.wantsToPickUp(level, item)) {
-+        if (mob.mcc$wantsToPickUp(level, item)) {
-             SimpleContainer inventory = carrier.getInventory();
-             boolean canAddItem = inventory.canAddItem(item);
-             if (!canAddItem) {
-diff --git a/net/minecraft/world/entity/player/Player.java b/net/minecraft/world/entity/player/Player.java
-index 3ae542153bf1538d17e7c0fe6acc9e7f8605750c..af5fd4b7c6c660a8e1951a79d286818cd5f86200 100644
---- a/net/minecraft/world/entity/player/Player.java
-+++ b/net/minecraft/world/entity/player/Player.java
-@@ -1215,7 +1215,7 @@ public abstract class Player extends LivingEntity {
- 
-     public void attack(Entity target) {
-         // Paper start - PlayerAttackEntityEvent
--        boolean willAttack = target.isAttackable() && !target.skipAttackInteraction(this); // Vanilla logic
-+        boolean willAttack = target.mcc$isAttackable() && !target.skipAttackInteraction(this); // Vanilla logic
-         io.papermc.paper.event.player.PrePlayerAttackEntityEvent playerAttackEntityEvent = new io.papermc.paper.event.player.PrePlayerAttackEntityEvent(
-             (org.bukkit.entity.Player) this.getBukkitEntity(),
-             target.getBukkitEntity(),
-diff --git a/net/minecraft/world/entity/projectile/ThrownPotion.java b/net/minecraft/world/entity/projectile/ThrownPotion.java
-index 5cff36e392a1a6150a5187e913fbfc9c176ccc88..6da8647927fdef541371e5d65f337d97e6729ff7 100644
---- a/net/minecraft/world/entity/projectile/ThrownPotion.java
-+++ b/net/minecraft/world/entity/projectile/ThrownPotion.java
-@@ -36,7 +36,7 @@ import net.minecraft.world.phys.HitResult;
- public class ThrownPotion extends ThrowableItemProjectile {
-     public static final double SPLASH_RANGE = 4.0;
-     private static final double SPLASH_RANGE_SQ = 16.0;
--    public static final Predicate<LivingEntity> WATER_SENSITIVE_OR_ON_FIRE = entity -> entity.isSensitiveToWater() || entity.isOnFire();
-+    public static final Predicate<LivingEntity> WATER_SENSITIVE_OR_ON_FIRE = entity -> entity.isSensitiveToWaterCustom() || entity.isOnFire(); // MCCLab - Add EntityBehaviour
- 
-     public ThrownPotion(EntityType<? extends ThrownPotion> entityType, Level level) {
-         super(entityType, level);
-@@ -128,7 +128,7 @@ public class ThrownPotion extends ThrowableItemProjectile {
-             // Paper end - Fix potions splash events
-             double d = this.distanceToSqr(livingEntity);
-             if (d < 16.0) {
--                if (livingEntity.isSensitiveToWater()) {
-+                if (livingEntity.mcc$isSensitiveToWater()) { // MCCLab - Add EntityBehaviour
-                     affected.put(livingEntity.getBukkitLivingEntity(), 1.0);
-                     // livingEntity.hurtServer(level, this.damageSources().indirectMagic(this, this.getOwner()), 1.0F);
-                 }
-diff --git a/net/minecraft/world/entity/projectile/windcharge/AbstractWindCharge.java b/net/minecraft/world/entity/projectile/windcharge/AbstractWindCharge.java
-index 2bb750bdb9b1ea2152cc10cf014364a1e1d55a2a..937d6b75db7a29d55ad5bb1d9f146fd0ea2b72be 100644
---- a/net/minecraft/world/entity/projectile/windcharge/AbstractWindCharge.java
-+++ b/net/minecraft/world/entity/projectile/windcharge/AbstractWindCharge.java
-@@ -57,7 +57,7 @@ public abstract class AbstractWindCharge extends AbstractHurtingProjectile imple
+@@ -177,8 +177,8 @@ public abstract class AbstractVillager extends AgeableMob implements Npc, Mercha
  
      @Override
-     public boolean canCollideWith(Entity entity) {
+     public void notifyTradeUpdated(final ItemStack itemStack) {
+-        if (!this.level().isClientSide() && this.ambientSoundTime > -this.getAmbientSoundInterval() + 20) {
+-            this.ambientSoundTime = -this.getAmbientSoundInterval();
++        if (!this.level().isClientSide() && this.ambientSoundTime > -this.mcc$getAmbientSoundInterval() + 20) {
++            this.ambientSoundTime = -this.mcc$getAmbientSoundInterval();
+             this.makeSound(this.getTradeUpdatedSound(!itemStack.isEmpty()));
+         }
+     }
+diff --git a/net/minecraft/world/entity/player/Player.java b/net/minecraft/world/entity/player/Player.java
+index 4ba3fb85b0473b4e7aa237701034d25f84e955cd..395bc93df724f4a96b9a4311f6aa152d66c1d6cf 100644
+--- a/net/minecraft/world/entity/player/Player.java
++++ b/net/minecraft/world/entity/player/Player.java
+@@ -1096,7 +1096,7 @@ public abstract class Player extends Avatar implements ContainerUser {
+     }
+ 
+     private boolean cannotAttack(final Entity entity) {
+-        return !entity.isAttackable() || entity.skipAttackInteraction(this);
++        return !entity.mcc$isAttackable() || entity.skipAttackInteraction(this);
+     }
+ 
+     private boolean deflectProjectile(final Entity entity, final java.util.function.BooleanSupplier callEvent) { // Paper - damage events
+diff --git a/net/minecraft/world/entity/projectile/hurtingprojectile/windcharge/AbstractWindCharge.java b/net/minecraft/world/entity/projectile/hurtingprojectile/windcharge/AbstractWindCharge.java
+index 654fdca39db9f559ad8fdce874e9d425441b4bf1..71fae059aa9e4baf23a85815df77c42e82acf539 100644
+--- a/net/minecraft/world/entity/projectile/hurtingprojectile/windcharge/AbstractWindCharge.java
++++ b/net/minecraft/world/entity/projectile/hurtingprojectile/windcharge/AbstractWindCharge.java
+@@ -62,7 +62,7 @@ public abstract class AbstractWindCharge extends AbstractHurtingProjectile imple
+ 
+     @Override
+     public boolean canCollideWith(final Entity entity) {
 -        return !(entity instanceof AbstractWindCharge) && super.canCollideWith(entity);
 +        return !(entity instanceof AbstractWindCharge) && super.mcc$canCollideWith(entity);
      }
  
      @Override
+diff --git a/net/minecraft/world/entity/projectile/throwableitemprojectile/AbstractThrownPotion.java b/net/minecraft/world/entity/projectile/throwableitemprojectile/AbstractThrownPotion.java
+index eb55301b0bcc91f73d8a92dead7d36c97ffb5d15..05e600fdf86fa69a1216cbcfdfdf283bf23615f2 100644
+--- a/net/minecraft/world/entity/projectile/throwableitemprojectile/AbstractThrownPotion.java
++++ b/net/minecraft/world/entity/projectile/throwableitemprojectile/AbstractThrownPotion.java
+@@ -26,7 +26,7 @@ import net.minecraft.world.phys.HitResult;
+ public abstract class AbstractThrownPotion extends ThrowableItemProjectile {
+     public static final double SPLASH_RANGE = 4.0;
+     protected static final double SPLASH_RANGE_SQ = 16.0;
+-    public static final Predicate<LivingEntity> WATER_SENSITIVE_OR_ON_FIRE = livingEntity -> livingEntity.isSensitiveToWater() || livingEntity.isOnFire();
++    public static final Predicate<LivingEntity> WATER_SENSITIVE_OR_ON_FIRE = livingEntity -> livingEntity.mcc$isSensitiveToWater() || livingEntity.isOnFire();
+ 
+     public AbstractThrownPotion(final EntityType<? extends AbstractThrownPotion> type, final Level level) {
+         super(type, level);
+@@ -123,7 +123,7 @@ public abstract class AbstractThrownPotion extends ThrowableItemProjectile {
+                 // Paper end - only compute entities once
+                 double dist = this.distanceToSqr(entity);
+                 if (dist < 16.0) {
+-                    if (hurtsWaterSensitiveEntities && entity.isSensitiveToWater()) {
++                    if (hurtsWaterSensitiveEntities && entity.mcc$isSensitiveToWater()) {
+                         affected.put(entity.getBukkitEntity(), 1.0); // Paper - PotionSplashEvents
+                     }
+ 
 diff --git a/net/minecraft/world/entity/raid/Raider.java b/net/minecraft/world/entity/raid/Raider.java
-index 8270d76a753bfd26a4c8ef6610bee5c24ee59cfe..98e6385c269f7514d26d70a867a2b8677e31472f 100644
+index 9d242f24c37fec196f06b8ef6fa29a66b2781c68..f847c5a1b0c50b44bf3c1b5bd7dcc686eb55dbb8 100644
 --- a/net/minecraft/world/entity/raid/Raider.java
 +++ b/net/minecraft/world/entity/raid/Raider.java
 @@ -239,7 +239,7 @@ public abstract class Raider extends PatrollingMonster {
  
      @Override
-     public boolean removeWhenFarAway(double distanceToClosestPlayer) {
--        return this.getCurrentRaid() == null && super.removeWhenFarAway(distanceToClosestPlayer);
-+        return this.getCurrentRaid() == null && super.mcc$removeWhenFarAway(distanceToClosestPlayer);
+     public boolean removeWhenFarAway(final double distSqr) {
+-        return this.getCurrentRaid() == null && super.removeWhenFarAway(distSqr);
++        return this.getCurrentRaid() == null && super.mcc$removeWhenFarAway(distSqr);
      }
  
      @Override
-@@ -399,7 +399,7 @@ public abstract class Raider extends PatrollingMonster {
-         }
- 
-         private boolean cannotPickUpBanner() {
--            if (!getServerLevel(this.mob).getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING) || !this.mob.canPickUpLoot()) return false; // Paper - respect game and entity rules for picking up items
-+            if (!getServerLevel(this.mob).getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING) || !this.mob.mcc$canPickUpLoot()) return false; // Paper - respect game and entity rules for picking up items
-             if (!this.mob.hasActiveRaid()) {
-                 return true;
-             } else if (this.mob.getCurrentRaid().isOver()) {
-diff --git a/net/minecraft/world/item/NameTagItem.java b/net/minecraft/world/item/NameTagItem.java
-index 438d98b11275d792f18301c643254dfb733c0dd6..db234e07c92fde8339a2518be10c9132ef72065a 100644
---- a/net/minecraft/world/item/NameTagItem.java
-+++ b/net/minecraft/world/item/NameTagItem.java
-@@ -16,7 +16,7 @@ public class NameTagItem extends Item {
-     @Override
-     public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
-         Component component = stack.get(DataComponents.CUSTOM_NAME);
--        if (component != null && target.getType().canSerialize() && target.canBeNameTagged()) {
-+        if (component != null && target.getType().canSerialize() && target.mcc$canBeNameTagged()) {
-             if (!player.level().isClientSide && target.isAlive()) {
-                 // Paper start - Add PlayerNameEntityEvent
-                 io.papermc.paper.event.player.PlayerNameEntityEvent event = new io.papermc.paper.event.player.PlayerNameEntityEvent(((net.minecraft.server.level.ServerPlayer) player).getBukkitEntity(), target.getBukkitLivingEntity(), io.papermc.paper.adventure.PaperAdventure.asAdventure(stack.getHoverName()), true);
 diff --git a/net/minecraft/world/level/EntityGetter.java b/net/minecraft/world/level/EntityGetter.java
-index e81195df621159da67136f020fa7a6d39d1ee5ed..06dbe57c3b2e54dbfe2935a88a62e8e469185b0c 100644
+index cc938f43c4a5e947ed87ca2001cbaca4084bf64c..9ac40862b8d3986eac1bfcae937f91d22feaedab 100644
 --- a/net/minecraft/world/level/EntityGetter.java
 +++ b/net/minecraft/world/level/EntityGetter.java
 @@ -103,7 +103,7 @@ public interface EntityGetter extends ca.spottedleaf.moonrise.patches.chunk_syst
                  continue;
              }
  
--            if ((entity == null && otherEntity.canBeCollidedWith()) || (entity != null && entity.canCollideWith(otherEntity))) {
-+            if ((entity == null && otherEntity.canBeCollidedWith()) || (entity != null && entity.mcc$canCollideWith(otherEntity))) {
+-            if ((source == null && otherEntity.canBeCollidedWith(source)) || (source != null && source.canCollideWith(otherEntity))) {
++            if ((source == null && otherEntity.canBeCollidedWith(source)) || (source != null && source.mcc$canCollideWith(otherEntity))) {
                  ret.add(Shapes.create(otherEntity.getBoundingBox()));
              }
          }
 diff --git a/net/minecraft/world/level/NaturalSpawner.java b/net/minecraft/world/level/NaturalSpawner.java
-index 17ce115e887cbbb06ad02ab7ddb488e27342c0e4..047b1ec61f7286bef626e32daebe1aa09769b8fe 100644
+index 06c63a3429d010546c8b9de610cbae7bf6bb6935..3e2dfa8c90221b344b335311f14f40a73e5e40e2 100644
 --- a/net/minecraft/world/level/NaturalSpawner.java
 +++ b/net/minecraft/world/level/NaturalSpawner.java
-@@ -405,7 +405,7 @@ public final class NaturalSpawner {
-     private static boolean isValidPositionForMob(ServerLevel level, Mob mob, double distance) {
+@@ -424,7 +424,7 @@ public final class NaturalSpawner {
+     private static boolean isValidPositionForMob(final ServerLevel level, final Mob mob, final double nearestPlayerDistanceSqr) {
          return (
-                 !(distance > mob.getType().getCategory().getDespawnDistance() * mob.getType().getCategory().getDespawnDistance())
--                    || !mob.removeWhenFarAway(distance)
-+                    || !mob.mcc$removeWhenFarAway(distance)
+                 !(nearestPlayerDistanceSqr > mob.getType().getCategory().getDespawnDistance() * mob.getType().getCategory().getDespawnDistance())
+-                    || !mob.removeWhenFarAway(nearestPlayerDistanceSqr)
++                    || !mob.mcc$removeWhenFarAway(nearestPlayerDistanceSqr)
              )
              && mob.checkSpawnRules(level, EntitySpawnReason.NATURAL)
              && mob.checkSpawnObstruction(level);
 diff --git a/net/minecraft/world/level/block/BaseFireBlock.java b/net/minecraft/world/level/block/BaseFireBlock.java
-index 45df9f008b74dd0d6d790c91102e9afe1da45633..f6cd50b7e5b6d942ec161a16e6d30ea2209d4d0a 100644
+index 580fac7e521e635fa1177652a2e6a287585589d2..019f7a6674375a41a890329ef3c580191dc2ea81 100644
 --- a/net/minecraft/world/level/block/BaseFireBlock.java
 +++ b/net/minecraft/world/level/block/BaseFireBlock.java
-@@ -130,7 +130,7 @@ public abstract class BaseFireBlock extends Block {
-     @Override
-     protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
-         if (!new io.papermc.paper.event.entity.EntityInsideBlockEvent(entity.getBukkitEntity(), org.bukkit.craftbukkit.block.CraftBlock.at(level, pos)).callEvent()) { return; } // Paper - Add EntityInsideBlockEvent
+@@ -140,7 +140,7 @@ public abstract class BaseFireBlock extends Block {
+     }
+ 
+     public static void fireIgnite(final Entity entity, BlockPos pos) { // Paper - track position inside effect was triggered on
 -        if (!entity.fireImmune()) {
 +        if (!entity.mcc$fireImmune()) {
              if (entity.getRemainingFireTicks() < 0) {
                  entity.setRemainingFireTicks(entity.getRemainingFireTicks() + 1);
              } else if (entity instanceof ServerPlayer) {
 diff --git a/net/minecraft/world/level/pathfinder/WalkNodeEvaluator.java b/net/minecraft/world/level/pathfinder/WalkNodeEvaluator.java
-index 9e6b2bbc1f83d32d0332f036be4f1a0e18b826bf..d9183fb0ad8aa3de197a3ee49731d2f1c9e382d4 100644
+index 7beeebdf6ddef8114ff8f56f438776c4daf1aa3e..1635f21402b7f82f2d92552c37be853cc177878a 100644
 --- a/net/minecraft/world/level/pathfinder/WalkNodeEvaluator.java
 +++ b/net/minecraft/world/level/pathfinder/WalkNodeEvaluator.java
-@@ -331,7 +331,7 @@ public class WalkNodeEvaluator extends NodeEvaluator {
+@@ -349,7 +349,7 @@ public class WalkNodeEvaluator extends NodeEvaluator {
  
-     private Node tryFindFirstGroundNodeBelow(int x, int y, int z) {
-         for (int i = y - 1; i >= this.mob.level().getMinY(); i--) {
--            if (y - i > this.mob.getMaxFallDistance()) {
-+            if (y - i > this.mob.mcc$getMaxFallDistance()) {
-                 return this.getBlockedNode(x, i, z);
+     private Node tryFindFirstGroundNodeBelow(final int x, final int y, final int z) {
+         for (int currentY = y - 1; currentY >= this.mob.level().getMinY(); currentY--) {
+-            if (y - currentY > this.mob.getMaxFallDistance()) {
++            if (y - currentY > this.mob.mcc$getMaxFallDistance()) {
+                 return this.getBlockedNode(x, currentY, z);
              }
  

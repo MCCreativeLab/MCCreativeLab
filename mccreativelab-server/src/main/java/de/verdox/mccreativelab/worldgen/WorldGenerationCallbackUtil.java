@@ -18,8 +18,14 @@ public class WorldGenerationCallbackUtil {
     public static void executeWorldGenCallbacks(WorldGenerationBehaviour.FeatureType featureType, WorldGenLevel worldGenLevel, BlockPos pos, BlockState state, ChunkAccess chunkAccess) {
         if(!WorldGenerationBehaviour.WORLD_GENERATION_BEHAVIOUR.isImplemented())
             return;
-        BlockData blockData = state.createCraftBlockData();
+        BlockData blockData = state.asBlockData();
         BlockVector blockPosition = new BlockVector(pos.getX(), pos.getY(), pos.getZ());
-        WorldGenerationBehaviour.WORLD_GENERATION_BEHAVIOUR.getBehaviour().featureBlockGenerationCallback(featureType, blockPosition, chunkAccess, blockData);
+        var region = new org.bukkit.craftbukkit.generator.CraftLimitedRegion(worldGenLevel, chunkAccess.getPos());
+        try {
+            WorldGenerationBehaviour.WORLD_GENERATION_BEHAVIOUR.getBehaviour().featureBlockGenerationCallback(featureType, blockPosition, region, blockData);
+            region.saveEntities();
+        } finally {
+            region.breakLink();
+        }
     }
 }

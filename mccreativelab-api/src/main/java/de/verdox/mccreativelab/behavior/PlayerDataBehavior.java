@@ -17,7 +17,7 @@ public interface PlayerDataBehavior extends Behaviour {
     }
 
     @Nullable
-    default CompletableFuture<Void> saveAdvancementsAsync(@NotNull UUID playerUUID, JsonElement jsonElement) {
+    default CompletableFuture<Void> saveAdvancementsAsync(@NotNull UUID playerUUID, @org.jetbrains.annotations.NotNull JsonElement jsonElement) {
         return null;
     }
 
@@ -27,7 +27,7 @@ public interface PlayerDataBehavior extends Behaviour {
     }
 
     @Nullable
-    default CompletableFuture<Void> saveNBTDataAsync(@NotNull UUID playerUUID, ByteArrayOutputStream nbtData) {
+    default CompletableFuture<Void> saveNBTDataAsync(@NotNull UUID playerUUID, @org.jetbrains.annotations.NotNull ByteArrayOutputStream nbtData) {
         return null;
     }
 
@@ -37,7 +37,7 @@ public interface PlayerDataBehavior extends Behaviour {
     }
 
     @Nullable
-    default CompletableFuture<Void> saveStatsAsync(@NotNull UUID playerUUID, JsonElement jsonElement) {
+    default CompletableFuture<Void> saveStatsAsync(@NotNull UUID playerUUID, @org.jetbrains.annotations.NotNull JsonElement jsonElement) {
         return null;
     }
 }

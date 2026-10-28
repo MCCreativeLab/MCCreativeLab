@@ -9,7 +9,7 @@ import com.google.gson.stream.JsonReader;
 import com.mojang.logging.LogUtils;
 import io.papermc.paper.event.data.PlayerAdvancementDataLoadEvent;
 import io.papermc.paper.event.data.PlayerAdvancementDataSaveEvent;
-import net.minecraft.FileUtil;
+import net.minecraft.util.FileUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.world.level.storage.LevelResource;

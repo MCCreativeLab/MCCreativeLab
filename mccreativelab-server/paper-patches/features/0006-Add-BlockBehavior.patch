@@ -5,24 +5,23 @@ Subject: [PATCH] Add BlockBehavior
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
-index 5cb69d0b822e11a99a96aef4f59986d083b079f4..91cf6fab55526b90bba1620bcf05dfe45fa3cacf 100644
+index 0ab39922e53ebeb044958f99b7f0f06391d78d31..7e26311648225acf5aa8a32046736791d34317d3 100644
 --- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
 +++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
-@@ -720,7 +720,7 @@ public class CraftBlock implements Block {
+@@ -701,7 +701,7 @@ public class CraftBlock implements Block {
      @Override
      public void tick() {
-         final ServerLevel level = this.world.getMinecraftWorld();
--        this.getNMS().tick(level, this.position, level.random);
-+        this.getNMS().mcc$tick(level, this.position, level.random);
+         final ServerLevel level = this.level.getMinecraftWorld();
+-        this.getBlockState().tick(level, this.position, level.getRandom());
++        this.getBlockState().mcc$tick(level, this.position, level.getRandom());
      }
  
- 
-@@ -732,7 +732,7 @@ public class CraftBlock implements Block {
+     @Override
+@@ -712,6 +712,6 @@ public class CraftBlock implements Block {
      @Override
      public void randomTick() {
-         final ServerLevel level = this.world.getMinecraftWorld();
--        this.getNMS().randomTick(level, this.position, level.random);
-+        this.getNMS().mcc$randomTick(level, this.position, level.random);
+         final ServerLevel level = this.level.getMinecraftWorld();
+-        this.getBlockState().randomTick(level, this.position, level.getRandom());
++        this.getBlockState().mcc$randomTick(level, this.position, level.getRandom());
      }
-     // Paper end
  }

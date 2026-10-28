@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: derverdox <mail.ysp@web.de>
+Date: Thu, 21 Mar 2024 16:54:14 +0100
+Subject: [PATCH] - Adding PredicateChoice
+
+
+diff --git a/src/main/java/org/bukkit/inventory/RecipeChoice.java b/src/main/java/org/bukkit/inventory/RecipeChoice.java
+index e8555782de9a5ef32f916997a3cab99ff8818285..7ec131ed010255900077152f0c9cead14fa035ed 100644
+--- a/src/main/java/org/bukkit/inventory/RecipeChoice.java
++++ b/src/main/java/org/bukkit/inventory/RecipeChoice.java
+@@ -408,5 +408,25 @@ public interface RecipeChoice extends Predicate<ItemStack>, Cloneable {
+     @ApiStatus.NonExtendable
+     interface PredicateChoice extends RecipeChoice {
+ 
++        static PredicateChoice create(Predicate<ItemStack> predicate, ItemStack... recipeBookExamples) {
++            return create(predicate, Arrays.asList(recipeBookExamples));
++        }
++
++        static PredicateChoice create(Predicate<ItemStack> predicate, java.util.Collection<ItemStack> recipeBookExamples) {
++            Objects.requireNonNull(predicate, "The item predicate cannot be null!");
++            Objects.requireNonNull(recipeBookExamples, "The recipe book examples cannot be null!");
++            if (recipeBookExamples.isEmpty()) {
++                throw new IllegalArgumentException("Please provide at least one recipe book example item!");
++            }
++            return new de.verdox.mccreativelab.recipe.PredicateChoiceImpl(predicate, List.copyOf(recipeBookExamples));
++        }
++
++        default Predicate<ItemStack> predicate() {
++            return this::test;
++        }
++
++        default List<ItemStack> recipeBookExamples() {
++            return List.of(this.getItemStack());
++        }
+     }
+ }

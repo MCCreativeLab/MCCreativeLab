@@ -1,6 +1,15 @@
 package de.verdox.mccreativelab.behavior;
 
 import de.verdox.mccreativelab.MultiCustomBehaviour;
+import de.verdox.mccreativelab.ItemInteractionResult;
+import de.verdox.mccreativelab.InteractionResult;
+import org.bukkit.World;
+import org.bukkit.block.BlockFace;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.util.RayTraceResult;
+import org.bukkit.util.Vector;
+import org.jetbrains.annotations.Nullable;
+
 import de.verdox.mccreativelab.random.VanillaRandomSource;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -53,7 +62,7 @@ public interface BlockBehaviour extends Behaviour {
      */
     @NotNull
     default BehaviourResult.Bool isBlockRandomlyTicking(@NotNull Block block, @NotNull BlockData blockData) {
-        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+        return isBlockDataRandomlyTicking(blockData);
     }
 
     /**
@@ -110,7 +119,7 @@ public interface BlockBehaviour extends Behaviour {
      */
     @NotNull
     default BehaviourResult.Bool canSurvive(@NotNull Block block) {
-        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+        return canSurvive(block, block.getWorld());
     }
 
     /**
@@ -132,7 +141,8 @@ public interface BlockBehaviour extends Behaviour {
      * @param dropConsumer the code that is run on the loot that is dropped because of the explosion
      * @return void
      */
-    default BehaviourResult.Void onExplosionHit(Block block, ExplosionResult explosionResult, BiConsumer<ItemStack, Location> dropConsumer) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Void onExplosionHit( @org.jetbrains.annotations.NotNull Block block, @org.jetbrains.annotations.NotNull ExplosionResult explosionResult, @org.jetbrains.annotations.NotNull BiConsumer<ItemStack, Location> dropConsumer) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
@@ -142,7 +152,8 @@ public interface BlockBehaviour extends Behaviour {
      * @param explosionResult the result of the explosion
      * @return void
      */
-    default BehaviourResult.Void wasExploded(Block block, ExplosionResult explosionResult) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Void wasExploded( @org.jetbrains.annotations.NotNull Block block, @org.jetbrains.annotations.NotNull ExplosionResult explosionResult) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
@@ -154,7 +165,8 @@ public interface BlockBehaviour extends Behaviour {
      * @param fallDistance the falling distance
      * @return void
      */
-    default BehaviourResult.Void fallOn(Block block, BlockData blockData, Entity fallingEntity, float fallDistance) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Void fallOn( @org.jetbrains.annotations.NotNull Block block, @org.jetbrains.annotations.NotNull BlockData blockData, @org.jetbrains.annotations.NotNull Entity fallingEntity, float fallDistance) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
@@ -165,7 +177,8 @@ public interface BlockBehaviour extends Behaviour {
      * @param precipitation the precipitation
      * @return void
      */
-    default BehaviourResult.Void handlePrecipitation(Block block, BlockData blockData, Precipitation precipitation) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Void handlePrecipitation( @org.jetbrains.annotations.NotNull Block block, @org.jetbrains.annotations.NotNull BlockData blockData, @org.jetbrains.annotations.NotNull Precipitation precipitation) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
@@ -176,7 +189,8 @@ public interface BlockBehaviour extends Behaviour {
      * @param dropExperience whether to drop experience
      * @return void
      */
-    default BehaviourResult.Void spawnAfterBreak(Block block, ItemStack toolUsedToBreakBlock, boolean dropExperience) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Void spawnAfterBreak( @org.jetbrains.annotations.NotNull Block block, @org.jetbrains.annotations.NotNull ItemStack toolUsedToBreakBlock, boolean dropExperience) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
 
@@ -186,8 +200,74 @@ public interface BlockBehaviour extends Behaviour {
      * @param projectile the projectile
      * @return void
      */
-    default BehaviourResult.Void onProjectileHit(Block block, Projectile projectile) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Void onProjectileHit( @org.jetbrains.annotations.NotNull Block block, @org.jetbrains.annotations.NotNull Projectile projectile) {
         return BehaviourResult.Void.DEFAULT_INSTANCE;
     }
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Callback onPlayerPlace(@NotNull Player player, @NotNull ItemStack stackUsedToPlaceBlock, @NotNull Location location, @NotNull BlockData thePlacedState) {
+        return BehaviourResult.Callback.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Callback onPlayerBreak(@NotNull Player player, @NotNull Location location, @NotNull BlockData brokenState) {
+        return BehaviourResult.Callback.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Callback onPistonMoveBlock(@NotNull BlockData blockDataMoved, @NotNull Location positionBeforeMove, @NotNull Location positionAfterMove, @NotNull Block piston, @NotNull Vector moveDirection) {
+        return BehaviourResult.Callback.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Callback onPlace(@NotNull Location location, @NotNull BlockData newBlockData, @NotNull BlockData oldBlockData, boolean notify, boolean isProcessingBlockPlaceEvent) {
+        return BehaviourResult.Callback.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Callback onDestroy(@NotNull Location location, boolean drop, @Nullable Entity destroyingEntity, int maxUpdateDepth) {
+        return BehaviourResult.Callback.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Object<Float> getExplosionResistance(@NotNull Block block, @NotNull BlockData blockData) {
+        return BehaviourResult.Object.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Bool fertilizeAction(@NotNull Block block, @NotNull ItemStack stack) {
+        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Bool isBlockDataRandomlyTicking(@NotNull BlockData blockData) {
+        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Bool canSurvive(@NotNull Block block, @NotNull World world) {
+        return BehaviourResult.Bool.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Object<BlockData> blockUpdate(@NotNull Location location, @NotNull BlockData blockData, @NotNull BlockFace direction, @NotNull BlockData neighbourBlockData, @NotNull Location neighbourLocation) {
+        return BehaviourResult.Object.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Void onNeighbourBlockUpdate(@NotNull Block block, @NotNull org.bukkit.block.BlockType sourceBlock, boolean notify) {
+        return BehaviourResult.Void.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Object<ItemInteractionResult> use(@NotNull Block block, @NotNull Player player, @NotNull EquipmentSlot hand, @NotNull RayTraceResult rayTraceResult) {
+        return BehaviourResult.Object.DEFAULT_INSTANCE;
+    }
+
+    /** Compatibility callback used by the MCC plugin extension. */
+    default BehaviourResult.@NotNull Callback onUseCallback(@NotNull Block block, @NotNull Player player, @NotNull EquipmentSlot hand, @NotNull RayTraceResult rayTraceResult, @NotNull InteractionResult interactionResult) {
+        return BehaviourResult.Callback.DEFAULT_INSTANCE;
+    }
+
 }
 

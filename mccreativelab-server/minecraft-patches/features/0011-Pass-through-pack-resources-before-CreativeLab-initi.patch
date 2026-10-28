@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox-w <verdox@solarminer.app>
+Date: Tue, 27 Oct 2026 14:32:34 +0000
+Subject: [PATCH] Pass through pack resources before CreativeLab initialization
+
+
+diff --git a/net/minecraft/server/packs/PathPackResources.java b/net/minecraft/server/packs/PathPackResources.java
+index 798a25217168856682d165acbc7d21743e3ce0ab..a3658c39fa4922d7e705b37e1f1f64fc831de34f 100644
+--- a/net/minecraft/server/packs/PathPackResources.java
++++ b/net/minecraft/server/packs/PathPackResources.java
+@@ -109,6 +109,10 @@ public class PathPackResources extends AbstractPackMetadataResources implements
+                 if (identifier == null) {
+                     Util.logAndPauseIfInIde(String.format(Locale.ROOT, "Invalid path in pack: %s:%s, ignoring", namespace, resourcePath));
+                 } else {
++                    if (!de.verdox.mccreativelab.MCCreativeLab.isInitialized()) {
++                        output.accept(identifier, IoSupplier.create(file));
++                        return;
++                    }
+                     de.verdox.mccreativelab.CraftDataPackInterceptor interceptor = (de.verdox.mccreativelab.CraftDataPackInterceptor) de.verdox.mccreativelab.MCCreativeLab.getDataPackInterceptor();
+                     IoSupplier<InputStream> intercepted = interceptor.evaluate(identifier, file, IoSupplier.create(file));
+                     if (intercepted != null) {

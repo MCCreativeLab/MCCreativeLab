@@ -5,10 +5,10 @@ Subject: [PATCH] Add BasicItemFormat
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
-index 3799973696eabbdc992bee4ff24175fc28ec8d7c..e693c05f28aa74e88d4e2187ba75dffcdd573fde 100644
+index d70fd987267deb9e19ef13b38221e89f0a9a8f88..ad4b750688eaeb73184b7b5916b4b22274cb6f09 100644
 --- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
 +++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
-@@ -177,6 +177,7 @@ public final class CraftItemStack extends ItemStack {
+@@ -192,6 +192,7 @@ public final class CraftItemStack extends ItemStack {
          this.setAmount(amount);
          this.setDurability(durability);
          this.setItemMeta(itemMeta);
@@ -17,7 +17,7 @@ index 3799973696eabbdc992bee4ff24175fc28ec8d7c..e693c05f28aa74e88d4e2187ba75dffc
  
      @Override
 diff --git a/src/test/java/org/bukkit/craftbukkit/inventory/DeprecatedItemMetaCustomValueTest.java b/src/test/java/org/bukkit/craftbukkit/inventory/DeprecatedItemMetaCustomValueTest.java
-index 1c80fe7549d70ae16c7b755c22752549261f072a..5fa003e9aaa6a2aa0caeae3f428fa1ea79548772 100644
+index 07ffea04850c0b7f593519727e8f42644a2dcb36..81a5382115ec7f3fc399c98d40df86ede6b37b92 100644
 --- a/src/test/java/org/bukkit/craftbukkit/inventory/DeprecatedItemMetaCustomValueTest.java
 +++ b/src/test/java/org/bukkit/craftbukkit/inventory/DeprecatedItemMetaCustomValueTest.java
 @@ -120,8 +120,8 @@ public class DeprecatedItemMetaCustomValueTest {
@@ -32,7 +32,7 @@ index 1c80fe7549d70ae16c7b755c22752549261f072a..5fa003e9aaa6a2aa0caeae3f428fa1ea
  
      @Test
 diff --git a/src/test/java/org/bukkit/craftbukkit/inventory/PersistentDataContainerTest.java b/src/test/java/org/bukkit/craftbukkit/inventory/PersistentDataContainerTest.java
-index f33b49915d1f1f0838c49ac943e8d4d619450f6b..31abd3d04b76e0154fa5294a18cef0adbe7329d8 100644
+index f56d5d2c72cebfbda3cac371e8161351f80bbc07..09b7123bda48290608d18d1614482658c47e92bd 100644
 --- a/src/test/java/org/bukkit/craftbukkit/inventory/PersistentDataContainerTest.java
 +++ b/src/test/java/org/bukkit/craftbukkit/inventory/PersistentDataContainerTest.java
 @@ -154,8 +154,8 @@ public class PersistentDataContainerTest {

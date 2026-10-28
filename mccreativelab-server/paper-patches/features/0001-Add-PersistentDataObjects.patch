@@ -5,26 +5,29 @@ Subject: [PATCH] Add PersistentDataObjects
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/persistence/CraftPersistentDataContainer.java b/src/main/java/org/bukkit/craftbukkit/persistence/CraftPersistentDataContainer.java
-index 9d867f1659433ea15f281c8b441db7e339013100..83aab7da3793fa862cd4804d7006ee6ccbacf8b2 100644
+index d1d10acda362d68f5f858cc3917b835e52df6cd1..770a56573ecb1f3fac7e71ec86ac6b8bb71765ca 100644
 --- a/src/main/java/org/bukkit/craftbukkit/persistence/CraftPersistentDataContainer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/persistence/CraftPersistentDataContainer.java
-@@ -20,6 +20,7 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
+@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
+ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.PaperPersistentDataContainerView implements PersistentDataContainer { // Paper - split up view and mutable
  
      private final Map<String, Tag> customDataTags = new HashMap<>();
-     // Paper - move to PersistentDataContainerView
++    // Paper - move to PersistentDataContainerView
 +    private final CraftPersistentDataObjectCache craftPersistentDataObjectCache; // Paper - Adding PersistentDataObjects
  
      public CraftPersistentDataContainer(Map<String, Tag> customTags, CraftPersistentDataTypeRegistry registry) {
          this(registry);
-@@ -28,6 +29,7 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
+@@ -27,7 +29,8 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
+     }
  
      public CraftPersistentDataContainer(CraftPersistentDataTypeRegistry registry) {
-         super(registry); // Paper - move to PersistentDataContainerView
+-        super(registry);
++        super(registry); // Paper - move to PersistentDataContainerView
 +        this.craftPersistentDataObjectCache = new CraftPersistentDataObjectCache(this, registry, customDataTags); // Paper - Adding PersistentDataObjects
      }
  
-     // Paper start
-@@ -44,6 +46,9 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
+     @Override
+@@ -42,13 +45,16 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
          Preconditions.checkArgument(value != null, "The provided value cannot be null");
  
          this.customDataTags.put(key.toString(), this.registry.wrap(type, type.toPrimitive(value, this.adapterContext)));
@@ -33,8 +36,7 @@ index 9d867f1659433ea15f281c8b441db7e339013100..83aab7da3793fa862cd4804d7006ee6c
 +        // Paper end - Adding PersistentDataObjects
      }
  
-     // Paper - move to PersistentDataContainerView
-@@ -52,7 +57,7 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
+     @NotNull
      @Override
      public Set<NamespacedKey> getKeys() {
          Set<NamespacedKey> keys = new HashSet<>();
@@ -43,7 +45,7 @@ index 9d867f1659433ea15f281c8b441db7e339013100..83aab7da3793fa862cd4804d7006ee6c
          this.customDataTags.keySet().forEach(key -> {
              String[] keyData = key.split(":", 2);
              if (keyData.length == 2) {
-@@ -66,25 +71,28 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
+@@ -62,25 +68,28 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
      @Override
      public void remove(@NotNull NamespacedKey key) {
          Preconditions.checkArgument(key != null, "The NamespacedKey key cannot be null");
@@ -75,7 +77,7 @@ index 9d867f1659433ea15f281c8b441db7e339013100..83aab7da3793fa862cd4804d7006ee6c
          }
      }
  
-@@ -102,11 +110,12 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
+@@ -98,11 +107,12 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
          Map<String, Tag> myRawMap = this.getRaw();
          Map<String, Tag> theirRawMap = ((CraftPersistentDataContainer) obj).getRaw();
  
@@ -89,24 +91,27 @@ index 9d867f1659433ea15f281c8b441db7e339013100..83aab7da3793fa862cd4804d7006ee6c
          for (Entry<String, Tag> entry : this.customDataTags.entrySet()) {
              tag.put(entry.getKey(), entry.getValue());
          }
-@@ -148,6 +157,7 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
+@@ -143,6 +153,7 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
+     }
  
-     // Paper start
      public void clear() {
 +        this.craftPersistentDataObjectCache.persistentDataObjectMap.clear(); // Paper - Adding PersistentDataObjects
          this.customDataTags.clear();
      }
-     // Paper end
-@@ -168,9 +178,35 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
  
-     // Paper start - deep clone tags
+@@ -160,6 +171,7 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
+     }
+ 
      public Map<String, Tag> getTagsCloned() {
 +        craftPersistentDataObjectCache.saveObjectsToTags(false); // Paper - Adding PersistentDataObjects
          final Map<String, Tag> tags = new HashMap<>();
          this.customDataTags.forEach((key, tag) -> tags.put(key, tag.copy()));
          return tags;
+@@ -177,4 +189,30 @@ public class CraftPersistentDataContainer extends io.papermc.paper.persistence.P
+     public int getSize() {
+         return this.customDataTags.size();
      }
-     // Paper end - deep clone tags
++    // Paper end - deep clone tags
 +
 +    // Paper start - Adding PersistentDataObjects
 +    @Override

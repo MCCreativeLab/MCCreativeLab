@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox-w <verdox@solarminer.app>
+Date: Tue, 27 Oct 2026 19:38:53 +0000
+Subject: [PATCH] Keep per-stack item callbacks and configurable water damage
+
+
+diff --git a/net/minecraft/world/entity/LivingEntity.java b/net/minecraft/world/entity/LivingEntity.java
+index 076a723ace9edd53618cab2a9e5ae6c3dbd2bca7..892ecc04ff72395779446ad4fff6c5385ca2159d 100644
+--- a/net/minecraft/world/entity/LivingEntity.java
++++ b/net/minecraft/world/entity/LivingEntity.java
+@@ -3825,7 +3825,7 @@ public abstract class LivingEntity extends Entity implements Attackable, Waypoin
+         }
+         // Paper end - Add EntityMoveEvent
+         if (this.level() instanceof ServerLevel serverLevel && this.mcc$isSensitiveToWater() && this.isInWaterOrRain()) {
+-            this.hurtServer(serverLevel, this.damageSources().drown(), 1.0F);
++            this.hurtServer(serverLevel, this.damageSources().drown(), this.mcc$waterDamage());
+         }
+     }
+ 
+diff --git a/net/minecraft/world/item/ItemStack.java b/net/minecraft/world/item/ItemStack.java
+index 4481789e4745c01094c4cdded285147c226ee09a..66b23a699b47d3be50f12b0a10da7c297a955b52 100644
+--- a/net/minecraft/world/item/ItemStack.java
++++ b/net/minecraft/world/item/ItemStack.java
+@@ -527,7 +527,7 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+     public InteractionResult use(final Level level, final Player player, final InteractionHand hand) {
+         ItemStack stackBeforeUse = this.copy();
+         boolean isInstantlyUsed = this.getUseDuration(player) <= 0;
+-        InteractionResult result = this.getItem().use(level, player, hand);
++        InteractionResult result = de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.use(this, level, player, hand);
+         if (isInstantlyUsed && result instanceof InteractionResult.Success success) {
+             ItemStack transformTo = success.heldItemTransformedTo() == null ? this : success.heldItemTransformedTo();
+             ItemStack resultItemStack = transformTo.applyAfterUseComponentSideEffects(player, stackBeforeUse);
+@@ -539,7 +539,7 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+ 
+     public ItemStack finishUsingItem(final Level level, final LivingEntity livingEntity) {
+         ItemStack stackBeforeUse = this.copy();
+-        ItemStack result = this.getItem().finishUsingItem(this, level, livingEntity);
++        ItemStack result = de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.finishUsingItem(this, level, livingEntity);
+         return result.applyAfterUseComponentSideEffects(livingEntity, stackBeforeUse);
+     }
+ 
+diff --git a/net/minecraft/world/item/crafting/BookCloningRecipe.java b/net/minecraft/world/item/crafting/BookCloningRecipe.java
+index 3ebce86dffd842f81e6edbd6462f1d513d7898ca..6ff477753cd35e168539c1c71a17b2dac1ab2895 100644
+--- a/net/minecraft/world/item/crafting/BookCloningRecipe.java
++++ b/net/minecraft/world/item/crafting/BookCloningRecipe.java
+@@ -132,9 +132,9 @@ public class BookCloningRecipe extends CustomRecipe {
+ 
+         for (int slot = 0; slot < result.size(); slot++) {
+             ItemStack itemStack = input.getItem(slot);
+-            ItemStackTemplate remainder = itemStack.getItem().getCraftingRemainder();
+-            if (remainder != null) {
+-                result.set(slot, remainder.create());
++            ItemStack remainder = de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.getCraftRemainingItem(itemStack);
++            if (!remainder.isEmpty()) {
++                result.set(slot, remainder);
+             } else if (itemStack.has(DataComponents.WRITTEN_BOOK_CONTENT)) {
+                 result.set(slot, itemStack.copyWithCount(1));
+                 break;
+diff --git a/net/minecraft/world/item/crafting/CraftingRecipe.java b/net/minecraft/world/item/crafting/CraftingRecipe.java
+index 6fbcac0adbc452482a40341fcf94c4d63666bdab..66d3e5c86cc9847f04c786b863d1d33eb6cdcec4 100644
+--- a/net/minecraft/world/item/crafting/CraftingRecipe.java
++++ b/net/minecraft/world/item/crafting/CraftingRecipe.java
+@@ -27,9 +27,7 @@ public interface CraftingRecipe extends Recipe<CraftingInput> {
+         NonNullList<ItemStack> result = NonNullList.withSize(input.size(), ItemStack.EMPTY);
+ 
+         for (int slot = 0; slot < result.size(); slot++) {
+-            Item item = input.getItem(slot).getItem();
+-            ItemStackTemplate remainder = item.getCraftingRemainder();
+-            result.set(slot, remainder != null ? remainder.create() : ItemStack.EMPTY);
++            result.set(slot, de.verdox.mccreativelab.behaviour.ItemBehaviourUtil.getCraftRemainingItem(input.getItem(slot)));
+         }
+ 
+         return result;

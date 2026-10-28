@@ -5,10 +5,10 @@ Subject: [PATCH] Add ItemBehavior
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
-index e693c05f28aa74e88d4e2187ba75dffcdd573fde..d4387568fa79435c9b2aa46ff31569f15a4fe3af 100644
+index ad4b750688eaeb73184b7b5916b4b22274cb6f09..c44d78d566324363e98424eee60c366e302e003a 100644
 --- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
 +++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
-@@ -101,7 +101,11 @@ public final class CraftItemStack extends ItemStack {
+@@ -136,7 +136,11 @@ public final class CraftItemStack extends ItemStack {
              return net.minecraft.world.item.ItemStack.EMPTY;
          }
          final CraftItemStack stack = getCraftStack(original);
@@ -21,20 +21,7 @@ index e693c05f28aa74e88d4e2187ba75dffcdd573fde..d4387568fa79435c9b2aa46ff31569f1
          // Paper end - re-implement after delegating all api ItemStack calls to CraftItemStack
      }
  
-@@ -138,7 +142,11 @@ public final class CraftItemStack extends ItemStack {
-     public static CraftItemStack asCraftCopy(ItemStack original) {
-         if (original instanceof CraftItemStack) {
-             CraftItemStack stack = (CraftItemStack) original;
--            return new CraftItemStack(stack.handle == null ? null : stack.handle.copy());
-+            // MCCreativeLab start - Add ItemBehavior
-+            CraftItemStack newStack = new CraftItemStack(stack.handle == null ? null : stack.handle.copy());
-+            newStack.setItemBehaviour(stack.getDefinedItemBehaviour());
-+            return newStack;
-+            // MCCreativeLab end - Add ItemBehavior
-         }
-         return new CraftItemStack(original);
-     }
-@@ -170,6 +178,7 @@ public final class CraftItemStack extends ItemStack {
+@@ -185,6 +189,7 @@ public final class CraftItemStack extends ItemStack {
  
      private CraftItemStack(ItemStack item) {
          this(item.getType(), item.getAmount(), item.getDurability(), item.hasItemMeta() ? item.getItemMeta() : null);
@@ -42,7 +29,7 @@ index e693c05f28aa74e88d4e2187ba75dffcdd573fde..d4387568fa79435c9b2aa46ff31569f1
      }
  
      private CraftItemStack(Material type, int amount, short durability, ItemMeta itemMeta) {
-@@ -667,4 +676,33 @@ public final class CraftItemStack extends ItemStack {
+@@ -760,4 +765,33 @@ public final class CraftItemStack extends ItemStack {
      }
  
      // Paper end - data component API

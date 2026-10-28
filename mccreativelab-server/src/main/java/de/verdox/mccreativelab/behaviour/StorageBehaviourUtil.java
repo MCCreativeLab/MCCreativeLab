@@ -1,5 +1,7 @@
 package de.verdox.mccreativelab.behaviour;
 
+import static de.verdox.mccreativelab.behaviour.BehaviourUtil.*;
+
 import com.google.gson.JsonElement;
 import de.verdox.mccreativelab.behavior.StorageBehaviour;
 import net.minecraft.server.level.ServerPlayer;

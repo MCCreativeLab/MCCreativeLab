@@ -55,8 +55,8 @@ public abstract class BehaviourResult<T, R extends BehaviourResult.Type> {
         }
 
         @Override
-        public java.lang.@NotNull Void evaluateReturnValue(@NotNull Supplier<java.lang.Void> vanillaLogic) {
-            return null;
+        public java.lang.@Nullable Void evaluateReturnValue(@NotNull Supplier<java.lang.Void> vanillaLogic) {
+            return vanillaLogic.get();
         }
 
         @Override
@@ -70,6 +70,12 @@ public abstract class BehaviourResult<T, R extends BehaviourResult.Type> {
 
         public Void(@NotNull Type result) {
             super(null, result);
+        }
+
+        @Override
+        public java.lang.@Nullable Void evaluateReturnValue(@NotNull Supplier<java.lang.Void> vanillaLogic) {
+            if (getResult() != Type.REPLACE_VANILLA) vanillaLogic.get();
+            return null;
         }
 
         public boolean replaceVanillaLogic() {

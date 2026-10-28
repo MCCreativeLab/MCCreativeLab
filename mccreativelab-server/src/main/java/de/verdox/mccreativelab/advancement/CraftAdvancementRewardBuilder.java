@@ -34,8 +34,8 @@ public class CraftAdvancementRewardBuilder implements AdvancementRewardBuilder{
     public AdvancementRewards build(){
         return new AdvancementRewards(
             this.experience,
-            lootTables.stream().map(namespacedKey -> ResourceKey.create(Registries.LOOT_TABLE, CraftNamespacedKey.toMinecraft(namespacedKey))).toList(),
-            recipes.stream().map(CraftNamespacedKey::toMinecraft).toList(),
+            net.minecraft.core.HolderSet.direct(lootTables.stream().map(key -> net.minecraft.server.MinecraftServer.getServer().reloadableRegistries().lookup().lookupOrThrow(Registries.LOOT_TABLE).getOrThrow(ResourceKey.create(Registries.LOOT_TABLE, CraftNamespacedKey.toMinecraft(key)))).toList()),
+            recipes.stream().map(key -> ResourceKey.create(Registries.RECIPE, CraftNamespacedKey.toMinecraft(key))).toList(),
             Optional.empty()
             );
     }

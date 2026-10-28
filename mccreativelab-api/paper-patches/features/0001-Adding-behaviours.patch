@@ -5,10 +5,10 @@ Subject: [PATCH] Adding behaviours
 
 
 diff --git a/src/main/java/org/bukkit/entity/Entity.java b/src/main/java/org/bukkit/entity/Entity.java
-index 19272cff8d6d040e95b2644d70acdac606e06c16..7b8f9f69de214895b09b0bd58881e0269acc9583 100644
+index 91e73dd4779bf97da7f029c56f95c4d9b9b2d5c8..c1a019eaa4f11b1b2d1243ae69ac4033da106c0b 100644
 --- a/src/main/java/org/bukkit/entity/Entity.java
 +++ b/src/main/java/org/bukkit/entity/Entity.java
-@@ -768,6 +768,35 @@ public interface Entity extends Metadatable, CommandSender, Nameable, Persistent
+@@ -994,6 +994,35 @@ public interface Entity extends Metadatable, CommandSender, Nameable, Persistent
      @NotNull
      Set<String> getScoreboardTags();
  
@@ -45,10 +45,10 @@ index 19272cff8d6d040e95b2644d70acdac606e06c16..7b8f9f69de214895b09b0bd58881e026
       * Add a tag to this entity.
       * <br>
 diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
-index 8c9654cd19af8b28fa276a55c5060eb389e60c1c..e73c891ed867c833ab7f28dfdb98a413f8e3108a 100644
+index a8a817fa6186f99107ccfd4d7a83f891fa7e1e17..10c86944b6f7796de9787be1da63492d238584ed 100644
 --- a/src/main/java/org/bukkit/inventory/ItemStack.java
 +++ b/src/main/java/org/bukkit/inventory/ItemStack.java
-@@ -143,6 +143,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+@@ -163,6 +163,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
          if (data != null) {
              createData(data);
          }
@@ -56,7 +56,7 @@ index 8c9654cd19af8b28fa276a55c5060eb389e60c1c..e73c891ed867c833ab7f28dfdb98a413
      }
  
      /**
-@@ -161,6 +162,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+@@ -181,6 +182,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
          if (stack.getType().isLegacy()) {
              this.data = stack.getData();
          }
@@ -64,7 +64,7 @@ index 8c9654cd19af8b28fa276a55c5060eb389e60c1c..e73c891ed867c833ab7f28dfdb98a413
      }
  
      /**
-@@ -1318,4 +1320,22 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+@@ -1361,4 +1363,22 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
          return this.craftDelegate.matchesWithoutData(item, excludeTypes, ignoreCount);
      }
      // Paper end - data component API

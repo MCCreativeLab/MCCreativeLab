@@ -57,6 +57,6 @@ public final class CreativeLabImpl implements CreativeLab {
         net.minecraft.world.level.Level level = ((org.bukkit.craftbukkit.CraftWorld) location.getWorld()).getHandle();
         BlockHitResult blockHitResult = new BlockHitResult(new Vec3(location.getBlockX(), location.getBlockY(), location.getBlockZ()), Direction.UP, new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()), true);
 
-        return BehaviourUtil.Converter.InteractionResult.INSTANCE.nmsToBukkitValue(blockItem.placeItemWithoutPlayer(new BlockPlaceContext(level, null, InteractionHand.MAIN_HAND, org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(stack), blockHitResult)));
+        return BehaviourUtil.Converter.InteractionResult.INSTANCE.nmsToBukkitValue(blockItem.place(new BlockPlaceContext(level, null, InteractionHand.MAIN_HAND, org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(stack), blockHitResult)));
     }
 }

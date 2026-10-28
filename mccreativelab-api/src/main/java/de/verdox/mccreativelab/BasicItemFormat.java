@@ -26,6 +26,7 @@ public interface BasicItemFormat {
      */
     @NotNull
     static ItemStack applyItemFormatAndReturn(@NotNull ItemStack stack){
+        if (!BASIC_FORMAT.isImplemented()) return stack;
         return applyItemFormatAndReturn(stack, BASIC_FORMAT.getBehaviour());
     }
 

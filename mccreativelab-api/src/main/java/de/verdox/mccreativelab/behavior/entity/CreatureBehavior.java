@@ -9,7 +9,8 @@ public interface CreatureBehavior<T extends Creature> extends MobBehaviour<T> {
      * @param entity the entity
      * @return the leash following speed
      */
-    default BehaviourResult.Object<Double> followLeashSpeed(Creature entity) {
+    @org.jetbrains.annotations.NotNull
+    default BehaviourResult.Object<Double> followLeashSpeed( @org.jetbrains.annotations.NotNull Creature entity) {
         return BehaviourResult.Object.DEFAULT_INSTANCE;
     }
 }
