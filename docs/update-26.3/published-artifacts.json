@@ -1,0 +1,74 @@
+[
+  {
+    "project": "MCCreativeLab-Fork/mccreativelab-api",
+    "coordinates": "de.verdox.mccreativelab:mccreativelab-api:26.3-R0.1-SNAPSHOT",
+    "snapshot": "26.3-R0.1-20261028.092116-1",
+    "artifact_url": "https://repo.verdox.de/snapshots/de/verdox/mccreativelab/mccreativelab-api/26.3-R0.1-SNAPSHOT/mccreativelab-api-26.3-R0.1-20261028.092116-1.jar",
+    "sha256": "fbaa1b835e472be89b804e4fa21002e493783e6724a629ffb22141e052d4dc8f",
+    "checksum_matches_build": true
+  },
+  {
+    "project": "MCCreativeLab-Fork/mccreativelab-server",
+    "coordinates": "de.verdox.mccreativelab:dev-bundle:26.3-R0.1-SNAPSHOT",
+    "snapshot": "26.3-R0.1-20261028.092116-1",
+    "artifact_url": "https://repo.verdox.de/snapshots/de/verdox/mccreativelab/dev-bundle/26.3-R0.1-SNAPSHOT/dev-bundle-26.3-R0.1-20261028.092116-1.zip",
+    "sha256": "9542ef69bc53e274e0dd75974744d52a374cac565934a8c41e57300dba4bfb81",
+    "checksum_matches_build": true
+  },
+  {
+    "project": "mcc-wrapper/api",
+    "coordinates": "de.verdox.mccreativelab.mcc-wrapper:api:26.3-R0.1-SNAPSHOT",
+    "snapshot": "26.3-R0.1-20261028.092318-1",
+    "artifact_url": "https://repo.verdox.de/snapshots/de/verdox/mccreativelab/mcc-wrapper/api/26.3-R0.1-SNAPSHOT/api-26.3-R0.1-20261028.092318-1.jar",
+    "sha256": "6c3a8f92ca4c5ac5cbf896771e479dbc5b9c78b85a4605a5e432498a8dae6f34",
+    "checksum_matches_build": true
+  },
+  {
+    "project": "mcc-wrapper/vanilla",
+    "coordinates": "de.verdox.mccreativelab.mcc-wrapper:vanilla:26.3-R0.1-SNAPSHOT",
+    "snapshot": "26.3-R0.1-20261028.092318-1",
+    "artifact_url": "https://repo.verdox.de/snapshots/de/verdox/mccreativelab/mcc-wrapper/vanilla/26.3-R0.1-SNAPSHOT/vanilla-26.3-R0.1-20261028.092318-1.jar",
+    "sha256": "d456d23b6dbd90c92759e919136cee9ad20fc4370f039e8d1b17fa2b0df12199",
+    "checksum_matches_build": true
+  },
+  {
+    "project": "mcc-wrapper/paper",
+    "coordinates": "de.verdox.mccreativelab.mcc-wrapper:paper:26.3-R0.1-SNAPSHOT",
+    "snapshot": "26.3-R0.1-20261028.092318-1",
+    "artifact_url": "https://repo.verdox.de/snapshots/de/verdox/mccreativelab/mcc-wrapper/paper/26.3-R0.1-SNAPSHOT/paper-26.3-R0.1-20261028.092318-1.jar",
+    "sha256": "f3d5d394c7bd20e2cec3da9b8aad78dc7a4e685bdd5684afbfc5297095513583",
+    "checksum_matches_build": true
+  },
+  {
+    "project": "mcc-wrapper/paper/mod",
+    "coordinates": "de.verdox.mccreativelab.mcc-wrapper:paper-mod:26.3-R0.1-SNAPSHOT",
+    "snapshot": "26.3-R0.1-20261028.092318-1",
+    "artifact_url": "https://repo.verdox.de/snapshots/de/verdox/mccreativelab/mcc-wrapper/paper-mod/26.3-R0.1-SNAPSHOT/paper-mod-26.3-R0.1-20261028.092318-1.jar",
+    "sha256": "6ae93b8d7a61c7baf98027d55e26c77696129a0b77458318751e3d630ef28be1",
+    "checksum_matches_build": true
+  },
+  {
+    "project": "mcc-util",
+    "coordinates": "de.verdox.mccreativelab:mcc-util:26.3-R0.1-SNAPSHOT",
+    "snapshot": "26.3-R0.1-20261028.092358-1",
+    "artifact_url": "https://repo.verdox.de/snapshots/de/verdox/mccreativelab/mcc-util/26.3-R0.1-SNAPSHOT/mcc-util-26.3-R0.1-20261028.092358-1.jar",
+    "sha256": "ed09f73759fd426ed2ac2b87d1952575b30443abd384b9e84d65479f99061dae",
+    "checksum_matches_build": true
+  },
+  {
+    "project": "mcc-pack-generator",
+    "coordinates": "de.verdox.mccreativelab:mcc-pack-generator:26.3-R0.1-SNAPSHOT",
+    "snapshot": "26.3-R0.1-20261028.092421-1",
+    "artifact_url": "https://repo.verdox.de/snapshots/de/verdox/mccreativelab/mcc-pack-generator/26.3-R0.1-SNAPSHOT/mcc-pack-generator-26.3-R0.1-20261028.092421-1.jar",
+    "sha256": "0768e0c777a493e223ddabe9902d457e9f3022c39335827c6b7673cb8de81b39",
+    "checksum_matches_build": true
+  },
+  {
+    "project": "mcc-plugin-extension",
+    "coordinates": "de.verdox.mccreativelab:mcc-plugin-extension:26.3-R0.1-SNAPSHOT",
+    "snapshot": "26.3-R0.1-20261028.092431-1",
+    "artifact_url": "https://repo.verdox.de/snapshots/de/verdox/mccreativelab/mcc-plugin-extension/26.3-R0.1-SNAPSHOT/mcc-plugin-extension-26.3-R0.1-20261028.092431-1.jar",
+    "sha256": "cd2b72cadb09772376c9af1ad7851f1a1ff7d2cdb085191ec7395c92fb43d278",
+    "checksum_matches_build": true
+  }
+]

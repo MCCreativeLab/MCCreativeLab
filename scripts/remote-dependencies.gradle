@@ -1,0 +1,8 @@
+// Verify published dependencies without resolving MCC artifacts from Maven Local.
+allprojects {
+    afterEvaluate {
+        repositories.withType(org.gradle.api.artifacts.repositories.MavenArtifactRepository).findAll {
+            it.name == "MavenLocal"
+        }.each { repositories.remove(it) }
+    }
+}

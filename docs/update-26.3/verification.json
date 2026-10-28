@@ -1,0 +1,145 @@
+{
+  "recorded_at": "2026-10-28T10:27:00.144478+01:00",
+  "minecraft": "26.3",
+  "paper_build": 226,
+  "paper_commit": "4f4904928fb8a26d15216c0ee6c36d8bbd3d48b0",
+  "java": "Temurin 25.0.5",
+  "gradle": "9.8.0",
+  "paperweight": "2.0.0-beta.24",
+  "source_commits_and_tests": [
+    {
+      "repository": "MCCreativeLab-Fork",
+      "commit": "cb39ef126b1d2ff16a016ab67f4dd97ab6bcaabb",
+      "tests": {
+        "mccreativelab-api": {
+          "tests": 487,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2
+        },
+        "paper-checkstyle": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "mccreativelab-server": {
+          "tests": 10178,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 86
+        }
+      }
+    },
+    {
+      "repository": "mcc-wrapper",
+      "commit": "5850f1c14de0057a88372bf40b9688504379bf03",
+      "tests": {
+        "paper": {
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "class-generator": {
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "vanilla": {
+          "tests": 13021,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "api": {
+          "tests": 42,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      }
+    },
+    {
+      "repository": "mcc-util",
+      "commit": "82dd00e500cf74dd1eaa7693e1980c996efeab85",
+      "tests": {}
+    },
+    {
+      "repository": "mcc-pack-generator",
+      "commit": "b9b08018add635487c4ebe032718d809dbe99482",
+      "tests": {
+        ".": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      }
+    },
+    {
+      "repository": "mcc-plugin-extension",
+      "commit": "60b7078d19e87d8ced619727fe424e05d29de3ca",
+      "tests": {
+        ".": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      }
+    }
+  ],
+  "remote_dependency_builds": [
+    {
+      "repository": "mcc-wrapper",
+      "mavenLocal": false,
+      "exit_code": 0
+    },
+    {
+      "repository": "mcc-util",
+      "mavenLocal": false,
+      "exit_code": 0
+    },
+    {
+      "repository": "mcc-pack-generator",
+      "mavenLocal": false,
+      "exit_code": 0
+    },
+    {
+      "repository": "mcc-plugin-extension",
+      "mavenLocal": false,
+      "exit_code": 0
+    }
+  ],
+  "server_checks": {
+    "core": 26,
+    "extension": 31,
+    "failures": 0
+  },
+  "maven_publications": {
+    "artifacts": 9,
+    "checksums_match": true,
+    "manifest": "published-artifacts.json"
+  },
+  "limitations": [
+    "No graphical Minecraft client session",
+    "No Ignite mod server run",
+    "Existing legacy API Checkstyle baseline retained; see UPDATE.md step 37"
+  ],
+  "local_runtime_artifacts": [
+    {
+      "path": "MCCreativeLab-Fork/mccreativelab-server/build/libs/mccreativelab-paperclip-26.3-R0.1-SNAPSHOT.jar",
+      "bytes": 56946551,
+      "sha256": "6ca198f7526007fc9d694a5ae60176df32dde5e0b7be09f02b6cf4d50c487b44",
+      "zip_integrity": "ok"
+    },
+    {
+      "path": "mcc-plugin-extension/build/libs/mcc-plugin-extension-26.3-R0.1-SNAPSHOT-all.jar",
+      "bytes": 55349995,
+      "sha256": "e45b0baa5a38d66591ef596d516d21979a854da8d86bfdf115c5f9cec273526a",
+      "zip_integrity": "ok"
+    }
+  ]
+}

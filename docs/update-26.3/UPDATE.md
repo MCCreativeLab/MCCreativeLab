@@ -146,3 +146,25 @@ Finale Befehle, jeweils mit `JAVA_HOME=/home/lukas/.jdks/temurin-25`:
 - Server- und Shader-Prüfbefehle: siehe die reproduzierbaren Anleitungen in `mcc-util/docs/update-26.3/INTEGRATION.md` und `mcc-pack-generator/docs/update-26.3/MIGRATION.md`.
 
 `git diff --check` besteht für Quell-/Build-/Dokumentationsdateien. Patch-Dateien enthalten die notwendigen Leerzeichen leerer Unified-Diff-Kontextzeilen und werden dafür separat behandelt. Vorhandene lokale Credential- und IDE-Änderungen werden aus den Update-Commits herausgehalten und bleiben im Arbeitsverzeichnis erhalten.
+
+73. Update-Commits für alle fünf Repositories erstellt. Die ursprünglichen Credential-Änderungen wurden bei der Commit-Vorbereitung gezielt ausgespart; ein Vergleich der verbleibenden Änderungen mit den gesicherten Ausgangsdiffs bestätigt deren Erhalt. `.idea/` bleibt unberührt. Quell-Commits: Fork `cb39ef1`, Wrapper `5850f1c`, Util `82dd00e`, Pack `b9b0801`, Extension `60b7078`. Der abschließende Dokumentationscommit des Forks ist davon getrennt.
+74. Remote-Veröffentlichung in Guide-Reihenfolge erfolgreich nach `https://repo.verdox.de/snapshots`: zuerst API und Dev-Bundle, danach Wrapper API/Vanilla/Paper/Paper-Mod, Util, Pack-Generator und Extension. Alle neun Koordinaten verwenden 26.3-R0.1-SNAPSHOT. Snapshot-Versionen und SHA-256-Werte sind dauerhaft in `published-artifacts.json` erfasst und gegen die lokalen Gradle-Modulmetadaten geprüft; alle stimmen überein. Credentials wurden weder ausgegeben noch versioniert. Kein Git-Push durchgeführt.
+75. Zusätzliche Abnahme mit entferntem MavenLocal-Repository: `help build` erfolgreich für Wrapper (49 s), Util (27 s), Pack-Generator und Extension (17 s). Damit lösen die Builds auch die tatsächlich veröffentlichten MCC-Abhängigkeiten auf. Abschlussdaten einschließlich Quell-Commits und Testzahlen stehen in `verification.json`.
+
+## Veröffentlichungen und Reproduktion
+
+Veröffentlichungsbefehle (Java 25; zusätzlich jeweils `--console=plain --no-daemon`):
+
+1. Fork: `./gradlew -PpublishDevBundle :mccreativelab-api:publish :mccreativelab-server:publishDevBundlePublicationToVerdoxRepository` – erfolgreich (1 min 53 s).
+2. Wrapper: `./gradlew :api:publish :vanilla:publish :paper:publish :paper:mod:publish` – erfolgreich (28 s).
+3. Util: `./gradlew publish` – erfolgreich (22 s).
+4. Pack-Generator: `./gradlew publish` – erfolgreich (9 s).
+5. Extension: `./gradlew publish` – erfolgreich (25 s).
+
+Das Wrapper-Mod-Artefakt heißt `de.verdox.mccreativelab.mcc-wrapper:paper-mod:26.3-R0.1-SNAPSHOT`. Alle anderen exakten Koordinaten und zeitgestempelten URLs stehen in `published-artifacts.json`. Die Extension stellt lokal zusätzlich das tatsächlich getestete vollständige Plugin unter `mcc-plugin-extension/build/libs/mcc-plugin-extension-26.3-R0.1-SNAPSHOT-all.jar` bereit; die Maven-Veröffentlichung enthält die reguläre Java-Komponente.
+
+Die Prüfsummenprüfung lässt sich aus dem Fork-Verzeichnis mit `python3 scripts/verify-maven-publications.py --output /tmp/mcc-publications.json` wiederholen. Sie benötigt die zuvor erzeugten `build/publications/*/module.json`-Dateien aller fünf Repositories und prüft die Haupt-JARs sowie das Dev-Bundle-ZIP gegen die veröffentlichten SHA-256-Dateien.
+
+Die Abnahme ohne lokale Maven-Artefakte lässt sich im jeweiligen abhängigen Repository mit `./gradlew help build --init-script ../MCCreativeLab-Fork/scripts/remote-dependencies.gradle --console=plain --no-daemon` wiederholen. Das Init-Skript entfernt MavenLocal nur für diesen Aufruf. Es verändert weder die Repository-Konfiguration noch lokale Maven-Dateien.
+
+76. Ausführbare Paperclip-JAR nach dem Quell-Commit erneut erstellt (`fork-final-paperclip.log`, erfolgreich in 1 min 28 s). Vollständige ZIP-Integritätsprüfung von Server-JAR und vollständiger Extension-JAR erfolgreich; lokale Pfade, Größen und SHA-256-Werte sind in `verification.json` erfasst. Abschließender Arbeitszustand enthält ausschließlich die erhaltenen ursprünglichen Credential-/IDE-Änderungen. Update und Maven-Veröffentlichungen sind abgeschlossen; die oben genannten Client-/Ignite-Prüfgrenzen bleiben bestehen.
