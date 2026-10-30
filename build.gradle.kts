@@ -5,6 +5,30 @@ plugins {
     id("io.papermc.paperweight.patcher") version "2.0.0-beta.24"
 }
 
+// Each repository can be checked out alone (.env) or inside MCCreativeLab (../.env).
+// Parse literal values without shell expansion, preserving '=' and backslashes in secrets.
+val verdoxEnvFile = listOf(rootProject.file(".env"), rootProject.file("../.env"))
+    .firstOrNull { it.isFile }
+val verdoxDotEnv = verdoxEnvFile?.let { envFile ->
+    providers.fileContents(layout.file(providers.provider { envFile })).asText.get()
+        .lineSequence()
+        .map { it.trim().removePrefix("export ").trim() }
+        .filter { it.isNotEmpty() && !it.startsWith("#") && '=' in it }
+        .associate { line ->
+            val key = line.substringBefore('=').trim()
+            val value = line.substringAfter('=').trim()
+            key to when {
+                value.startsWith("\"") && value.endsWith("\"") -> value.removeSurrounding("\"")
+                else -> value.removeSurrounding("'")
+            }
+        }
+} ?: emptyMap()
+
+fun Project.verdoxCredential(property: String, environment: String): String? =
+    providers.gradleProperty(property).orNull
+        ?: providers.environmentVariable(environment).orNull
+        ?: verdoxDotEnv[environment]
+
 paperweight {
     upstreams.paper {
         ref = providers.gradleProperty("paperRef")
@@ -83,7 +107,12 @@ subprojects {
     repositories {
         mavenCentral()
         maven(paperMavenPublicUrl)
-        maven("https://repo.verdox.de/snapshots")
+        maven("https://repo.verdox.de/snapshots") {
+            credentials {
+                username = verdoxCredential("reposilite.verdox.user", "REPO_USER")
+                password = verdoxCredential("reposilite.verdox.key", "REPO_PASSWORD")
+            }
+        }
     }
 
     tasks.withType<AbstractArchiveTask>().configureEach {
@@ -115,8 +144,8 @@ subprojects {
                 name = "verdox"
                 url = uri("https://repo.verdox.de/snapshots")
                 credentials {
-                    username = (findProperty("reposilite.verdox.user") ?: System.getenv("REPO_USER")).toString()
-                    password = (findProperty("reposilite.verdox.key") ?: System.getenv("REPO_PASSWORD")).toString()
+                    username = verdoxCredential("reposilite.verdox.user", "REPO_USER")
+                    password = verdoxCredential("reposilite.verdox.key", "REPO_PASSWORD")
                 }
             }
         }

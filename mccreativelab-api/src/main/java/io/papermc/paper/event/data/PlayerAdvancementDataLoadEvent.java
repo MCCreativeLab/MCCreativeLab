@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 public class PlayerAdvancementDataLoadEvent extends PlayerDataEvent {
+    private static final HandlerList HANDLERS = new HandlerList();
+
     private JsonElement serializedAdvancements;
 
     public PlayerAdvancementDataLoadEvent(@NotNull UUID playerUUID) {
@@ -25,8 +27,12 @@ public class PlayerAdvancementDataLoadEvent extends PlayerDataEvent {
         this.serializedAdvancements = serializedAdvancements;
     }
 
+    public static @NotNull HandlerList getHandlerList() {
+        return HANDLERS;
+    }
+
     @Override
     public @NotNull HandlerList getHandlers() {
-        return null;
+        return HANDLERS;
     }
 }

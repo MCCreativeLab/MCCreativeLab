@@ -1,0 +1,184 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: verdox-w <verdox@solarminer.app>
+Date: Wed, 28 Oct 2026 16:48:00 +0000
+Subject: [PATCH] Preserve vanilla super calls inside entity behaviour fallbacks
+
+Calling a behaviour dispatcher from a vanilla superclass delegation re-enters
+the subtype through its fallback and causes unbounded recursion. Dispatch at
+external call sites while retaining direct vanilla superclass implementations.
+
+diff --git a/net/minecraft/world/entity/TamableAnimal.java b/net/minecraft/world/entity/TamableAnimal.java
+index 5a59f546bb4c2fac59071dd50c9c235b7a21fbb4..8881d76b5346baf5f14926696e93e07dc0889a24 100644
+--- a/net/minecraft/world/entity/TamableAnimal.java
++++ b/net/minecraft/world/entity/TamableAnimal.java
+@@ -182,7 +182,7 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
+ 
+     @Override
+     public boolean canAttack(final LivingEntity target) {
+-        return !this.isOwnedBy(target) && super.mcc$canAttack(target);
++        return !this.isOwnedBy(target) && super.canAttack(target);
+     }
+ 
+     public boolean isOwnedBy(final LivingEntity entity) {
+diff --git a/net/minecraft/world/entity/animal/dolphin/Dolphin.java b/net/minecraft/world/entity/animal/dolphin/Dolphin.java
+index 13a13e68a1582a6fc2851a9da3d35ff823c65d3a..274dd55ab20feb594f9f4290b1638979ed85f231 100644
+--- a/net/minecraft/world/entity/animal/dolphin/Dolphin.java
++++ b/net/minecraft/world/entity/animal/dolphin/Dolphin.java
+@@ -197,7 +197,7 @@ public class Dolphin extends AgeableWaterCreature {
+ 
+     @Override
+     public boolean canAttack(final LivingEntity target) {
+-        return !this.isBaby() && super.mcc$canAttack(target);
++        return !this.isBaby() && super.canAttack(target);
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/animal/feline/Cat.java b/net/minecraft/world/entity/animal/feline/Cat.java
+index 694a0a626422da50f80c778ddf078bf1541280e5..7e458b7cb5de06e38b0a00af2300f62ab582e88f 100644
+--- a/net/minecraft/world/entity/animal/feline/Cat.java
++++ b/net/minecraft/world/entity/animal/feline/Cat.java
+@@ -391,7 +391,7 @@ public class Cat extends TamableAnimal {
+ 
+     @Override
+     public boolean canMate(final Animal partner) {
+-        return this.isTame() && partner instanceof Cat cat && cat.isTame() && super.mcc$canMate(partner);
++        return this.isTame() && partner instanceof Cat cat && cat.isTame() && super.canMate(partner);
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/animal/sheep/Sheep.java b/net/minecraft/world/entity/animal/sheep/Sheep.java
+index 7b2c4563940f2731727479feea041d9939ab9291..450bdc5fab3b4e2fd9007595b339327adebbca60 100644
+--- a/net/minecraft/world/entity/animal/sheep/Sheep.java
++++ b/net/minecraft/world/entity/animal/sheep/Sheep.java
+@@ -313,7 +313,7 @@ public class Sheep extends Animal implements Shearable {
+     @Override
+     public void ate() {
+         if (!new org.bukkit.event.entity.SheepRegrowWoolEvent((org.bukkit.entity.Sheep) this.getBukkitEntity()).callEvent()) return; // CraftBukkit
+-        super.mcc$ate();
++        super.ate();
+         this.setSheared(false);
+         if (this.canAgeUp()) {
+             this.ageUp(60);
+diff --git a/net/minecraft/world/entity/animal/sniffer/Sniffer.java b/net/minecraft/world/entity/animal/sniffer/Sniffer.java
+index 87bdd9d9e0f4bff3274b04ac32a66bcd8b7b7932..30d48c61bcefe547a798b1f640baf84019d3e77a 100644
+--- a/net/minecraft/world/entity/animal/sniffer/Sniffer.java
++++ b/net/minecraft/world/entity/animal/sniffer/Sniffer.java
+@@ -442,7 +442,7 @@ public class Sniffer extends Animal {
+             return false;
+         } else {
+             Set<Sniffer.State> states = Set.of(Sniffer.State.IDLING, Sniffer.State.SCENTING, Sniffer.State.FEELING_HAPPY);
+-            return states.contains(this.getState()) && states.contains(snifferPartner.getState()) && super.mcc$canMate(partner);
++            return states.contains(this.getState()) && states.contains(snifferPartner.getState()) && super.canMate(partner);
+         }
+     }
+ 
+diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
+index f8cf2a3a7cf1502579db4c015c8e70f918c76524..a1fa75b4a02187686f1bd18f409abd2e6cbe31be 100644
+--- a/net/minecraft/world/entity/item/ItemEntity.java
++++ b/net/minecraft/world/entity/item/ItemEntity.java
+@@ -319,7 +319,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+ 
+     @Override
+     public boolean fireImmune() {
+-        return !this.getItem().canBeHurtBy(this.damageSources().inFire()) || super.mcc$fireImmune();
++        return !this.getItem().canBeHurtBy(this.damageSources().inFire()) || super.fireImmune();
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/monster/creaking/Creaking.java b/net/minecraft/world/entity/monster/creaking/Creaking.java
+index 37e585f2b4b3a5d2bb25caf6eb2cb5bb94b2ad60..e2b531190218c9c644933300d03d6d732c195070 100644
+--- a/net/minecraft/world/entity/monster/creaking/Creaking.java
++++ b/net/minecraft/world/entity/monster/creaking/Creaking.java
+@@ -344,7 +344,7 @@ public class Creaking extends Monster {
+ 
+     @Override
+     public boolean fireImmune() {
+-        return this.isHeartBound() || super.mcc$fireImmune();
++        return this.isHeartBound() || super.fireImmune();
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/monster/illager/AbstractIllager.java b/net/minecraft/world/entity/monster/illager/AbstractIllager.java
+index 131582cc489d74658ebff089370dbfa11e96f5d8..017056bb37970803f639ccae809aab532f846384 100644
+--- a/net/minecraft/world/entity/monster/illager/AbstractIllager.java
++++ b/net/minecraft/world/entity/monster/illager/AbstractIllager.java
+@@ -25,7 +25,7 @@ public abstract class AbstractIllager extends Raider {
+ 
+     @Override
+     public boolean canAttack(final LivingEntity target) {
+-        return (!(target instanceof AbstractVillager) || !target.isBaby()) && super.mcc$canAttack(target);
++        return (!(target instanceof AbstractVillager) || !target.isBaby()) && super.canAttack(target);
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/monster/piglin/PiglinBrute.java b/net/minecraft/world/entity/monster/piglin/PiglinBrute.java
+index 6f2173ef1dff5063e470b4839a9cab94bb69982e..8bba57ee432ab41b47b6dd89a21bf17c4b462d1f 100644
+--- a/net/minecraft/world/entity/monster/piglin/PiglinBrute.java
++++ b/net/minecraft/world/entity/monster/piglin/PiglinBrute.java
+@@ -89,7 +89,7 @@ public class PiglinBrute extends AbstractPiglin {
+ 
+     @Override
+     public boolean wantsToPickUp(final ServerLevel level, final ItemStack itemStack) {
+-        return itemStack.is(Items.GOLDEN_AXE) && super.mcc$wantsToPickUp(level, itemStack);
++        return itemStack.is(Items.GOLDEN_AXE) && super.wantsToPickUp(level, itemStack);
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/monster/skeleton/WitherSkeleton.java b/net/minecraft/world/entity/monster/skeleton/WitherSkeleton.java
+index 5a12ea63185bcf6273cec5ef0ed054940a604c4d..a69cda3d70e1698e1750142efd194f98a0805a47 100644
+--- a/net/minecraft/world/entity/monster/skeleton/WitherSkeleton.java
++++ b/net/minecraft/world/entity/monster/skeleton/WitherSkeleton.java
+@@ -67,7 +67,7 @@ public class WitherSkeleton extends AbstractSkeleton {
+ 
+     @Override
+     public boolean canHoldItem(final ItemStack itemStack) {
+-        return !itemStack.is(ItemTags.WITHER_SKELETON_DISLIKED_WEAPONS) && super.mcc$canHoldItem(itemStack);
++        return !itemStack.is(ItemTags.WITHER_SKELETON_DISLIKED_WEAPONS) && super.canHoldItem(itemStack);
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/monster/zombie/Zombie.java b/net/minecraft/world/entity/monster/zombie/Zombie.java
+index ad265abbbe0eaf624bd414ab9a338a1237e3d416..071c1fba954486634599eab7843f7ae751ee5be6 100644
+--- a/net/minecraft/world/entity/monster/zombie/Zombie.java
++++ b/net/minecraft/world/entity/monster/zombie/Zombie.java
+@@ -456,12 +456,12 @@ public class Zombie extends Monster {
+ 
+     @Override
+     public boolean canHoldItem(final ItemStack itemStack) {
+-        return (!itemStack.is(ItemTags.EGGS) || !this.isBaby() || !this.isPassenger()) && super.mcc$canHoldItem(itemStack);
++        return (!itemStack.is(ItemTags.EGGS) || !this.isBaby() || !this.isPassenger()) && super.canHoldItem(itemStack);
+     }
+ 
+     @Override
+     public boolean wantsToPickUp(final ServerLevel level, final ItemStack itemStack) {
+-        return !itemStack.is(Items.GLOW_INK_SAC) && super.mcc$wantsToPickUp(level, itemStack);
++        return !itemStack.is(Items.GLOW_INK_SAC) && super.wantsToPickUp(level, itemStack);
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/projectile/hurtingprojectile/windcharge/AbstractWindCharge.java b/net/minecraft/world/entity/projectile/hurtingprojectile/windcharge/AbstractWindCharge.java
+index 71fae059aa9e4baf23a85815df77c42e82acf539..654fdca39db9f559ad8fdce874e9d425441b4bf1 100644
+--- a/net/minecraft/world/entity/projectile/hurtingprojectile/windcharge/AbstractWindCharge.java
++++ b/net/minecraft/world/entity/projectile/hurtingprojectile/windcharge/AbstractWindCharge.java
+@@ -62,7 +62,7 @@ public abstract class AbstractWindCharge extends AbstractHurtingProjectile imple
+ 
+     @Override
+     public boolean canCollideWith(final Entity entity) {
+-        return !(entity instanceof AbstractWindCharge) && super.mcc$canCollideWith(entity);
++        return !(entity instanceof AbstractWindCharge) && super.canCollideWith(entity);
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/raid/Raider.java b/net/minecraft/world/entity/raid/Raider.java
+index f847c5a1b0c50b44bf3c1b5bd7dcc686eb55dbb8..9d242f24c37fec196f06b8ef6fa29a66b2781c68 100644
+--- a/net/minecraft/world/entity/raid/Raider.java
++++ b/net/minecraft/world/entity/raid/Raider.java
+@@ -239,7 +239,7 @@ public abstract class Raider extends PatrollingMonster {
+ 
+     @Override
+     public boolean removeWhenFarAway(final double distSqr) {
+-        return this.getCurrentRaid() == null && super.mcc$removeWhenFarAway(distSqr);
++        return this.getCurrentRaid() == null && super.removeWhenFarAway(distSqr);
+     }
+ 
+     @Override

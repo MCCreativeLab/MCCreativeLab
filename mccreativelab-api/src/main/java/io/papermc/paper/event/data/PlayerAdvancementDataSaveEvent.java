@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 public class PlayerAdvancementDataSaveEvent extends PlayerDataEvent implements Cancellable {
+    private static final HandlerList HANDLERS = new HandlerList();
+
     private final JsonElement serializedAdvancements;
     private boolean cancelled;
 
@@ -25,9 +27,13 @@ public class PlayerAdvancementDataSaveEvent extends PlayerDataEvent implements C
         return serializedAdvancements;
     }
 
+    public static @NotNull HandlerList getHandlerList() {
+        return HANDLERS;
+    }
+
     @Override
     public @NotNull HandlerList getHandlers() {
-        return null;
+        return HANDLERS;
     }
 
     @Override

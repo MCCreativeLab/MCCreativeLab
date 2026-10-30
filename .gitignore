@@ -16,6 +16,11 @@ build
 .idea/
 /patches_rework
 
+# Local repository credentials
+.env
+.env.*
+!.env.example
+
 # Generated from the pinned Paper upstream
 /paper-checkstyle
 /.checkstyle
